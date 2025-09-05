@@ -34,7 +34,7 @@ export default function ContactPage() {
         email: formData.email,
         dob: "",
         phone: formData.phone,
-        customerType: "USER",
+        customerType: "IMPORTER",
         note: formData.message,
       };
 

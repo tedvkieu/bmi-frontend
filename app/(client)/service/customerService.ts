@@ -5,7 +5,7 @@ export interface CustomerRequest {
   dob: string; // ISO string format
   phone: string;
   note?: string;
-  customerType: "USER" | "BUSINESS"; // tuỳ enum bạn định nghĩa
+  customerType: "IMPORTER" | "SERVICE_MANAGER"; // tuỳ enum bạn định nghĩa
 }
 
 export interface CustomerResponse {

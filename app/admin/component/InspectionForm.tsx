@@ -1,0 +1,220 @@
+"use client";
+import React, { useState, useEffect } from "react";
+
+import "../styles/InspectionForm.css";
+import { InspectionFormData, ReceiptFormData } from "../types/inspection";
+import { Customer } from "../types/customer";
+import { useParams } from "next/navigation";
+import { inspectionApi } from "../services/inspectionApi";
+import { ReceiptFormSection } from "./ReceiptFormSection";
+import { CompletionSection } from "./CompletionSection";
+import { CustomerProfileSection } from "./CustomerProfileSection";
+
+const InspectionForm: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [currentSection, setCurrentSection] = useState(1);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [customerProfileData, setCustomerProfileData] =
+    useState<InspectionFormData>({
+      customerId: Number(id),
+      serviceAddress: "",
+      taxCode: "",
+      email: "",
+      objectType: "SERVICE_MANAGER",
+      inspectionTypeId: "",
+    });
+
+  const [receiptData, setReceiptData] = useState<ReceiptFormData>({
+    registrationNo: "",
+    customerSubmitId: Number(id) || 0,
+    customerRelatedId: 0,
+    inspectionTypeId: "",
+    declarationNo: "",
+    billOfLading: "",
+    shipName: "",
+    cout10: 0,
+    cout20: 0,
+    bulkShip: false,
+    declarationDoc: "",
+    declarationPlace: "",
+    inspectionDate: "",
+    certificateDate: "",
+    inspectionLocation: "",
+    certificateStatus: "PENDING",
+  });
+
+  useEffect(() => {
+    if (id) {
+      fetchCustomer();
+    }
+  }, [id]);
+
+  const fetchCustomer = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`/api/customers/${id}`);
+      if (!res.ok) {
+        throw new Error("Lỗi khi gọi API");
+      }
+
+      const customer: Customer = await res.json();
+
+      setCustomer(customer);
+      setCustomerProfileData((prev) => ({
+        ...prev,
+        email: customer.email,
+      }));
+    } catch (err) {
+      console.error(err);
+      setError("Không thể tải thông tin khách hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomerProfileSubmit = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/inspection-files", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customerProfileData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Có lỗi xảy ra khi gửi hồ sơ");
+      }
+
+      const data = await response.json();
+      console.log("Kết quả:", data);
+
+      if (data.inspectionFileId) {
+        setReceiptData((prev) => ({
+          ...prev,
+          inspectionTypeId: customerProfileData.inspectionTypeId,
+        }));
+        setCurrentSection(2);
+      } else {
+        throw new Error(data.message || "Có lỗi xảy ra");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi hồ sơ"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReceiptSubmit = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await inspectionApi.submitReceipt(receiptData);
+
+      if (response.success) {
+        setCurrentSection(3);
+      } else {
+        throw new Error(response.message || "Có lỗi xảy ra");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi biên nhận"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !customer) {
+    return (
+      <div className="inspection-form-loading">
+        <div className="spinner"></div>
+        <p>Đang tải...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="inspection-form-container">
+      <div className="inspection-form-header">
+        <h1>Tạo Hồ Sơ Kiểm Tra</h1>
+        <div className="progress-indicator">
+          <div
+            className={`step ${currentSection >= 1 ? "active" : ""} ${
+              currentSection > 1 ? "completed" : ""
+            }`}
+          >
+            <span className="step-number">1</span>
+            <span className="step-label">Hồ sơ khách hàng</span>
+          </div>
+          <div
+            className={`step ${currentSection >= 2 ? "active" : ""} ${
+              currentSection > 2 ? "completed" : ""
+            }`}
+          >
+            <span className="step-number">2</span>
+            <span className="step-label">Thông tin biên nhận</span>
+          </div>
+          <div className={`step ${currentSection >= 3 ? "active" : ""}`}>
+            <span className="step-number">3</span>
+            <span className="step-label">Hoàn thành</span>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-message">
+          <span className="error-icon">⚠</span>
+          {error}
+          <button
+            className="error-close"
+            onClick={() => setError(null)}
+            aria-label="Đóng thông báo lỗi"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="inspection-form-content">
+        {currentSection === 1 && (
+          <CustomerProfileSection
+            customer={customer}
+            formData={customerProfileData}
+            setFormData={setCustomerProfileData}
+            onSubmit={handleCustomerProfileSubmit}
+            loading={loading}
+          />
+        )}
+
+        {currentSection === 2 && customer && (
+          <ReceiptFormSection
+            customer={customer}
+            formData={receiptData}
+            setFormData={setReceiptData}
+            onSubmit={handleReceiptSubmit}
+            onBack={() => setCurrentSection(1)}
+            loading={loading}
+          />
+        )}
+
+        {currentSection === 3 && (
+          <CompletionSection
+            customerData={customerProfileData}
+            receiptData={receiptData}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default InspectionForm;

@@ -30,7 +30,7 @@ interface Customer {
   dob: string | null;
   phone: string;
   note: string;
-  customerType: "USER" | "BUSINESS";
+  customerType: "IMPORTER" | "SERVICE_MANAGER";
   createdAt: string;
   updatedAt: string;
 }

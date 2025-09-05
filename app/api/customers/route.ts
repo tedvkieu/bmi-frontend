@@ -15,6 +15,8 @@ export async function POST(req: Request) {
       body: JSON.stringify(body),
     });
 
+    console.log("Response from Spring Boot API:", res);
+
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));
       return NextResponse.json(

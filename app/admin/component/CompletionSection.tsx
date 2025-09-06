@@ -1,14 +1,31 @@
 import React from "react";
 import { InspectionFormData, ReceiptFormData } from "../types/inspection";
 
+interface MachineryFormData {
+  receiptId: number;
+  registrationNo: string;
+  itemName: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  manufactureCountry: string;
+  manufacturerName: string;
+  manufactureYear?: number;
+  quantity: number;
+  usage: string;
+  note: string;
+}
+
 interface CompletionSectionProps {
   customerData: InspectionFormData;
   receiptData: ReceiptFormData;
+  machineryData?: MachineryFormData | null;
 }
 
 export const CompletionSection: React.FC<CompletionSectionProps> = ({
   customerData,
   receiptData,
+  machineryData,
 }) => {
   const handlePrintReceipt = () => {
     window.print();
@@ -118,7 +135,7 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
             </div>
             <div className="summary-item">
               <label>Tàu chở hàng rời:</label>
-              <span>{receiptData.bulkShip} tấn</span>
+              <span>{receiptData.bulkShip ? "Có" : "Không"}</span>
             </div>
             <div className="summary-item">
               <label>Nơi khai báo:</label>
@@ -153,6 +170,64 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
           </div>
         </div>
 
+        {machineryData && (
+          <div className="summary-section">
+            <h3>Thông Tin Máy Móc Giám Định</h3>
+            <div className="summary-grid">
+              <div className="summary-item">
+                <label>Mã biên nhận:</label>
+                <span>{machineryData.receiptId}</span>
+              </div>
+              <div className="summary-item">
+                <label>Số đăng ký:</label>
+                <span>{machineryData.registrationNo}</span>
+              </div>
+              <div className="summary-item">
+                <label>Tên thiết bị:</label>
+                <span>{machineryData.itemName}</span>
+              </div>
+              <div className="summary-item">
+                <label>Thương hiệu:</label>
+                <span>{machineryData.brand}</span>
+              </div>
+              <div className="summary-item">
+                <label>Model:</label>
+                <span>{machineryData.model}</span>
+              </div>
+              <div className="summary-item">
+                <label>Số serial:</label>
+                <span>{machineryData.serialNumber}</span>
+              </div>
+              <div className="summary-item">
+                <label>Nước sản xuất:</label>
+                <span>{machineryData.manufactureCountry}</span>
+              </div>
+              <div className="summary-item">
+                <label>Nhà sản xuất:</label>
+                <span>{machineryData.manufacturerName}</span>
+              </div>
+              <div className="summary-item">
+                <label>Năm sản xuất:</label>
+                <span>{machineryData.manufactureYear}</span>
+              </div>
+              <div className="summary-item">
+                <label>Số lượng:</label>
+                <span>{machineryData.quantity}</span>
+              </div>
+              <div className="summary-item full-width">
+                <label>Mục đích sử dụng:</label>
+                <span>{machineryData.usage}</span>
+              </div>
+              {machineryData.note && (
+                <div className="summary-item full-width">
+                  <label>Ghi chú:</label>
+                  <span>{machineryData.note}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="completion-actions">
           <button
             type="button"
@@ -186,6 +261,9 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
           <h3>Các bước tiếp theo</h3>
           <ul>
             <li>Hồ sơ của bạn đang được xem xét bởi bộ phận kiểm tra</li>
+            <li>
+              Thông tin máy móc giám định đã được ghi nhận và sẽ được xử lý
+            </li>
             <li>Bạn sẽ nhận được thông báo qua email khi có cập nhật</li>
             <li>Vui lòng chuẩn bị các tài liệu cần thiết cho buổi kiểm tra</li>
             <li>Liên hệ hotline: 1900-xxxx nếu cần hỗ trợ</li>
@@ -195,3 +273,4 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
     </div>
   );
 };
+export default CompletionSection;

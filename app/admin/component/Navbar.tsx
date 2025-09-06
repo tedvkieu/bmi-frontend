@@ -84,9 +84,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div
-      className={`bg-white shadow-xl transition-all duration-300 z-50 ${
-        isMobile ? "fixed h-full" : "relative"
-      } ${
+      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${
         isSidebarOpen
           ? isMobile
             ? "w-64"
@@ -96,8 +94,8 @@ const Navbar: React.FC<NavbarProps> = ({
           : "w-16"
       }`}
     >
-      {/* Logo */}
-      <div className="p-4 border-b border-gray-200">
+      {/* Logo - Fixed at top */}
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">BM</span>
@@ -115,32 +113,36 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="mt-4 px-2 pb-4">
-        {navItems.map((item) => (
-          <button
-            key={item.key}
-            onClick={() => onPageChange(item.key)}
-            className={`w-full flex items-center px-3 py-3 mb-1 rounded-lg text-left transition-colors ${
-              currentPage === item.key
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-            title={!isSidebarOpen && !isMobile ? item.label : undefined}
-          >
-            <item.icon size={20} className="flex-shrink-0" />
-            {(isSidebarOpen || isMobile) && (
-              <>
-                <span className="ml-3 font-medium truncate">{item.label}</span>
-                {item.badge && (
-                  <span className="ml-auto bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex-shrink-0">
-                    {item.badge}
+      {/* Navigation - Scrollable area */}
+      <nav className="flex-1 overflow-y-auto px-2 py-4">
+        <div className="space-y-1">
+          {navItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => onPageChange(item.key)}
+              className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-colors ${
+                currentPage === item.key
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+              title={!isSidebarOpen && !isMobile ? item.label : undefined}
+            >
+              <item.icon size={20} className="flex-shrink-0" />
+              {(isSidebarOpen || isMobile) && (
+                <>
+                  <span className="ml-3 font-medium truncate">
+                    {item.label}
                   </span>
-                )}
-              </>
-            )}
-          </button>
-        ))}
+                  {item.badge && (
+                    <span className="ml-auto bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex-shrink-0">
+                      {item.badge}
+                    </span>
+                  )}
+                </>
+              )}
+            </button>
+          ))}
+        </div>
       </nav>
     </div>
   );

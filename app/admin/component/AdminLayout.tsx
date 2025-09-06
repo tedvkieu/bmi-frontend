@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Header from "./Header";
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
@@ -67,7 +68,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex relative">
+    <div className="min-h-screen bg-gray-50">
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
         <div
@@ -76,7 +77,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Fixed Sidebar */}
       <Navbar
         currentPage={currentPage}
         isSidebarOpen={isSidebarOpen}
@@ -84,8 +85,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         onPageChange={handlePageChange}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 min-w-0">
+      {/* Main Content with dynamic margin */}
+      <div
+        className={`min-h-screen transition-all duration-300 ${
+          isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
+        }`}
+      >
         {/* Header */}
         <Header
           currentPage={currentPage}

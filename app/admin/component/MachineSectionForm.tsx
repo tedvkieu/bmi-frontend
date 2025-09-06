@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 
 interface MachineryFormData {
@@ -9,7 +10,7 @@ interface MachineryFormData {
   serialNumber: string;
   manufactureCountry: string;
   manufacturerName: string;
-  manufacturateYear: number;
+  manufactureYear: number;
   quantity: number;
   usage: string;
   note: string;
@@ -41,7 +42,7 @@ export const MachineryFormSection: React.FC<MachineryFormSectionProps> = ({
     serialNumber: "",
     manufactureCountry: "",
     manufacturerName: "",
-    manufacturateYear: new Date().getFullYear(),
+    manufactureYear: new Date().getFullYear(),
     quantity: 1,
     usage: "",
     note: "",
@@ -54,7 +55,7 @@ export const MachineryFormSection: React.FC<MachineryFormSectionProps> = ({
     setFormData((prev) => ({
       ...prev,
       [field]:
-        field === "manufacturateYear" || field === "quantity"
+        field === "manufactureYear" || field === "quantity"
           ? Number(value)
           : value,
     }));
@@ -67,25 +68,24 @@ export const MachineryFormSection: React.FC<MachineryFormSectionProps> = ({
       setInternalLoading(true);
       setError(null);
 
-      const response = await fetch("http://localhost:3000/api/machines", {
+      const response = await fetch("/api/machines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        throw new Error("Có lỗi xảy ra khi gửi thông tin máy móc");
+      console.log("Submit Machinery Response:", response);
+      if (response.ok) {
+        const data = await response.json();
+        onSubmit(data); // hoặc onSubmit(formData) nếu bạn chỉ cần gửi lại form
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || "Có lỗi xảy ra khi gửi thông tin máy móc");
       }
 
       const data = await response.json();
 
-      if (data.success) {
-        onSubmit(formData);
-      } else {
-        throw new Error(
-          data.message || "Có lỗi xảy ra khi gửi thông tin máy móc"
-        );
-      }
+      onSubmit(formData);
     } catch (err) {
       console.error("Error submitting machinery:", err);
       setError(
@@ -106,7 +106,7 @@ export const MachineryFormSection: React.FC<MachineryFormSectionProps> = ({
       formData.serialNumber.trim() !== "" &&
       formData.manufactureCountry.trim() !== "" &&
       formData.manufacturerName.trim() !== "" &&
-      formData.manufacturateYear > 1900 &&
+      formData.manufactureYear > 1900 &&
       formData.quantity > 0 &&
       formData.usage.trim() !== ""
     );
@@ -274,16 +274,16 @@ export const MachineryFormSection: React.FC<MachineryFormSectionProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="manufacturateYear" className="form-label required">
+            <label htmlFor="manufactureYear" className="form-label required">
               Năm sản xuất
             </label>
             <input
               type="number"
-              id="manufacturateYear"
+              id="manufactureYear"
               className="form-input"
-              value={formData.manufacturateYear}
+              value={formData.manufactureYear}
               onChange={(e) =>
-                handleInputChange("manufacturateYear", e.target.value)
+                handleInputChange("manufactureYear", e.target.value)
               }
               placeholder="Nhập năm sản xuất"
               min="1900"

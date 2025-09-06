@@ -6,6 +6,7 @@ export interface Customer {
   address: string;
   taxCode?: string;
   contactPerson?: string;
+  customerType: string;
   createdAt?: string;
   updatedAt?: string;
 }

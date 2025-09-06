@@ -120,6 +120,7 @@ class InspectionApi {
     machineryData: MachineryFormData
   ): Promise<SubmitMachineryResponse> {
     try {
+      console.log("Submitting Machinery Data:", machineryData);
       const response = await fetch("http://localhost:3000/api/machines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

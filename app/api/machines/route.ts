@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Gọi trực tiếp sang BE Spring Boot
-    const springResponse = await fetch("http://localhost:8080/api/receipts", {
+    const springResponse = await fetch("http://localhost:8080/api/machines", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
+    console.log("Response from Spring Boot API:", springResponse);
     if (!springResponse.ok) {
       const errorText = await springResponse.text();
       return NextResponse.json(

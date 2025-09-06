@@ -9,6 +9,22 @@ import { inspectionApi } from "../services/inspectionApi";
 import { ReceiptFormSection } from "./ReceiptFormSection";
 import { CompletionSection } from "./CompletionSection";
 import { CustomerProfileSection } from "./CustomerProfileSection";
+import { MachineryFormSection } from "./MachineSectionForm";
+
+interface MachineryFormData {
+  receiptId: number;
+  registrationNo: string;
+  itemName: string;
+  brand: string;
+  model: string;
+  serialNumber: string;
+  manufactureCountry: string;
+  manufacturerName: string;
+  manufactureYear: number;
+  quantity: number;
+  usage: string;
+  note: string;
+}
 
 const InspectionForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +32,7 @@ const InspectionForm: React.FC = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [receiptId, setReceiptId] = useState<number | null>(null);
 
   const [customerProfileData, setCustomerProfileData] =
     useState<InspectionFormData>({
@@ -45,6 +62,10 @@ const InspectionForm: React.FC = () => {
     inspectionLocation: "",
     certificateStatus: "PENDING",
   });
+
+  const [machineryData, setMachineryData] = useState<MachineryFormData | null>(
+    null
+  );
 
   useEffect(() => {
     if (id) {
@@ -120,7 +141,14 @@ const InspectionForm: React.FC = () => {
       const response = await inspectionApi.submitReceipt(receiptData);
 
       if (response.success) {
-        setCurrentSection(3);
+        // Get receiptId from response.data
+        const receiptId = response.data?.receiptId;
+        if (receiptId) {
+          setReceiptId(receiptId);
+          setCurrentSection(3);
+        } else {
+          throw new Error("Không nhận được mã biên nhận");
+        }
       } else {
         throw new Error(response.message || "Có lỗi xảy ra");
       }
@@ -131,6 +159,17 @@ const InspectionForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMachinerySubmit = (machinery: MachineryFormData) => {
+    // If the machinery object has manufactureYear, map it to manufactureYear
+    const mappedMachinery = {
+      ...machinery,
+      manufactureYear:
+        (machinery as any).manufactureYear ?? machinery.manufactureYear,
+    };
+    setMachineryData(mappedMachinery);
+    setCurrentSection(4);
   };
 
   if (loading && !customer) {
@@ -163,8 +202,16 @@ const InspectionForm: React.FC = () => {
             <span className="step-number">2</span>
             <span className="step-label">Thông tin biên nhận</span>
           </div>
-          <div className={`step ${currentSection >= 3 ? "active" : ""}`}>
+          <div
+            className={`step ${currentSection >= 3 ? "active" : ""} ${
+              currentSection > 3 ? "completed" : ""
+            }`}
+          >
             <span className="step-number">3</span>
+            <span className="step-label">Máy móc giám định</span>
+          </div>
+          <div className={`step ${currentSection >= 4 ? "active" : ""}`}>
+            <span className="step-number">4</span>
             <span className="step-label">Hoàn thành</span>
           </div>
         </div>
@@ -206,10 +253,21 @@ const InspectionForm: React.FC = () => {
           />
         )}
 
-        {currentSection === 3 && (
+        {currentSection === 3 && receiptId && (
+          <MachineryFormSection
+            receiptId={receiptId}
+            registrationNo={receiptData.registrationNo}
+            onSubmit={handleMachinerySubmit}
+            onBack={() => setCurrentSection(2)}
+            loading={loading}
+          />
+        )}
+
+        {currentSection === 4 && (
           <CompletionSection
             customerData={customerProfileData}
             receiptData={receiptData}
+            machineryData={machineryData}
           />
         )}
       </div>

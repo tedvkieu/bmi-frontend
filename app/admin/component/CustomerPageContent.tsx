@@ -123,10 +123,10 @@ const CustomersContent = () => {
 
   const getCustomerTypeText = (type: string) => {
     switch (type) {
-      case "USER":
-        return "Cá nhân";
-      case "BUSINESS":
-        return "Doanh nghiệp";
+      case "IMPORTER":
+        return "Nhà nhập khẩu";
+      case "SERVICE_MANAGER":
+        return "Quản lý dịch vụ";
       default:
         return "Không xác định";
     }

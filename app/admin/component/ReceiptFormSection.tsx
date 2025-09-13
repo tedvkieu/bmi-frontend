@@ -60,16 +60,26 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("Submitting receipt with data:", formData);
+
     try {
       setInternalLoading(true);
       setError(null);
 
-      const updatedFormData = {
+      const dataToSubmit = {
         ...formData,
-        customerRelatedId: relatedCustomerId || formData.customerRelatedId,
+        customerRelatedId:
+          (relatedCustomerId || formData.customerRelatedId) &&
+          (relatedCustomerId || formData.customerRelatedId) !== 0
+            ? relatedCustomerId || formData.customerRelatedId
+            : formData.customerSubmitId,
       };
 
-      const response = await inspectionApi.submitReceipt(updatedFormData);
+      console.log("Data to submit:", dataToSubmit);
+      console.log("customerSubmitId:", dataToSubmit.customerSubmitId);
+      console.log("customerRelatedId:", dataToSubmit.customerRelatedId);
+
+      const response = await inspectionApi.submitReceipt(dataToSubmit);
 
       if (response.success) {
         onSubmit();
@@ -94,7 +104,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
       formData.shipName.trim() !== "" &&
       formData.declarationPlace.trim() !== "" &&
       formData.inspectionDate.trim() !== "" &&
-      formData.certificateDate.trim() !== "" &&
+      // formData.certificateDate.trim() !== "" &&
       formData.inspectionLocation.trim() !== ""
     );
   };

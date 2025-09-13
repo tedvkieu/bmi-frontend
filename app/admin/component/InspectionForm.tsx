@@ -121,10 +121,22 @@ const InspectionForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await inspectionApi.submitReceipt(receiptData);
+      // đảm bảo nếu chưa có customerRelatedId thì fallback về customerSubmitId
+      const dataToSubmit = {
+        ...receiptData,
+        customerRelatedId:
+          receiptData.customerRelatedId && receiptData.customerRelatedId !== 0
+            ? receiptData.customerRelatedId
+            : receiptData.customerSubmitId,
+      };
+
+      console.log("Data to submit:", dataToSubmit);
+      console.log("customerSubmitId:", dataToSubmit.customerSubmitId);
+      console.log("customerRelatedId:", dataToSubmit.customerRelatedId);
+
+      const response = await inspectionApi.submitReceipt(dataToSubmit);
 
       if (response.success) {
-        // Get receiptId from response.data
         const receiptId = response.data?.receiptId;
         if (receiptId) {
           setReceiptId(receiptId);

@@ -1,6 +1,7 @@
 import {
   InspectionFormData,
   MachineryFormData,
+  ReceiptData,
   ReceiptFormData,
   SubmitMachineryResponse,
 } from "../types/inspection";
@@ -149,6 +150,10 @@ class InspectionApi {
       };
     }
   }
+
+
 }
+
+
 
 export const inspectionApi = new InspectionApi();

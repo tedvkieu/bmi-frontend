@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Head from "next/head";
+import toast, { Toast } from "react-hot-toast";
 import { createCustomer, CustomerRequest } from "./service/customerService";
 
 export default function ContactPage() {
@@ -39,7 +40,7 @@ export default function ContactPage() {
       };
 
       const res = await createCustomer(customer);
-      alert("Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.");
+      toast.success('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
       console.log("Created:", res);
     } catch (error) {
       console.error(error);

@@ -1,12 +1,12 @@
 // app/tai-lieu-giam-dinh/page.tsx
+import AdminLayout from "@/app/admin/component/AdminLayout";
+import EditDocumentContent from "@/app/admin/component/EditDocumentContent";
 import React from "react";
-import DocumentsContent from "../../component/DocumentContent";
-import AdminLayout from "../../component/AdminLayout";
 
 const DocumentsPage = () => {
   return (
     <AdminLayout>
-      <DocumentsContent />
+      <EditDocumentContent />
     </AdminLayout>
   );
 };

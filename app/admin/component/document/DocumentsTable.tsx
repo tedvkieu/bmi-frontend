@@ -1,0 +1,146 @@
+// components/admin/documents/DocumentsTable.tsx
+import React from "react";
+import {
+  Edit2,
+  Trash2,
+  Eye,
+  Download,
+  Calendar,
+} from "lucide-react";
+import { InspectionReport } from "../../types/inspection"; 
+import StatusBadge from "./StatusBadge";
+
+interface DocumentsTableProps {
+  documents: InspectionReport[];
+  onView: (id: string) => void;
+  onDownload: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+const DocumentsTable: React.FC<DocumentsTableProps> = ({
+  documents,
+  onView,
+  onDownload,
+  onEdit,
+  onDelete,
+}) => {
+  return (
+    <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+              >
+                Số đăng ký
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+              >
+                Khách hàng
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+              >
+                Trạng thái
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+              >
+                Ngày tạo
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-4 text-right text-xs font-semibold text-blue-800 uppercase tracking-wider"
+              >
+                Thao tác
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {documents.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-12 text-center text-lg text-gray-500 italic"
+                >
+                  Không tìm thấy tài liệu nào.
+                  <p className="mt-2 text-sm text-gray-400">
+                    Hãy thử tạo một tài liệu mới hoặc điều chỉnh bộ lọc.
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              documents.map((doc) => (
+                <tr
+                  key={doc.id}
+                  className="hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <p className="text-sm font-medium text-gray-900">
+                        {doc.name}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-800">{doc.client}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <StatusBadge status={doc.status} size="md" />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      <Calendar size={18} className="text-gray-500" />
+                      <span className="text-sm text-gray-800">{doc.date}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-2">
+                      <button
+                        onClick={() => onView(doc.id)}
+                        className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                        title="Xem chi tiết"
+                      >
+                        <Eye size={20} />
+                      </button>
+                      <button
+                        onClick={() => onDownload(doc.id)}
+                        className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                        title="Tải xuống"
+                      >
+                        <Download size={20} />
+                      </button>
+                      <button
+                        onClick={() => onEdit(doc.id)}
+                        className="p-2.5 rounded-full text-gray-600 hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit2 size={20} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(doc.id)}
+                        className="p-2.5 rounded-full text-gray-600 hover:bg-red-100 hover:text-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                        title="Xóa"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default DocumentsTable;

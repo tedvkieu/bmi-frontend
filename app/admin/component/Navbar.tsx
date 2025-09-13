@@ -32,18 +32,11 @@ const Navbar: React.FC<NavbarProps> = ({
       href: "/admin",
     },
     {
-      key: "dossiers",
+      key: "documents",
       icon: FileText,
       label: "Hồ sơ giám định",
       badge: "24",
       href: "/admin/ho-so",
-    },
-    {
-      key: "documents",
-      icon: FileText,
-      label: "Tài liệu giám định",
-      badge: "24",
-      href: "/admin/tai-lieu-giam-dinh",
     },
     {
       key: "clients",
@@ -95,7 +88,7 @@ const Navbar: React.FC<NavbarProps> = ({
       }`}
     >
       {/* Logo - Fixed at top */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+      <div className="p-5 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">BM</span>

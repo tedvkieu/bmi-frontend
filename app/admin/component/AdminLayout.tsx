@@ -18,8 +18,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   // Determine current page based on pathname
   const getCurrentPage = () => {
     if (pathname === "/admin") return "admin";
-    if (pathname.startsWith("/admin/ho-so")) return "dossiers";
-    if (pathname.startsWith("/admin/tai-lieu-giam-dinh")) return "documents";
+    if (pathname.startsWith("/admin/ho-so")) return "documents";
     if (pathname.startsWith("/admin/khach-hang")) return "clients";
     if (pathname.startsWith("/admin/giam-dinh-vien")) return "inspectors";
     if (pathname.startsWith("/admin/danh-muc")) return "categories";
@@ -52,7 +51,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const handlePageChange = (page: string) => {
     const routes = {
       dashboard: "/admin",
-      documents: "/admin/tai-lieu-giam-dinh",
+      documents: "/admin/ho-so",
       clients: "/admin/khach-hang",
       inspectors: "/admin/giam-dinh-vien",
       categories: "/admin/danh-muc",

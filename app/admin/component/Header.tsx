@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-4 min-w-0">
           <button
             onClick={onSidebarToggle}
-            className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+            className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg flex-shrink-0"
           >
             {isSidebarOpen && isMobile ? <X size={20} /> : <Menu size={20} />}
           </button>

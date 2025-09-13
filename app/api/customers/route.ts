@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SPRINGBOOT_API =
-  process.env.SPRINGBOOT_API_URL || "http://localhost:8080/api/customers";
+const BACKEND_API = `${process.env.API_BASE_URL}/api/customers`;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const res = await fetch(SPRINGBOOT_API, {
+    const res = await fetch(BACKEND_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `http://localhost:8080/api/customers?${params.toString()}`,
+      `${process.env.API_BASE_URL}/api/customers?${params.toString()}`,
       {
         method: "GET",
         headers: {

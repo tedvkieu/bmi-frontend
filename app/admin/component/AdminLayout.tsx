@@ -1,9 +1,10 @@
-// components/admin/AdminLayout.tsx
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Header from "./Header";
+import LoginWrapper from "./LoginWrapper";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -68,41 +69,42 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Overlay */}
-      {isMobile && isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+    <LoginWrapper>
+      <div className="min-h-screen bg-gray-50">
+        {/* Mobile Overlay */}
+        {isMobile && isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-      {/* Fixed Sidebar */}
-      <Navbar
-        currentPage={currentPage}
-        isSidebarOpen={isSidebarOpen}
-        isMobile={isMobile}
-        onPageChange={handlePageChange}
-      />
-
-      {/* Main Content with dynamic margin */}
-      <div
-        className={`min-h-screen transition-all duration-300 ${
-          isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
-        }`}
-      >
-        {/* Header */}
-        <Header
+        {/* Fixed Sidebar */}
+        <Navbar
           currentPage={currentPage}
           isSidebarOpen={isSidebarOpen}
           isMobile={isMobile}
-          onSidebarToggle={handleSidebarToggle}
+          onPageChange={handlePageChange}
         />
 
-        {/* Page Content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        {/* Main Content with dynamic margin */}
+        <div
+          className={`min-h-screen transition-all duration-300 ${isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
+            }`}
+        >
+          {/* Header */}
+          <Header
+            currentPage={currentPage}
+            isSidebarOpen={isSidebarOpen}
+            isMobile={isMobile}
+            onSidebarToggle={handleSidebarToggle}
+          />
+
+          {/* Page Content */}
+          <main className="p-4 lg:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </LoginWrapper>
   );
 };
 

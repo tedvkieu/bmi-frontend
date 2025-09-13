@@ -69,9 +69,10 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
             />
           </svg>
         </div>
-        <h2>Hoàn Thành Hồ Sơ Kiểm Tra</h2>
-        <p>
-          Hồ sơ của bạn đã được gửi thành công. Dưới đây là thông tin tóm tắt:
+        <h2 className="text-gray-600">Hoàn Thành Hồ Sơ Kiểm Tra</h2>
+        <p className="text-gray-600">
+          Hồ sơ khách hàng đã được tạo thành công. Dưới đây là thông tin tóm
+          tắt:
         </p>
       </div>
 
@@ -107,10 +108,10 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
         </div>
 
         <div className="summary-section">
-          <h3>Thông Tin Biên Nhận</h3>
+          <h3>Thông Tin Yêu Cầu</h3>
           <div className="summary-grid">
             <div className="summary-item">
-              <label>Số đăng ký:</label>
+              <label>Số yêu cầu:</label>
               <span>{receiptData.registrationNo}</span>
             </div>
             <div className="summary-item">
@@ -134,21 +135,21 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
               <span>{receiptData.cout20}</span>
             </div>
             <div className="summary-item">
-              <label>Tàu chở hàng rời:</label>
+              <label>Tàu đã rời?</label>
               <span>{receiptData.bulkShip ? "Có" : "Không"}</span>
             </div>
             <div className="summary-item">
               <label>Nơi khai báo:</label>
               <span>{receiptData.declarationPlace}</span>
             </div>
-            <div className="summary-item">
+            {/* <div className="summary-item">
               <label>Ngày kiểm tra:</label>
               <span>{formatDate(receiptData.inspectionDate)}</span>
             </div>
             <div className="summary-item">
               <label>Ngày cấp chứng chỉ:</label>
               <span>{formatDate(receiptData.certificateDate)}</span>
-            </div>
+            </div> */}
             <div className="summary-item">
               <label>Địa điểm kiểm tra:</label>
               <span>{receiptData.inspectionLocation}</span>

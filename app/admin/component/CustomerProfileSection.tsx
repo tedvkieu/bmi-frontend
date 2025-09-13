@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Customer } from "../types/customer";
 import { InspectionFormData } from "../types/inspection";
+import { FileUploadComponent } from "./file-upload/FileUploadComponent";
 
 interface CustomerProfileSectionProps {
   customer: Customer | null;
@@ -10,6 +11,7 @@ interface CustomerProfileSectionProps {
   setFormData: React.Dispatch<React.SetStateAction<InspectionFormData>>;
   onSubmit: () => void;
   loading: boolean;
+  onUploadSuccess?: (data: any) => void;
 }
 
 interface InspectionType {
@@ -20,7 +22,18 @@ interface InspectionType {
   updatedAt: string;
 }
 
-const objectTypeOptions = [
+interface CustomerUpdateData {
+  name: string;
+  address: string;
+  email: string;
+  dob: string;
+  phone: string;
+  taxCode: string;
+  note: string;
+  customerType: "SERVICE_MANAGER" | "IMPORTER";
+}
+
+const customerTypeOptions = [
   { value: "SERVICE_MANAGER", label: "Người quản lý dịch vụ" },
   { value: "IMPORTER", label: "Nhà nhập khẩu" },
 ];
@@ -31,19 +44,47 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   setFormData,
   onSubmit,
   loading,
+  onUploadSuccess,
 }) => {
   const [inspectionTypes, setInspectionTypes] = useState<InspectionType[]>([]);
   const [inspectionTypesLoading, setInspectionTypesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  // Customer editing states
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [customerUpdateLoading, setCustomerUpdateLoading] = useState(false);
+  const [customerData, setCustomerData] = useState<CustomerUpdateData | null>(
+    null
+  );
+  const [updatedCustomer, setUpdatedCustomer] = useState<Customer | null>(
+    customer
+  );
+
+  // Initialize customer data when customer prop changes
+  useEffect(() => {
+    if (customer) {
+      setCustomerData({
+        name: customer.name,
+        address: customer.address,
+        email: customer.email,
+        dob: customer.dob || "",
+        phone: customer.phone,
+        taxCode: customer.taxCode || "",
+        note: customer.note || "",
+        customerType: customer.customerType as "SERVICE_MANAGER" | "IMPORTER",
+      });
+      setUpdatedCustomer(customer);
+    }
+  }, [customer]);
 
   useEffect(() => {
     const fetchInspectionTypes = async () => {
       setInspectionTypesLoading(true);
       setError(null);
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/inspection-types"
-        );
+        const response = await fetch("/api/inspection-types");
         if (!response.ok) {
           throw new Error("Failed to fetch inspection types");
         }
@@ -70,23 +111,103 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
     }));
   };
 
+  const handleCustomerDataChange = (
+    field: keyof CustomerUpdateData,
+    value: string
+  ) => {
+    setCustomerData((prev) => ({
+      ...prev!,
+      [field]: value,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
   };
 
   const isFormValid = () => {
-    return (
-      formData.serviceAddress.trim() !== "" &&
-      formData.taxCode.trim() !== "" &&
-      formData.email.trim() !== "" &&
-      formData.inspectionTypeId.trim() !== ""
-    );
+    return formData.inspectionTypeId.trim() !== "";
   };
 
   const selectedInspectionType = inspectionTypes.find(
     (type) => type.inspectionTypeId === formData.inspectionTypeId
   );
+
+  const handleUploadSuccess = (data: any) => {
+    if (onUploadSuccess) {
+      onUploadSuccess(data);
+    }
+  };
+
+  const handleUpdateCustomer = async () => {
+    if (!customerData || !updatedCustomer) return;
+
+    setCustomerUpdateLoading(true);
+    try {
+      const response = await fetch(
+        `/api/customers/${updatedCustomer.customerId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(customerData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Không thể cập nhật thông tin khách hàng");
+      }
+
+      const updatedCustomerResponse: Customer = await response.json();
+      setUpdatedCustomer(updatedCustomerResponse);
+      setEditingCustomer(false);
+      setError(null);
+
+      // Show success message
+      alert("Cập nhật thông tin khách hàng thành công!");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi cập nhật thông tin khách hàng"
+      );
+    } finally {
+      setCustomerUpdateLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (updatedCustomer) {
+      setCustomerData({
+        name: updatedCustomer.name,
+        address: updatedCustomer.address,
+        email: updatedCustomer.email,
+        dob: updatedCustomer.dob || "",
+        phone: updatedCustomer.phone,
+        taxCode: updatedCustomer.taxCode || "",
+        note: updatedCustomer.note || "",
+        customerType: updatedCustomer.customerType as
+          | "SERVICE_MANAGER"
+          | "IMPORTER",
+      });
+    }
+    setEditingCustomer(false);
+    setError(null);
+  };
+
+  // Show upload form if requested
+  if (showUploadForm) {
+    return (
+      <FileUploadComponent
+        onUploadSuccess={handleUploadSuccess}
+        onCancel={() => setShowUploadForm(false)}
+        loading={uploadLoading}
+        setLoading={setUploadLoading}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
@@ -114,17 +235,17 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
             Thông Tin Hồ Sơ Khách Hàng
           </h1>
           <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-            Vui lòng điền đầy đủ thông tin để hoàn thành hồ sơ khách hàng
+            Vui lòng kiểm tra và cập nhật thông tin khách hàng nếu cần thiết
           </p>
         </div>
 
-        {/* Current Customer Info */}
-        {customer && (
-          <div className="bg-white/80 backdrop-blur-sm border border-blue-200 rounded-2xl p-6 lg:p-8 mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="flex items-center mb-6">
-              <div className="bg-blue-100 p-3 rounded-full mr-4">
+        {/* Upload Option */}
+        <div className="bg-gradient-to-r from-orange-100 via-yellow-100 to-amber-100 rounded-2xl shadow-xl border border-orange-200 p-6 lg:p-8 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="bg-orange-100 p-3 rounded-full mr-4">
                 <svg
-                  className="w-6 h-6 text-blue-600"
+                  className="w-6 h-6 text-orange-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -133,64 +254,39 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
               </div>
-              <h3 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Thông tin khách hàng hiện tại
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 lg:gap-4">
-              <div className="bg-gradient-to-r from-white to-blue-50 rounded-lg p-3 shadow-sm transition-all duration-200 border border-gray-100">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Tên khách hàng
-                </label>
-                <span className="text-gray-900 font-semibold text-sm">
-                  {customer.name}
-                </span>
-              </div>
-
-              <div className="bg-gradient-to-r from-white to-green-50 rounded-lg p-3 shadow-sm transition-all duration-200 border border-gray-100">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Số điện thoại
-                </label>
-                <span className="text-gray-900 font-semibold text-sm">
-                  {customer.phone}
-                </span>
-              </div>
-
-              <div className="bg-gradient-to-r from-white to-purple-50 rounded-lg p-3 shadow-sm transition-all duration-200 border border-gray-100">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Địa chỉ
-                </label>
-                <span className="text-gray-900 font-semibold text-sm">
-                  {customer.address}
-                </span>
-              </div>
-
-              <div className="bg-gradient-to-r from-white to-purple-50 rounded-lg p-3 shadow-sm transition-all duration-200 border border-gray-100">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Đối tượng
-                </label>
-                <span className="text-gray-900 font-semibold text-sm">
-                  {customer.customerType === "IMPORTER"
-                    ? "Nhà nhập khẩu"
-                    : customer.customerType === "SERVICE_MANAGER"
-                    ? "Quản lý dịch vụ"
-                    : customer.customerType}
-                </span>
+              <div>
+                <h3 className="text-xl font-bold text-orange-800">
+                  Tùy Chọn Nhanh
+                </h3>
+                <p className="text-orange-700 font-medium">
+                  Upload file Excel/CSV để tạo hồ sơ tự động
+                </p>
               </div>
             </div>
+            <button
+              onClick={() => setShowUploadForm(true)}
+              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Upload File
+            </button>
           </div>
-        )}
+          <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-3">
+            <strong>Mẹo:</strong> Sử dụng tính năng upload để tạo hồ sơ nhanh
+            chóng từ file dữ liệu có sẵn. Hệ thống sẽ tự động xử lý và tạo biên
+            nhận cùng thông tin máy móc.
+          </p>
+        </div>
 
-        {/* Customer Profile Form */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8 mb-8">
-          <div className="flex items-center mb-8">
-            <div className="bg-indigo-100 p-3 rounded-full mr-4">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6 shadow-sm">
+            <div className="flex items-center">
               <svg
-                className="w-6 h-6 text-indigo-600"
+                className="w-5 h-5 text-red-500 mr-3"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -199,80 +295,329 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
                 />
               </svg>
-            </div>
-            <div>
-              <h3 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Thông tin chi tiết
-              </h3>
-              <p className="text-gray-700 font-medium mt-1">
-                Điền các thông tin cần thiết cho hồ sơ
-              </p>
+              <span className="text-red-800 font-medium">{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
             </div>
           </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <label
-                  htmlFor="serviceAddress"
-                  className="block text-xs font-medium text-gray-700"
-                >
-                  Địa chỉ dịch vụ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="serviceAddress"
-                  className="w-full text-sm text-gray-800 px-2 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 shadow-sm placeholder-gray-400"
-                  value={formData.serviceAddress}
-                  onChange={(e) =>
-                    handleInputChange("serviceAddress", e.target.value)
-                  }
-                  placeholder="Nhập địa chỉ dịch vụ"
-                  required
-                />
+        {/* Current Customer Info */}
+        {updatedCustomer && customerData && (
+          <div className="bg-white/80 backdrop-blur-sm border border-blue-200 rounded-2xl p-6 lg:p-8 mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-3 rounded-full mr-4">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl lg:text-2xl font-bold text-gray-900">
+                  Thông tin khách hàng
+                </h3>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="taxCode"
-                  className="block text-xs font-medium text-gray-700"
+              {!editingCustomer && (
+                <button
+                  onClick={() => setEditingCustomer(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center"
                 >
-                  Mã số thuế <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="taxCode"
-                  className="w-full text-sm text-gray-800 px-2 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 shadow-sm placeholder-gray-400"
-                  value={formData.taxCode}
-                  onChange={(e) => handleInputChange("taxCode", e.target.value)}
-                  placeholder="Nhập mã số thuế"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="block text-xs font-medium text-gray-700"
-                >
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="w-full text-sm text-gray-800 px-2 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 shadow-sm placeholder-gray-400"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Nhập địa chỉ email"
-                  required
-                />
-              </div>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Chỉnh sửa
+                </button>
+              )}
             </div>
-          </form>
-        </div>
+
+            {editingCustomer ? (
+              // Edit Mode
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Tên khách hàng <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customerData.name}
+                      onChange={(e) =>
+                        handleCustomerDataChange("name", e.target.value)
+                      }
+                      className="text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Số điện thoại <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={customerData.phone}
+                      onChange={(e) =>
+                        handleCustomerDataChange("phone", e.target.value)
+                      }
+                      className="text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={customerData.email}
+                      onChange={(e) =>
+                        handleCustomerDataChange("email", e.target.value)
+                      }
+                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ngày sinh
+                    </label>
+                    <input
+                      type="date"
+                      value={customerData.dob}
+                      onChange={(e) =>
+                        handleCustomerDataChange("dob", e.target.value)
+                      }
+                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Mã số thuế
+                    </label>
+                    <input
+                      type="text"
+                      value={customerData.taxCode}
+                      onChange={(e) =>
+                        handleCustomerDataChange("taxCode", e.target.value)
+                      }
+                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Loại khách hàng <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={customerData.customerType}
+                      onChange={(e) =>
+                        handleCustomerDataChange("customerType", e.target.value)
+                      }
+                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      required
+                    >
+                      {customerTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Địa chỉ <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={customerData.address}
+                    onChange={(e) =>
+                      handleCustomerDataChange("address", e.target.value)
+                    }
+                    rows={3}
+                    className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    value={customerData.note}
+                    onChange={(e) =>
+                      handleCustomerDataChange("note", e.target.value)
+                    }
+                    rows={2}
+                    className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    placeholder="Nhập ghi chú về khách hàng..."
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={customerUpdateLoading}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-all duration-200 font-medium"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleUpdateCustomer}
+                    disabled={
+                      customerUpdateLoading ||
+                      !customerData.name ||
+                      !customerData.phone ||
+                      !customerData.email ||
+                      !customerData.address
+                    }
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {customerUpdateLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Đang cập nhật...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Cập nhật
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // View Mode
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-r from-white to-blue-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Tên khách hàng
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.name}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-r from-white to-green-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Số điện thoại
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.phone}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-r from-white to-purple-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <span className="text-gray-900 text-xs break-words">
+                    {updatedCustomer.email}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-r from-white to-yellow-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Loại khách hàng
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.customerType === "IMPORTER"
+                      ? "Nhà nhập khẩu"
+                      : updatedCustomer.customerType === "SERVICE_MANAGER"
+                      ? "Người quản lý dịch vụ"
+                      : updatedCustomer.customerType}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-r from-white to-indigo-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Mã số thuế
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.taxCode || "Chưa có"}
+                  </span>
+                </div>
+
+                <div className="bg-gradient-to-r from-white to-pink-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Ngày sinh
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.dob
+                      ? new Date(updatedCustomer.dob).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "Chưa có"}
+                  </span>
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Địa chỉ
+                  </label>
+                  <span className="text-gray-900 font-semibold text-sm">
+                    {updatedCustomer.address}
+                  </span>
+                </div>
+
+                {updatedCustomer.note && (
+                  <div className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Ghi chú
+                    </label>
+                    <span className="text-gray-900 font-semibold text-sm">
+                      {updatedCustomer.note}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Inspection Type Selection */}
         <div className="bg-gradient-to-r from-white via-green-50 to-blue-50 rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8 mb-8">
@@ -309,34 +654,6 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                 <span className="text-gray-800 font-semibold text-lg">
                   Đang tải danh sách...
                 </span>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-300 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <svg
-                    className="w-6 h-6 text-red-500 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                  <span className="text-red-800 font-semibold">{error}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition duration-200 font-semibold shadow-md hover:shadow-lg"
-                >
-                  Thử lại
-                </button>
               </div>
             </div>
           ) : (
@@ -430,9 +747,17 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={loading || !isFormValid() || inspectionTypesLoading}
+            disabled={
+              loading ||
+              !isFormValid() ||
+              inspectionTypesLoading ||
+              editingCustomer
+            }
             className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform ${
-              loading || !isFormValid() || inspectionTypesLoading
+              loading ||
+              !isFormValid() ||
+              inspectionTypesLoading ||
+              editingCustomer
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 hover:scale-105 shadow-xl hover:shadow-2xl"
             } min-w-[280px]`}
@@ -442,6 +767,8 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
                 Đang xử lý...
               </div>
+            ) : editingCustomer ? (
+              "Vui lòng hoàn thành chỉnh sửa thông tin khách hàng"
             ) : (
               "Hoàn thành hồ sơ khách hàng"
             )}

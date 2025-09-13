@@ -102,37 +102,20 @@ const InspectionForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("/api/inspection-files", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(customerProfileData),
-      });
+      // Chỉ cần set inspectionTypeId vào receiptData và chuyển section
+      setReceiptData((prev) => ({
+        ...prev,
+        inspectionTypeId: customerProfileData.inspectionTypeId,
+      }));
 
-      if (!response.ok) {
-        throw new Error("Có lỗi xảy ra khi gửi hồ sơ");
-      }
-
-      const data = await response.json();
-      console.log("Kết quả:", data);
-
-      if (data.inspectionFileId) {
-        setReceiptData((prev) => ({
-          ...prev,
-          inspectionTypeId: customerProfileData.inspectionTypeId,
-        }));
-        setCurrentSection(2);
-      } else {
-        throw new Error(data.message || "Có lỗi xảy ra");
-      }
+      // Chuyển sang section 2 ngay lập tức
+      setCurrentSection(2);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi hồ sơ"
-      );
+      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
   };
-
   const handleReceiptSubmit = async () => {
     try {
       setLoading(true);
@@ -169,6 +152,10 @@ const InspectionForm: React.FC = () => {
         (machinery as any).manufactureYear ?? machinery.manufactureYear,
     };
     setMachineryData(mappedMachinery);
+  };
+
+  // Handler for completing the machinery section and moving to completion
+  const handleMachineryComplete = () => {
     setCurrentSection(4);
   };
 
@@ -259,6 +246,7 @@ const InspectionForm: React.FC = () => {
             registrationNo={receiptData.registrationNo}
             onSubmit={handleMachinerySubmit}
             onBack={() => setCurrentSection(2)}
+            onComplete={handleMachineryComplete}
             loading={loading}
           />
         )}

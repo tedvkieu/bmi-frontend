@@ -136,7 +136,7 @@ export const CustomerRelatedForm: React.FC<CustomerRelatedFormProps> = ({
           </span>
           <button
             type="button"
-            className="btn btn-outline btn-sm"
+            className="btn btn-outline btn-sm text-gray-600"
             onClick={() => setShowForm(true)}
             disabled={loading}
           >

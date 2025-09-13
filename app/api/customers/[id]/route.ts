@@ -36,3 +36,28 @@ export async function GET(
     );
   }
 }
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await req.json();
+
+    const res = await fetch(
+      `http://localhost:8080/api/customers/${params.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    const data = await res.json();
+
+    return NextResponse.json(data, { status: res.status });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+}

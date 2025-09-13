@@ -164,23 +164,19 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Tên khách hàng
                 </label>
-                <span className="text-gray-900 font-bold text-lg">
-                  {customer.name}
-                </span>
+                <span className="text-gray-900 text-lg">{customer.name}</span>
               </div>
               <div className="bg-gradient-to-r from-white to-teal-50 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Số điện thoại
                 </label>
-                <span className="text-gray-900 font-bold text-lg">
-                  {customer.phone}
-                </span>
+                <span className="text-gray-900 text-lg">{customer.phone}</span>
               </div>
               <div className="bg-gradient-to-r from-white to-cyan-50 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Địa chỉ
                 </label>
-                <span className="text-gray-900 font-bold text-lg">
+                <span className="text-gray-900 text-lg">
                   {customer.address}
                 </span>
               </div>
@@ -376,7 +372,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
                   htmlFor="cout10"
                   className="block text-sm font-bold text-gray-800"
                 >
-                  Container 10 feet
+                  Container 20 feet
                 </label>
                 <input
                   type="number"
@@ -396,7 +392,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
                   htmlFor="cout20"
                   className="block text-sm font-bold text-gray-800"
                 >
-                  Container 20 feet
+                  Container 40 feet
                 </label>
                 <input
                   type="number"
@@ -475,7 +471,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
               </div>
 
               {/* Certificate Date */}
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <label
                   htmlFor="certificateDate"
                   className="block text-sm font-bold text-gray-800"
@@ -493,7 +489,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
                   required
                   disabled={isLoading}
                 />
-              </div>
+              </div> */}
 
               {/* Inspection Location */}
               <div className="space-y-3">

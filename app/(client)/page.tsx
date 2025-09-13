@@ -72,8 +72,10 @@ export default function ContactPage() {
         {/* Header */}
         <header className="bg-blue-900 text-white py-6">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl font-bold text-center">LIÊN HỆ</h1>
-            <p className="text-center mt-2 text-blue-200">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold">LIÊN HỆ</h1>
+            </div>
+            <p className="text-center text-blue-200">
               Công ty Cổ phần Dịch vụ và Giám định Bảo Minh
             </p>
           </div>

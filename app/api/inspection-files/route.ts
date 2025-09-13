@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const BACKEND_API = `${process.env.API_BASE_URL}/api/inspection-files`;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Gọi trực tiếp sang BE Spring Boot
     const springResponse = await fetch(
-      "http://localhost:8080/api/inspection-files",
+      BACKEND_API,
       {
         method: "POST",
         headers: {

@@ -1,15 +1,12 @@
-// components/admin/Header.tsx
 "use client";
-import React, { useState } from "react";
+
+import React from "react";
 import {
   Menu,
   X,
   Bell,
-  User,
-  Settings,
-  LogOut,
-  ChevronDown,
 } from "lucide-react";
+import UserMenu from "./UserMenu";
 
 interface HeaderProps {
   currentPage: string;
@@ -24,7 +21,6 @@ const Header: React.FC<HeaderProps> = ({
   isMobile,
   onSidebarToggle,
 }) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const getPageTitle = (page: string) => {
     switch (page) {
@@ -70,43 +66,8 @@ const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 pl-3 border-l border-gray-200 hover:bg-gray-50 rounded-r-lg p-2"
-            >
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <User size={16} className="text-white" />
-              </div>
-              <div className="hidden sm:block text-left min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
-                  Admin
-                </p>
-                <p className="text-xs text-gray-500 truncate">Quản trị viên</p>
-              </div>
-              <ChevronDown
-                size={16}
-                className="text-gray-400 hidden sm:block"
-              />
-            </button>
-
-            {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                  <User size={16} />
-                  <span>Thông tin cá nhân</span>
-                </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                  <Settings size={16} />
-                  <span>Cài đặt</span>
-                </button>
-                <hr className="my-2 border-gray-200" />
-                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2">
-                  <LogOut size={16} />
-                  <span>Đăng xuất</span>
-                </button>
-              </div>
-            )}
+          <div className="pl-3 border-l border-gray-200">
+            <UserMenu />
           </div>
         </div>
       </div>

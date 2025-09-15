@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
       params.append("customerType", customerType);
     }
 
+    console.log("API_BASE_URL =", process.env.API_BASE_URL);
+
     const response = await fetch(
       `${process.env.API_BASE_URL}/api/customers?${params.toString()}`,
       {
@@ -65,6 +67,8 @@ export async function GET(request: NextRequest) {
         cache: "no-store", // Disable caching for real-time data
       }
     );
+
+    console.log("Response from Spring Boot API:", response);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch customers: ${response.statusText}`);

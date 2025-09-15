@@ -13,15 +13,20 @@ import DocumentViewModal from "./document/DocumentViewModal";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./document/ConfirmationModal"; // Import the new ConfirmationModal
 
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8080";
 const DocumentsContent = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<InspectionReport['status'] | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    InspectionReport["status"] | "all"
+  >("all");
   const [documents, setDocuments] = useState<InspectionReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // State for confirmation modal
@@ -41,42 +46,50 @@ const DocumentsContent = () => {
       }
       const data = await response.json();
 
-      const mappedDocuments: InspectionReport[] = data.content.map((apiDoc: InspectionReportApi) => ({
-        receiptId: apiDoc.receiptId,
-        registrationNo: apiDoc.registrationNo,
-        customerSubmitId: apiDoc.customerSubmitId,
-        customerRelatedId: apiDoc.customerRelatedId, // Đây vẫn là ID khách hàng
-        inspectionTypeId: apiDoc.inspectionTypeId,
-        declarationNo: apiDoc.declarationNo,
-        billOfLading: apiDoc.billOfLading,
-        shipName: apiDoc.shipName,
-        cout10: apiDoc.cout10,
-        cout20: apiDoc.cout20,
-        bulkShip: apiDoc.bulkShip,
-        declarationDoc: apiDoc.declarationDoc,
-        declarationPlace: apiDoc.declarationPlace,
-        inspectionDate: apiDoc.inspectionDate,
-        certificateDate: apiDoc.certificateDate,
-        inspectionLocation: apiDoc.inspectionLocation,
-        certificateStatus: apiDoc.certificateStatus,
-        createdAt: apiDoc.createdAt,
-        updatedAt: apiDoc.updatedAt,
+      const mappedDocuments: InspectionReport[] = data.content.map(
+        (apiDoc: InspectionReportApi) => ({
+          receiptId: apiDoc.receiptId,
+          registrationNo: apiDoc.registrationNo,
+          customerSubmitId: apiDoc.customerSubmitId,
+          customerRelatedId: apiDoc.customerRelatedId, // Đây vẫn là ID khách hàng
+          inspectionTypeId: apiDoc.inspectionTypeId,
+          declarationNo: apiDoc.declarationNo,
+          billOfLading: apiDoc.billOfLading,
+          shipName: apiDoc.shipName,
+          cout10: apiDoc.cout10,
+          cout20: apiDoc.cout20,
+          bulkShip: apiDoc.bulkShip,
+          declarationDoc: apiDoc.declarationDoc,
+          declarationPlace: apiDoc.declarationPlace,
+          inspectionDate: apiDoc.inspectionDate,
+          certificateDate: apiDoc.certificateDate,
+          inspectionLocation: apiDoc.inspectionLocation,
+          certificateStatus: apiDoc.certificateStatus,
+          createdAt: apiDoc.createdAt,
+          updatedAt: apiDoc.updatedAt,
 
-        id: String(apiDoc.receiptId),
-        name: apiDoc.registrationNo || apiDoc.billOfLading || `Document ${apiDoc.receiptId}`,
-        client: `${apiDoc.customerRelatedId}`, // Tạm thời hiển thị ID
-        inspector: "N/A",
-        date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }),
-        type: apiDoc.inspectionTypeId,
-        status: apiDoc.certificateStatus.toLowerCase() as "completed" | "pending" | "in_progress",
-      }));
+          id: String(apiDoc.receiptId),
+          name:
+            apiDoc.registrationNo ||
+            apiDoc.billOfLading ||
+            `Document ${apiDoc.receiptId}`,
+          client: `${apiDoc.customerRelatedId}`, // Tạm thời hiển thị ID
+          inspector: "N/A",
+          date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }),
+          type: apiDoc.inspectionTypeId,
+          status: apiDoc.certificateStatus.toLowerCase() as
+            | "completed"
+            | "pending"
+            | "in_progress",
+        })
+      );
       setDocuments(mappedDocuments);
     } catch (e: any) {
-      if (e.name !== 'AbortError') {
+      if (e.name !== "AbortError") {
         setError(e.message);
         console.error("Failed to fetch documents:", e);
       }
@@ -119,9 +132,56 @@ const DocumentsContent = () => {
     router.push(`/admin/ho-so/chinh-sua/${id}`);
   };
 
-  const handleDownload = (id: string) => {
+  const handleDownload = async (id: string) => {
     console.log("Download document:", id);
-    // Implement download logic
+    try {
+      // 1. Gọi API generate inspection report
+      const res = await fetch(
+        `/api/documents/generate-inspection-report/${id}`
+      );
+
+      console.log("Generate report response:", res);
+
+      if (!res.ok) {
+        throw new Error("Không thể generate report");
+      }
+
+      const data = await res.json();
+      console.log("API response:", data);
+
+      // 2. Lấy tên file
+      const fileName = data.files;
+
+      console.log("File name:", fileName);
+      if (!fileName) {
+        throw new Error("Không có tên file trả về");
+      }
+
+      // 3. Gọi API export để lấy file (blob)
+      const fileRes = await fetch(`${API_BASE_URL}/api/exports/${fileName}`);
+
+      if (!fileRes.ok) {
+        throw new Error("Không thể tải file");
+      }
+
+      const blob = await fileRes.blob();
+
+      // 4. Tạo link download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName; // gợi ý tên file tải xuống
+      document.body.appendChild(link);
+      link.click();
+
+      // cleanup
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("File đã được tải xuống!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Có lỗi xảy ra khi tạo hoặc tải file");
+    }
   };
 
   // Function to open confirmation modal
@@ -154,7 +214,6 @@ const DocumentsContent = () => {
       setDocToDelete(null); // Reset doc to delete
     }
   };
-
 
   const handleCreateNewDocument = () => {
     console.log("Create new document");

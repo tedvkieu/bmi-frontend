@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Gọi trực tiếp sang BE Spring Boot
-    const springResponse = await fetch(`${API_BASE_URL}/api/receipts`, {
+    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const size = searchParams.get("size");
 
     const springResponse = await fetch(
-      `${API_BASE_URL}/api/receipts?page=${page}&size=${size}`,
+      `${API_BASE_URL}/api/dossiers?page=${page}&size=${size}`,
       { method: "GET" }
     );
 
@@ -57,7 +57,6 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await springResponse.json();
-
 
     return NextResponse.json(data);
   } catch (error) {

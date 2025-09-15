@@ -40,7 +40,7 @@ const DocumentsContent = () => {
       const controller = new AbortController();
       const signal = controller.signal;
 
-      const response = await fetch("/api/receipts?page=0&size=5", { signal });
+      const response = await fetch("/api/dossiers?page=0&size=5", { signal });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -116,7 +116,7 @@ const DocumentsContent = () => {
   // View
   const handleView = async (id: string) => {
     try {
-      const response = await axios.get(`/api/receipts/${id}`);
+      const response = await axios.get(`/api/dossiers/${id}`);
       if (response.data) {
         setSelectedDoc(response.data);
         setIsModalOpen(true);
@@ -195,7 +195,7 @@ const DocumentsContent = () => {
     if (!docToDelete) return; // Should not happen if modal is open
 
     try {
-      const response = await axios.delete(`/api/receipts/${docToDelete}`);
+      const response = await axios.delete(`/api/dossiers/${docToDelete}`);
 
       if (response.status === 200 || response.status === 204) {
         // Update the documents state to remove the deleted document

@@ -21,7 +21,7 @@ class InspectionApi {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/receipts`, {
+      const response = await fetch(`${API_BASE_URL}/dossiers`, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
@@ -64,7 +64,7 @@ class InspectionApi {
   }
 
   async submitReceipt(formData: ReceiptFormData): Promise<ApiResponse> {
-    return this.makeRequest("/receipts", {
+    return this.makeRequest("/dossiers", {
       method: "POST",
       body: JSON.stringify(formData),
     });
@@ -150,10 +150,6 @@ class InspectionApi {
       };
     }
   }
-
-
 }
-
-
 
 export const inspectionApi = new InspectionApi();

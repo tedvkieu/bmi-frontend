@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
 // GET /api/receipts/[id]
 export async function GET(
@@ -10,7 +11,7 @@ export async function GET(
   try {
     const { id } = params;
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/receipts/${id}`, {
+    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "GET",
     });
 
@@ -33,7 +34,6 @@ export async function GET(
   }
 }
 
-
 // PUT /api/receipts/[id]
 export async function PUT(
   req: NextRequest,
@@ -43,7 +43,7 @@ export async function PUT(
     const { id } = params;
     const body = await req.json(); // Lấy request body từ client
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/receipts/${id}`, {
+    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -78,7 +78,7 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/receipts/${id}`, {
+    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "DELETE",
     });
 

@@ -1,25 +1,27 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('token')?.value || request.headers.get('authorization')?.replace('Bearer ', '')
+  const token =
+    request.cookies.get("token")?.value ||
+    request.headers.get("authorization")?.replace("Bearer ", "");
 
-    // Các route auth không cần thiết nữa vì đã bọc login trực tiếp
-    const authRoutes = ['/auth/login', '/auth/register', '/auth/forgot-password']
+  const { pathname } = request.nextUrl;
 
-    const { pathname } = request.nextUrl
+  // ✅ Bỏ qua tất cả API
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
 
-    // Nếu đang ở trang auth và đã có token, redirect về admin
-    if (authRoutes.some(route => pathname.startsWith(route)) && token) {
-        return NextResponse.redirect(new URL('/admin', request.url))
-    }
+  const authRoutes = ["/auth/login", "/auth/register", "/auth/forgot-password"];
 
-    // Không cần redirect admin nữa vì đã có LoginWrapper
-    return NextResponse.next()
+  if (authRoutes.some((route) => pathname.startsWith(route)) && token) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-    matcher: [
-        '/auth/:path*'
-    ]
-}
+  matcher: ["/auth/:path*", "/api/:path*"],
+};

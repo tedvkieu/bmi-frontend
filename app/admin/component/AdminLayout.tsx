@@ -21,7 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (pathname === "/admin") return "admin";
     if (pathname.startsWith("/admin/ho-so")) return "documents";
     if (pathname.startsWith("/admin/khach-hang")) return "clients";
-    if (pathname.startsWith("/admin/giam-dinh-vien")) return "inspectors";
+    if (pathname.startsWith("/admin/quan-ly-nhan-vien")) return "users";
     if (pathname.startsWith("/admin/danh-muc")) return "categories";
     if (pathname.startsWith("/admin/bao-cao")) return "reports";
     if (pathname.startsWith("/admin/cai-dat")) return "settings";
@@ -54,7 +54,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       dashboard: "/admin",
       documents: "/admin/ho-so",
       clients: "/admin/khach-hang",
-      inspectors: "/admin/giam-dinh-vien",
+      users: "/admin/quan-ly-nhan-vien",
       categories: "/admin/danh-muc",
       reports: "/admin/bao-cao",
       settings: "/admin/cai-dat",

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Home,
   FileText,
@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
+import { authApi } from "../../services/authApi";
 
 interface NavbarProps {
   currentPage: string;
@@ -46,18 +47,11 @@ const Navbar: React.FC<NavbarProps> = ({
       href: "/admin/khach-hang",
     },
     {
-      key: "inspectors",
+      key: "users",
       icon: Users,
-      label: "Giám định viên",
+      label: "Quản lý nhân viên",
       badge: null,
-      href: "/admin/giam-dinh-vien",
-    },
-    {
-      key: "categories",
-      icon: Folder,
-      label: "Danh mục",
-      badge: null,
-      href: "/admin/danh-muc",
+      href: "/admin/quan-ly-nhan-vien",
     },
     {
       key: "reports",
@@ -75,17 +69,38 @@ const Navbar: React.FC<NavbarProps> = ({
     },
   ];
 
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const r = authApi.getRoleFromToken();
+    setRole(r);
+  }, []);
+
+  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
+    if (!userRole || userRole === "ADMIN") return false;
+    if (userRole === "MANAGER") {
+      return itemKey === "settings";
+    }
+    if (userRole === "ISO_STAFF" || userRole === "DOCUMENT_STAFF") {
+      return itemKey === "settings" || itemKey === "users";
+    }
+    return false;
+  };
+
+  const filteredNavItems = navItems.filter(
+    (item) => !shouldHideItem(item.key, role)
+  );
+
   return (
     <div
-      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${
-        isSidebarOpen
-          ? isMobile
-            ? "w-64"
-            : "w-64"
-          : isMobile
+      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${isSidebarOpen
+        ? isMobile
+          ? "w-64"
+          : "w-64"
+        : isMobile
           ? "-translate-x-full w-64"
           : "w-16"
-      }`}
+        }`}
     >
       {/* Logo - Fixed at top */}
       <div className="p-5 border-b border-gray-200 flex-shrink-0">
@@ -109,15 +124,14 @@ const Navbar: React.FC<NavbarProps> = ({
       {/* Navigation - Scrollable area */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <div className="space-y-1">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.key}
               onClick={() => onPageChange(item.key)}
-              className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-colors ${
-                currentPage === item.key
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-colors ${currentPage === item.key
+                ? "bg-blue-100 text-blue-700"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
               title={!isSidebarOpen && !isMobile ? item.label : undefined}
             >
               <item.icon size={20} className="flex-shrink-0" />

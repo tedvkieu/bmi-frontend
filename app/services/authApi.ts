@@ -8,17 +8,17 @@ export interface LoginResponse {
     type: string;
     username: string;
     email: string;
-    position: string;
+    role: string;
     fullName: string;
-    employeeId: number;
+    userId: number;
 }
 
 export interface User {
     username: string;
     email: string;
-    position: string;
+    role: string;
     fullName: string;
-    employeeId: number;
+    userId: number;
 }
 
 export const authApi = {
@@ -40,29 +40,16 @@ export const authApi = {
         return response.json();
     },
 
-    // Lưu token và user info vào localStorage và cookie
+    // Lưu token vào cookie (không dùng localStorage)
     saveAuthData(authData: LoginResponse): void {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('token', authData.token);
-            localStorage.setItem('user', JSON.stringify({
-                username: authData.username,
-                email: authData.email,
-                position: authData.position,
-                fullName: authData.fullName,
-                employeeId: authData.employeeId,
-            }));
-
-            // Lưu token vào cookie
             document.cookie = `token=${authData.token}; path=/; max-age=86400; secure; samesite=strict`;
         }
     },
 
-    // Lấy token từ localStorage hoặc cookie
+    // Lấy token chỉ từ cookie
     getToken(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('token') || this.getTokenFromCookie();
-        }
-        return null;
+        return this.getTokenFromCookie();
     },
 
     // Lấy token từ cookie
@@ -75,20 +62,49 @@ export const authApi = {
         return null;
     },
 
-    // Lấy user info từ localStorage
-    getUser(): User | null {
-        if (typeof window !== 'undefined') {
-            const userStr = localStorage.getItem('user');
-            return userStr ? JSON.parse(userStr) : null;
+    // Decode JWT payload (no verification), return null on error
+    decodeJwt<T = any>(token?: string | null): T | null {
+        try {
+            const t = token ?? this.getTokenFromCookie();
+            if (!t) return null;
+            const parts = t.split('.');
+            if (parts.length < 2) return null;
+            const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = typeof atob !== 'undefined' ? atob(base64) : Buffer.from(base64, 'base64').toString('utf8');
+            return JSON.parse(json) as T;
+        } catch {
+            return null;
         }
-        return null;
+    },
+
+    // Get role from JWT in cookie
+    getRoleFromToken(): string | null {
+        const payload = this.decodeJwt<{ role?: string }>();
+        return payload?.role || null;
+    },
+
+    // Get userId from JWT in cookie
+    getUserIdFromToken(): number | null {
+        const payload = this.decodeJwt<{ userId?: number }>();
+        return (payload?.userId as number) ?? null;
+    },
+
+    // Lấy user info từ JWT (không dùng localStorage)
+    getUser(): User | null {
+        const payload = this.decodeJwt<{ sub?: string; email?: string; role?: string; userId?: number; fullName?: string }>();
+        if (!payload) return null;
+        return {
+            username: payload.sub || '',
+            email: payload.email || '',
+            role: payload.role || '',
+            fullName: payload.fullName || payload.sub || '',
+            userId: (payload.userId as number) ?? 0,
+        };
     },
 
     // Xóa auth data
     clearAuthData(): void {
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
             document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         }
     },

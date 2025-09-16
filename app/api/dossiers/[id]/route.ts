@@ -6,13 +6,17 @@ const API_BASE_URL =
 // GET /api/receipts/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "GET",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (!springResponse.ok) {
@@ -37,16 +41,18 @@ export async function GET(
 // PUT /api/receipts/[id]
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json(); // Lấy request body từ client
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -73,13 +79,17 @@ export async function PUT(
 // DELETE /api/receipts/[id]
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
       method: "DELETE",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (!springResponse.ok) {

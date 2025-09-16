@@ -30,10 +30,8 @@ const Header: React.FC<HeaderProps> = ({
         return "Quản lý Tài liệu Giám định";
       case "clients":
         return "Quản lý Khách hàng";
-      case "inspectors":
-        return "Quản lý Giám định viên";
-      case "categories":
-        return "Quản lý Danh mục";
+      case "users":
+        return "Quản lý nhân viên";
       case "reports":
         return "Báo cáo";
       case "settings":

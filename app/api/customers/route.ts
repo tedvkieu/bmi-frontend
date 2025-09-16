@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("API_BASE_URL =", process.env.API_BASE_URL);
+    const token = request.cookies.get("token")?.value;
 
     const response = await fetch(
       `${process.env.API_BASE_URL}/api/customers?${params.toString()}`,
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store", // Disable caching for real-time data
       }

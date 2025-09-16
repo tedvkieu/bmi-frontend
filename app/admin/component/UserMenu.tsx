@@ -32,7 +32,7 @@ const UserMenu: React.FC = () => {
                 </div>
                 <div className="text-left">
                     <p className="text-sm font-medium">{user.fullName}</p>
-                    <p className="text-xs text-gray-500">{user.position}</p>
+                    <p className="text-xs text-gray-500">{user.role}</p>
                 </div>
                 <svg
                     className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -57,7 +57,7 @@ const UserMenu: React.FC = () => {
                         <div className="p-4 border-b border-gray-200">
                             <p className="font-medium text-gray-900">{user.fullName}</p>
                             <p className="text-sm text-gray-500">{user.email}</p>
-                            <p className="text-sm text-gray-500">{user.position}</p>
+                            <p className="text-sm text-gray-500">{user.role}</p>
                         </div>
 
                         <div className="py-2">

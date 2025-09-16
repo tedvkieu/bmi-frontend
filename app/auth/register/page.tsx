@@ -110,7 +110,8 @@ const RegisterPage: React.FC = () => {
                     </div>
                 )}
 
-                <FormInput
+                <FormInput 
+                    name="fullName"
                     id="fullName"
                     label="Họ và tên"
                     type="text"
@@ -127,6 +128,7 @@ const RegisterPage: React.FC = () => {
                 />
 
                 <FormInput
+                    name="email"
                     id="email"
                     label="Email"
                     type="email"
@@ -143,6 +145,7 @@ const RegisterPage: React.FC = () => {
                 />
 
                 <FormInput
+                    name="phone"
                     id="phone"
                     label="Số điện thoại"
                     type="tel"
@@ -159,6 +162,7 @@ const RegisterPage: React.FC = () => {
                 />
 
                 <FormInput
+                    name="password"
                     id="password"
                     label="Mật khẩu"
                     type="password"
@@ -175,6 +179,7 @@ const RegisterPage: React.FC = () => {
                 />
 
                 <FormInput
+                    name="confirmPassword"
                     id="confirmPassword"
                     label="Xác nhận mật khẩu"
                     type="password"

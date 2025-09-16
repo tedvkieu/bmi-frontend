@@ -6,12 +6,14 @@ const API_BASE_URL =
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const token = req.cookies.get("token")?.value;
 
     // Gọi trực tiếp sang BE Spring Boot
     const springResponse = await fetch(`${API_BASE_URL}/api/dossiers`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -42,10 +44,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const page = searchParams.get("page");
     const size = searchParams.get("size");
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
       `${API_BASE_URL}/api/dossiers?page=${page}&size=${size}`,
-      { method: "GET" }
+      {
+        method: "GET",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
     );
 
     if (!springResponse.ok) {

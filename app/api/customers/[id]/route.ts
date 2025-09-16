@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const springResponse = await fetch(
       `http://localhost:8080/api/customers/${id}`,
@@ -38,13 +38,14 @@ export async function GET(
 }
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
 
     const res = await fetch(
-      `http://localhost:8080/api/customers/${params.id}`,
+      `http://localhost:8080/api/customers/${id}`,
       {
         method: "PUT",
         headers: {

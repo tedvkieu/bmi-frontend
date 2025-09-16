@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Head from "next/head";
-import toast, { Toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { createCustomer, CustomerRequest } from "./service/customerService";
 
 export default function ContactPage() {

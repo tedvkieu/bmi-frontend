@@ -9,24 +9,28 @@ interface StatusBadgeProps {
 
 const getStatusColor = (status: InspectionReport['status']) => {
   switch (status) {
-    case "completed":
+    case "obtained":
       return "bg-green-100 text-green-800 ring-green-600/20";
     case "pending":
       return "bg-yellow-100 text-yellow-800 ring-yellow-600/20";
-    case "in_progress":
-      return "bg-blue-100 text-blue-800 ring-blue-600/20";
+    case "not_obtained":
+      return "bg-red-100 text-red-800 ring-red-600/20";
+    case "not_within_scope":
+      return "bg-gray-100 text-gray-800 ring-gray-600/20";
     default:
       return "bg-gray-100 text-gray-800 ring-gray-600/20";
   }
 };
 const getStatusText = (status: InspectionReport['status']) => {
   switch (status) {
-    case "completed":
-      return "Hoàn thành";
+    case "obtained":
+      return "Đạt";
     case "pending":
-      return "Chờ xử lý";
-    case "in_progress":
-      return "Đang thực hiện";
+      return "Đang xử lý";
+    case "not_obtained":
+      return "Không đạt";
+    case "not_within_scope":
+      return "Không thuộc phạm vi";
     default:
       return "Không xác định";
   }
@@ -34,12 +38,14 @@ const getStatusText = (status: InspectionReport['status']) => {
 
 const getStatusIcon = (status: InspectionReport['status'], iconSize: number) => {
   switch (status) {
-    case "completed":
-      return <CheckCircle size={iconSize} />;
     case "pending":
       return <Clock size={iconSize} />;
-    case "in_progress":
+    case "not_within_scope":
       return <AlertCircle size={iconSize} />;
+    case "not_obtained":
+      return <AlertCircle size={iconSize} />;
+    case "obtained":
+      return <CheckCircle size={iconSize} />;
     default:
       return <Clock size={iconSize} />;
   }

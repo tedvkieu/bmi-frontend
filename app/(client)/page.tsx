@@ -1,15 +1,14 @@
-// app/contact/page.tsx (or wherever your ContactPage component is)
 "use client";
-import { useState, useRef, useEffect } from "react";
+
+import { useState, useRef } from "react";
 import Head from "next/head";
 import toast from "react-hot-toast";
-import { createCustomer, CustomerRequest } from "./service/customerService";
 import NavbarClient from "./components/NavbarClient";
-import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaBuilding, FaClock, FaCheckCircle, FaExclamationCircle, FaCalendarAlt } from 'react-icons/fa'; // Import icons, added FaCalendarAlt
+import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaBuilding, FaCalendarAlt } from 'react-icons/fa';
 import BannerClient from "./components/BannerClient";
-import Sticky from "./components/Sticky";
 import Footer from "./components/Footer";
 import Image from "next/image";
+import { PublicContactRequest, sendPublicContact } from "./service/customerService";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -34,7 +33,7 @@ export default function ContactPage() {
   const contactInfoRef = useRef<HTMLDivElement>(null);
   const contactFormRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const workingHoursRef = useRef<HTMLDivElement>(null); // This ref is not used in the provided code, but kept if it's for future use.
+  const workingHoursRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -58,17 +57,15 @@ export default function ContactPage() {
     setErrorMessage("");
 
     try {
-      const customer: CustomerRequest = {
+      const customerPublicContact: PublicContactRequest = {
         name: formData.name,
-        address: "", // You might want to add an address field to your form
         email: formData.email,
-        dob: "", // You might want to add a DOB field
         phone: formData.phone,
-        customerType: "SERVICE_MANAGER", // This seems like a fixed value, consider if it should be dynamic
         note: formData.message,
+        customerType: "SERVICE_MANAGER",
       };
 
-      await createCustomer(customer);
+      const res = await sendPublicContact(customerPublicContact);
       toast.success('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
       setSubmitStatus("success");
       console.log("Customer created successfully!");

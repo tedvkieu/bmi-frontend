@@ -180,10 +180,10 @@ const EditDocumentContent: React.FC<EditDocumentPageProps> = () => {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             disabled={!isEditable}
           >
-            <option value="PENDING">Chờ xử lý</option>
-            <option value="IN_PROGRESS">Đang xử lý</option>
-            <option value="COMPLETED">Hoàn thành</option>
-            <option value="REJECTED">Bị từ chối</option>
+            <option value="OBTAINED">Đạt</option>
+            <option value="NOT_OBTAINED">Không đạt</option>
+            <option value="PENDING">Đang xử lý</option>
+            <option value="NOT_WITHIN_SCOPE">Không thuộc phạm vi</option>
           </select>
         );
       }

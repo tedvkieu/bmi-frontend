@@ -17,10 +17,13 @@ const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
+    const handleRegisterClick = () => {
+        router.push('/auth/register');
+    }
+
     useEffect(() => {
         if (searchParams.get("registered") === "true") {
             setShowSuccessMessage(true);
-            // Hide success message after 5 seconds
             setTimeout(() => setShowSuccessMessage(false), 5000);
         }
     }, [searchParams]);
@@ -77,13 +80,15 @@ const LoginPage: React.FC = () => {
 
             const response = await authApi.login(loginData);
 
-            // Lưu thông tin đăng nhập
             authApi.saveAuthData(response);
 
-            // console.log("Login successful:", response);
+            const role = authApi.getRoleFromToken();
 
-            // Redirect to admin dashboard
-            router.push("/admin");
+            if (role === "ADMIN") {
+                router.push("/admin");
+            } else if (role === "CUSTOMER") {
+                router.push("/");
+            }
         } catch (error: any) {
             console.error("Login error:", error);
             setErrors({ general: error.message || "Đăng nhập thất bại. Vui lòng thử lại." });
@@ -182,6 +187,17 @@ const LoginPage: React.FC = () => {
                         "Đăng nhập"
                     )}
                 </button>
+
+                <p className="text-center text-sm text-gray-600">
+                    Chưa có tài khoản?{" "}
+                    <button
+                        type="button"
+                        onClick={handleRegisterClick}
+                        className="text-blue-600 hover:text-blue-500 font-medium"
+                    >
+                        Đăng ký
+                    </button>
+                </p>
 
             </form>
         </AuthCard>

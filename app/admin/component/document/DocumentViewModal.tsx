@@ -106,12 +106,14 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
 
   const getStatusDisplay = (status: string | undefined | null) => {
     switch (status) {
-      case 'COMPLETED':
-        return { text: 'Hoàn thành', color: 'text-green-600', tooltip: 'Biên lai đã hoàn tất' };
+      case 'OBTAINED':
+        return { text: 'Đạt', color: 'text-green-600', tooltip: 'Biên lai đạt' };
       case 'PENDING':
-        return { text: 'Đang chờ xử lý', color: 'text-yellow-600', tooltip: 'Biên lai đang trong quá trình chờ' };
-      case 'CANCELLED':
-        return { text: 'Đã hủy', color: 'text-red-600', tooltip: 'Biên lai đã bị hủy bỏ' };
+        return { text: 'Đang xử lý', color: 'text-yellow-600', tooltip: 'Biên lai đang trong quá trình xử lý' };
+      case 'NOT_OBTAINED':
+        return { text: 'Không đạt', color: 'text-red-600', tooltip: 'Biên lai không đạt' };
+      case 'NOT_WITHIN_SCOPE':
+        return { text: 'Không thuộc phạm vi', color: 'text-gray-600', tooltip: 'Biên lai không thuộc phạm vi' };
       default:
         return { text: 'Không xác định', color: 'text-gray-600', tooltip: 'Trạng thái không rõ ràng' };
     }

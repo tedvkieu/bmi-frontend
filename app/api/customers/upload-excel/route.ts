@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const token = req.cookies.get("token")?.value;
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
@@ -13,6 +14,10 @@ export async function POST(req: NextRequest) {
       `${process.env.BACKEND_URL}/api/customers/upload-excel`,
       {
         method: "POST",
+        headers: {
+          // "Content-Type": "multipart/form-data",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: formData,
       }
     );

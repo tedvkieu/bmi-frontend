@@ -8,10 +8,10 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // ✅ Bỏ qua tất cả API
-  // if (pathname.startsWith("/api")) {
-  //   return NextResponse.next();
-  // }
+  //✅ Bỏ qua tất cả API
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
 
   const authRoutes = ["/auth/login", "/auth/register", "/auth/forgot-password"];
 

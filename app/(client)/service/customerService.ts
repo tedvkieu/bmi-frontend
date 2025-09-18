@@ -19,7 +19,7 @@ export interface CustomerResponse {
 export async function createCustomer(
   customer: CustomerRequest
 ): Promise<CustomerResponse> {
-  const res = await fetch("/api/customers", {
+  const res = await fetch("/api/customers/public", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
         const loginUrl = `${backendUrl}/api/auth/login`;
 
-        console.log('🔍 Auth Debug Info:');
-        console.log('- Backend URL:', backendUrl);
-        console.log('- Login URL:', loginUrl);
-        console.log('- Request body:', body);
+        // console.log('🔍 Auth Debug Info:');
+        // console.log('- Backend URL:', backendUrl);
+        // console.log('- Login URL:', loginUrl);
+        // console.log('- Request body:', body);
 
         // Forward request to backend
         const response = await fetch(loginUrl, {
@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify(body),
         });
 
-        console.log('📡 Backend Response:');
-        console.log('- Status:', response.status);
-        console.log('- Status Text:', response.statusText);
+        // console.log('📡 Backend Response:');
+        // console.log('- Status:', response.status);
+        // console.log('- Status Text:', response.statusText);
 
         const data = await response.json();
         console.log('- Response data:', data);

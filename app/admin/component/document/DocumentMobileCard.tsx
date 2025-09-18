@@ -1,5 +1,4 @@
-// components/admin/documents/DocumentMobileCard.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FileText,
   Edit2,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { InspectionReport } from "../../types/inspection"; // Adjust path as needed
 import StatusBadge from "./StatusBadge"; // Import the new StatusBadge component
+import { authApi } from "@/app/services/authApi";
 
 interface DocumentMobileCardProps {
   document: InspectionReport;
@@ -30,6 +30,16 @@ const DocumentMobileCard: React.FC<DocumentMobileCardProps> = ({
   onDelete,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRole(authApi.getRoleFromToken());
+  }, []);
+
+  const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
+  const isCompleted = document.status === "obtained";
+  const canDelete = isAdminOrManager;
+  const canEdit = isAdminOrManager || !isCompleted;
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 transform hover:scale-[1.01] transition-transform duration-200">
@@ -68,14 +78,18 @@ const DocumentMobileCard: React.FC<DocumentMobileCardProps> = ({
                 <Download size={16} /> <span>Tải xuống</span>
               </button>
               <button
-                onClick={() => { onEdit(document.id); setIsMenuOpen(false); }}
-                className="flex items-center space-x-2 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => { if (canEdit) { onEdit(document.id); setIsMenuOpen(false); } }}
+                disabled={!canEdit}
+                className={`flex items-center space-x-2 w-full text-left px-4 py-2 text-sm  hover:bg-gray-100 ${canEdit ? "text-gray-700" : "text-gray-300 cursor-not-allowed"
+                  }`}
               >
                 <Edit2 size={16} /> <span>Chỉnh sửa</span>
               </button>
               <button
-                onClick={() => { onDelete(document.id); setIsMenuOpen(false); }}
-                className="flex items-center space-x-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                onClick={() => { if (canDelete) { onDelete(document.id); setIsMenuOpen(false); } }}
+                disabled={!canDelete}
+                className={`flex items-center space-x-2 w-full text-left px-4 py-2 text-sm hover:bg-red-50 ${canDelete ? "text-red-600" : "text-red-300 cursor-not-allowed"
+                  }`}
               >
                 <Trash2 size={16} /> <span>Xóa</span>
               </button>

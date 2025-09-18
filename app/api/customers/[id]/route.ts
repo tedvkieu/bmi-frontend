@@ -6,13 +6,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `http://localhost:8080/api/customers/${id}`,
+      `${process.env.API_BASE_URL}/api/customers/${id}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       }
@@ -43,13 +45,15 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-
+    const token = req.cookies.get("token")?.value;
+    
     const res = await fetch(
-      `http://localhost:8080/api/customers/${id}`,
+      `${process.env.API_BASE_URL}/api/customers/${id}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(body),
       }

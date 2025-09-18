@@ -1,5 +1,4 @@
-// components/admin/documents/DocumentsTable.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Edit2,
   Trash2,
@@ -7,8 +6,9 @@ import {
   Download,
   Calendar,
 } from "lucide-react";
-import { InspectionReport } from "../../types/inspection"; 
+import { InspectionReport } from "../../types/inspection";
 import StatusBadge from "./StatusBadge";
+import { authApi } from "@/app/services/authApi";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -25,6 +25,12 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRole(authApi.getRoleFromToken());
+  }, []);
+
   return (
     <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -77,64 +83,78 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 </td>
               </tr>
             ) : (
-              documents.map((doc) => (
-                <tr
-                  key={doc.id}
-                  className="hover:bg-blue-50 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <p className="text-sm font-medium text-gray-900">
-                        {doc.name}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-800">{doc.client}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={doc.status} size="md" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <Calendar size={18} className="text-gray-500" />
-                      <span className="text-sm text-gray-800">{doc.date}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => onView(doc.id)}
-                        className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        title="Xem chi tiết"
-                      >
-                        <Eye size={20} />
-                      </button>
-                      <button
-                        onClick={() => onDownload(doc.id)}
-                        className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-                        title="Tải xuống"
-                      >
-                        <Download size={20} />
-                      </button>
-                      <button
-                        onClick={() => onEdit(doc.id)}
-                        className="p-2.5 rounded-full text-gray-600 hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit2 size={20} />
-                      </button>
-                      <button
-                        onClick={() => onDelete(doc.id)}
-                        className="p-2.5 rounded-full text-gray-600 hover:bg-red-100 hover:text-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                        title="Xóa"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              documents.map((doc) => {
+                const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
+                const isCompleted = doc.status === "obtained";
+                const canDelete = isAdminOrManager; // Only Admin/Manager can delete
+                const canEdit = isAdminOrManager || !isCompleted; // Staff cannot edit when completed
+                return (
+                  <tr
+                    key={doc.id}
+                    className="hover:bg-blue-50 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <p className="text-sm font-medium text-gray-900">
+                          {doc.name}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-800">{doc.client}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status={doc.status} size="md" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <Calendar size={18} className="text-gray-500" />
+                        <span className="text-sm text-gray-800">{doc.date}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => onView(doc.id)}
+                          className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                          title="Xem chi tiết"
+                        >
+                          <Eye size={20} />
+                        </button>
+                        <button
+                          onClick={() => onDownload(doc.id)}
+                          className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                          title="Tải xuống"
+                        >
+                          <Download size={20} />
+                        </button>
+                        <button
+                          onClick={() => { if (canEdit) onEdit(doc.id); }}
+                          disabled={!canEdit}
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
+                            ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
+                            : "text-gray-300 cursor-not-allowed"
+                            }`}
+                          title={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
+                        >
+                          <Edit2 size={20} />
+                        </button>
+                        <button
+                          onClick={() => { if (canDelete) onDelete(doc.id); }}
+                          disabled={!canDelete}
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
+                            ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
+                            : "text-gray-300 cursor-not-allowed"
+                            }`}
+                          title={canDelete ? "Xóa" : "Không có quyền xóa"}
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

@@ -54,17 +54,19 @@ const RegisterPage: React.FC = () => {
             newErrors.phone = "Số điện thoại không hợp lệ";
         }
 
+        // Kiểm tra mật khẩu
         if (!formData.password) {
             newErrors.password = "Mật khẩu là bắt buộc";
         } else if (formData.password.length < 6) {
             newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+        } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(formData.password)) {
             newErrors.password = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số";
         }
 
+        // Kiểm tra xác nhận mật khẩu
         if (!formData.confirmPassword) {
             newErrors.confirmPassword = "Xác nhận mật khẩu là bắt buộc";
-        } else if (formData.password !== formData.confirmPassword) {
+        } else if (formData.password && formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
         }
 
@@ -82,13 +84,20 @@ const RegisterPage: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1500));
+            const respionse = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },  
+                body: JSON.stringify(formData),
+            });
 
-            // For demo purposes, accept any valid data
-            console.log("Register attempt:", formData);
-
-            // Redirect to login page with success message
+            if (!respionse.ok) {
+                const errorData = await respionse.json();
+                throw new Error(errorData.message || "Đăng ký thất bại");
+            }
+   
             router.push("/auth/login?registered=true");
         } catch (error) {
             console.error("Register error:", error);

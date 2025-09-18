@@ -89,7 +89,7 @@ export interface InspectionReport {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: "PENDING" | "COMPLETED" | "IN_PROGRESS"; // Adjust as per actual statuses
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust as per actual statuses
   createdAt: string;
   updatedAt: string;
 
@@ -100,7 +100,7 @@ export interface InspectionReport {
   inspector: string; // You'll need to fetch inspector details separately or use a placeholder
   date: string; // Mapped from createdAt or inspectionDate
   type: string; // Mapped from inspectionTypeId
-  status: "completed" | "pending" | "in_progress"; // Mapped from certificateStatus
+  status: "pending" | "not_within_scope" | "not_obtained" | "obtained"; // Mapped from certificateStatus
 }
 
 
@@ -154,7 +154,7 @@ export interface ReceiptData {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: "PENDING" | "COMPLETED" | "IN_PROGRESS"; // Adjust based on actual values
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED";
   createdAt: string;
   updatedAt: string;
 }
@@ -177,7 +177,7 @@ export interface InspectionReportApi {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: "PENDING" | "COMPLETED" | "IN_PROGRESS"; // Adjust based on actual values
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust based on actual values
   createdAt: string;
   updatedAt: string;
 }

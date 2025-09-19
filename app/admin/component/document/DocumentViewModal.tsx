@@ -4,17 +4,14 @@ import { InspectionReportApi } from "../../types/inspection";
 import {
   XCircle,
   FileText,
-  ClipboardList,
   User,
   Truck,
   Ship,
   Calendar,
   MapPin,
-  CheckCircle,
   Clock,
   Tag,
   Hash,
-  Box,
   Container,
 } from "lucide-react"; // Import các icon mới
 
@@ -24,7 +21,11 @@ interface DocumentViewModalProps {
   document: InspectionReportApi | null;
 }
 
-const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, document }) => {
+const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
+  isOpen,
+  onClose,
+  document,
+}) => {
   if (!isOpen || !document) {
     return null;
   }
@@ -35,11 +36,12 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
     tooltip: string,
     Icon: React.ElementType // Nhận vào component icon
   ) => {
+    console.log("Icon: ", Icon);
     let displayValue: string;
-    if (typeof value === 'boolean') {
-      displayValue = value ? 'Đã rời cảng' : 'Chưa rời cảng';
-    } else if (value === null || value === undefined || value === '') {
-      displayValue = 'EMPTY';
+    if (typeof value === "boolean") {
+      displayValue = value ? "Đã rời cảng" : "Chưa rời cảng";
+    } else if (value === null || value === undefined || value === "") {
+      displayValue = "EMPTY";
     } else {
       displayValue = String(value);
     }
@@ -53,7 +55,9 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
             ({tooltip})
           </span>
         </div>
-        <span className="text-gray-800 font-semibold text-right">{displayValue}</span>
+        <span className="text-gray-800 font-semibold text-right">
+          {displayValue}
+        </span>
       </div>
     );
   };
@@ -64,6 +68,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
     tooltip: string,
     Icon: React.ElementType
   ) => {
+    console.log("Icon: ", Icon);
     const date = dateString ? new Date(dateString) : null;
     return (
       <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0 group">
@@ -75,7 +80,9 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
           </span>
         </div>
         <span className="text-gray-800 font-semibold text-right">
-          {date && !isNaN(date.getTime()) ? date.toLocaleDateString("vi-VN") : 'N/A'}
+          {date && !isNaN(date.getTime())
+            ? date.toLocaleDateString("vi-VN")
+            : "N/A"}
         </span>
       </div>
     );
@@ -87,6 +94,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
     tooltip: string,
     Icon: React.ElementType
   ) => {
+    console.log("iocn: ", Icon);
     const date = dateString ? new Date(dateString) : null;
     return (
       <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0 group">
@@ -98,7 +106,9 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
           </span>
         </div>
         <span className="text-gray-800 font-semibold text-right">
-          {date && !isNaN(date.getTime()) ? date.toLocaleString("vi-VN") : 'N/A'}
+          {date && !isNaN(date.getTime())
+            ? date.toLocaleString("vi-VN")
+            : "N/A"}
         </span>
       </div>
     );
@@ -106,16 +116,36 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
 
   const getStatusDisplay = (status: string | undefined | null) => {
     switch (status) {
-      case 'OBTAINED':
-        return { text: 'Đạt', color: 'text-green-600', tooltip: 'Biên lai đạt' };
-      case 'PENDING':
-        return { text: 'Đang xử lý', color: 'text-yellow-600', tooltip: 'Biên lai đang trong quá trình xử lý' };
-      case 'NOT_OBTAINED':
-        return { text: 'Không đạt', color: 'text-red-600', tooltip: 'Biên lai không đạt' };
-      case 'NOT_WITHIN_SCOPE':
-        return { text: 'Không thuộc phạm vi', color: 'text-gray-600', tooltip: 'Biên lai không thuộc phạm vi' };
+      case "OBTAINED":
+        return {
+          text: "Đạt",
+          color: "text-green-600",
+          tooltip: "Biên lai đạt",
+        };
+      case "PENDING":
+        return {
+          text: "Đang xử lý",
+          color: "text-yellow-600",
+          tooltip: "Biên lai đang trong quá trình xử lý",
+        };
+      case "NOT_OBTAINED":
+        return {
+          text: "Không đạt",
+          color: "text-red-600",
+          tooltip: "Biên lai không đạt",
+        };
+      case "NOT_WITHIN_SCOPE":
+        return {
+          text: "Không thuộc phạm vi",
+          color: "text-gray-600",
+          tooltip: "Biên lai không thuộc phạm vi",
+        };
       default:
-        return { text: 'Không xác định', color: 'text-gray-600', tooltip: 'Trạng thái không rõ ràng' };
+        return {
+          text: "Không xác định",
+          color: "text-gray-600",
+          tooltip: "Trạng thái không rõ ràng",
+        };
     }
   };
 
@@ -127,7 +157,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
         <div className="flex justify-between items-center p-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-xl">
           <h2 className="text-xl flex items-center gap-3">
             {/* <ClipboardList size={30} /> */}
-            Chi tiết giám định mã số 
+            Chi tiết giám định mã số
             <span className="font-bold">{document.registrationNo}</span>
           </h2>
           <button
@@ -141,27 +171,104 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
 
         <div className="flex-grow overflow-y-auto p-7 space-y-6 bg-gray-50">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
-            {renderDetailItem("Mã hồ sơ", document.receiptId, "Receipt ID", Tag)}
-            {renderDetailItem("Số đăng ký", document.registrationNo, "Số đăng ký của tài liệu hoặc phương tiện", Hash)}
-            {renderDetailItem("Khách hàng yêu cầu giám định", document.customerSubmitId, "Customer Submit", User)}
-            {renderDetailItem("Khách hàng nhập khẩu", document.customerRelatedId, "Customer Related", User)}
-            {renderDetailItem("Loại hình giám định", document.inspectionTypeId, "Inspection Type", FileText)}
-            {renderDetailItem("Số tờ khai", document.declarationNo, "Declaration No", FileText)}
-            {renderDetailItem("Số vận đơn", document.billOfLading, "Bill Of Lading", Truck)}
+            {renderDetailItem(
+              "Mã hồ sơ",
+              document.receiptId,
+              "Receipt ID",
+              Tag
+            )}
+            {renderDetailItem(
+              "Số đăng ký",
+              document.registrationNo,
+              "Số đăng ký của tài liệu hoặc phương tiện",
+              Hash
+            )}
+            {renderDetailItem(
+              "Khách hàng yêu cầu giám định",
+              document.customerSubmitId,
+              "Customer Submit",
+              User
+            )}
+            {renderDetailItem(
+              "Khách hàng nhập khẩu",
+              document.customerRelatedId,
+              "Customer Related",
+              User
+            )}
+            {renderDetailItem(
+              "Loại hình giám định",
+              document.inspectionTypeId,
+              "Inspection Type",
+              FileText
+            )}
+            {renderDetailItem(
+              "Số tờ khai",
+              document.declarationNo,
+              "Declaration No",
+              FileText
+            )}
+            {renderDetailItem(
+              "Số vận đơn",
+              document.billOfLading,
+              "Bill Of Lading",
+              Truck
+            )}
             {renderDetailItem("Tên tàu", document.shipName, "Ship Name", Ship)}
-            {renderDetailItem("Số lượng Container 20 Feets", document.cout10, "Container 20 Feets", Container)}
-            {renderDetailItem("Số lượng Container 40 Feets", document.cout20, "Container 40 Feets", Container)}
-            {renderDetailItem("Trạng thái rời cảng", document.bulkShip, "Bulk Ship", Ship)}
-            {renderDetailItem("Tài liệu khai báo", document.declarationDoc, "Declaration Doc", FileText)}
-            {renderDetailItem("Nơi khai báo", document.declarationPlace, "Declaration Place", MapPin)}
-            {renderDateItem("Ngày kiểm tra", document.inspectionDate, "Inspection Date", Calendar)}
-            {renderDateItem("Ngày cấp chứng chỉ", document.certificateDate, "Certificate Date", Calendar)}
-            {renderDetailItem("Địa điểm kiểm tra", document.inspectionLocation, "Inspection Location", MapPin)}
+            {renderDetailItem(
+              "Số lượng Container 20 Feets",
+              document.cout10,
+              "Container 20 Feets",
+              Container
+            )}
+            {renderDetailItem(
+              "Số lượng Container 40 Feets",
+              document.cout20,
+              "Container 40 Feets",
+              Container
+            )}
+            {renderDetailItem(
+              "Trạng thái rời cảng",
+              document.bulkShip,
+              "Bulk Ship",
+              Ship
+            )}
+            {renderDetailItem(
+              "Tài liệu khai báo",
+              document.declarationDoc,
+              "Declaration Doc",
+              FileText
+            )}
+            {renderDetailItem(
+              "Nơi khai báo",
+              document.declarationPlace,
+              "Declaration Place",
+              MapPin
+            )}
+            {renderDateItem(
+              "Ngày kiểm tra",
+              document.inspectionDate,
+              "Inspection Date",
+              Calendar
+            )}
+            {renderDateItem(
+              "Ngày cấp chứng chỉ",
+              document.certificateDate,
+              "Certificate Date",
+              Calendar
+            )}
+            {renderDetailItem(
+              "Địa điểm kiểm tra",
+              document.inspectionLocation,
+              "Inspection Location",
+              MapPin
+            )}
             <div className="col-span-full md:col-span-1">
               <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0 group">
                 <div className="flex items-center space-x-2">
                   {/* <CheckCircle size={18} className={`${certificateStatus.color} group-hover:brightness-110 transition-colors`} /> */}
-                  <span className="font-medium text-gray-700">Trạng thái chứng chỉ:</span>
+                  <span className="font-medium text-gray-700">
+                    Trạng thái chứng chỉ:
+                  </span>
                   <span className="ml-1 text-sm text-gray-500 hidden md:inline group-hover:block transition-all duration-300">
                     ({certificateStatus.tooltip})
                   </span>
@@ -171,7 +278,12 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({ isOpen, onClose, 
                 </span>
               </div>
             </div>
-            {renderDateTimeItem("Ngày tạo hồ sơ", document.createdAt, "Created At", Clock)}
+            {renderDateTimeItem(
+              "Ngày tạo hồ sơ",
+              document.createdAt,
+              "Created At",
+              Clock
+            )}
           </div>
         </div>
 

@@ -1,7 +1,6 @@
 import {
   InspectionFormData,
   MachineryFormData,
-  ReceiptData,
   ReceiptFormData,
   SubmitMachineryResponse,
 } from "../types/inspection";
@@ -13,7 +12,7 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
-const API_BASE_URL = `${process.env.FRONTEND_URL}/api`
+const API_BASE_URL = `${process.env.FRONTEND_URL}/api`;
 
 class InspectionApi {
   private async makeRequest<T>(

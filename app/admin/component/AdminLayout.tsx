@@ -20,6 +20,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const getCurrentPage = () => {
     if (pathname === "/admin") return "admin";
     if (pathname.startsWith("/admin/ho-so")) return "documents";
+    if (pathname.startsWith("/admin/evaluation")) return "evaluation";
     if (pathname.startsWith("/admin/khach-hang")) return "clients";
     if (pathname.startsWith("/admin/quan-ly-nhan-vien")) return "users";
     if (pathname.startsWith("/admin/danh-muc")) return "categories";
@@ -53,6 +54,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const routes = {
       dashboard: "/admin",
       documents: "/admin/ho-so",
+      evaluation: "/admin/evaluation",
       clients: "/admin/khach-hang",
       users: "/admin/quan-ly-nhan-vien",
       categories: "/admin/danh-muc",
@@ -88,8 +90,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Main Content with dynamic margin */}
         <div
-          className={`min-h-screen transition-all duration-300 ${isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
-            }`}
+          className={`min-h-screen transition-all duration-300 ${
+            isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
+          }`}
         >
           {/* Header */}
           <Header

@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { Toaster } from "react-hot-toast";
 import AuthWrapper from "./authWrapper";
-import NavbarClient from "./components/NavbarClient";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +12,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-
 });
 
 export const metadata: Metadata = {
@@ -34,7 +32,15 @@ export default function ClientLayout({
       <body
         className={`${geistSans.variable}  ${geistMono.variable} antialiased`}
       >
-        <AuthWrapper allowedRoles={["CUSTOMER", "ADMIN", "STAFF"]}>
+        <AuthWrapper
+          allowedRoles={[
+            "CUSTOMER",
+            "ADMIN",
+            "IMPORTER",
+            "DOCUMENT_STAFF",
+            "ISO_STAFF",
+          ]}
+        >
           {children}
         </AuthWrapper>
         <Toaster position="top-right" reverseOrder={false} />

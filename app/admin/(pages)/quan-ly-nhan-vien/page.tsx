@@ -4,7 +4,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Plus, Edit, Trash2, RefreshCcw, Eye } from "lucide-react";
 import AdminLayout from "../../component/AdminLayout";
 import { authApi, User as AuthUser } from "../../../services/authApi";
-import { userApi, type UserRequest, type UserResponse, type UserRole } from "../../services/userApi";
+import {
+  userApi,
+  type UserRequest,
+  type UserResponse,
+  type UserRole,
+} from "../../services/userApi";
 import ConfirmationModal from "../../component/document/ConfirmationModal";
 
 const STAFF_ROLES: UserRole[] = ["INSPECTOR", "DOCUMENT_STAFF", "ISO_STAFF"];
@@ -37,7 +42,11 @@ const UsersPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  const [adminStatus, setAdminStatus] = useState<{ hasAdmin: boolean; canCreateAdmin: boolean; isOnlyAdmin: boolean } | null>(null);
+  const [adminStatus, setAdminStatus] = useState<{
+    hasAdmin: boolean;
+    canCreateAdmin: boolean;
+    isOnlyAdmin: boolean;
+  } | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<FormMode>("create");
@@ -152,7 +161,11 @@ const UsersPage = () => {
     resetForm();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value, type, checked } = e.target as any;
     setForm((prev) => ({
       ...prev,
@@ -168,7 +181,7 @@ const UsersPage = () => {
 
   const filteredRoleOptions = roleOptions.filter((r) => {
     if (r === "ADMIN") return canSelectAdmin; // Only when backend allows
-    if (isManager && (r === "MANAGER")) return false;
+    if (isManager && r === "MANAGER") return false;
     return true;
   });
 
@@ -178,10 +191,14 @@ const UsersPage = () => {
     if (!form.email.trim()) return "Vui lòng nhập email";
 
     // Block ADMIN selection in UI unless explicitly allowed
-    if (form.role === "ADMIN" && !canSelectAdmin) return "Không thể chọn vai trò ADMIN";
+    if (form.role === "ADMIN" && !canSelectAdmin)
+      return "Không thể chọn vai trò ADMIN";
 
     // For create mode, require password
-    if (formMode === "create" && !(form.passwordHash && form.passwordHash.length >= 6)) {
+    if (
+      formMode === "create" &&
+      !(form.passwordHash && form.passwordHash.length >= 6)
+    ) {
       return "Mật khẩu tối thiểu 6 ký tự";
     }
 
@@ -226,17 +243,6 @@ const UsersPage = () => {
     }
   };
 
-  const onDelete = async (u: UserResponse) => {
-    if (!confirm(`Xác nhận xóa người dùng: ${u.fullName}?`)) return;
-    setError("");
-    try {
-      await userApi.remove(u.userId);
-      await loadData();
-    } catch (e: any) {
-      setError(e?.message || "Xóa thất bại");
-    }
-  };
-
   const requestDelete = (u: UserResponse) => {
     setPendingDelete(u);
     setConfirmOpen(true);
@@ -258,19 +264,25 @@ const UsersPage = () => {
 
   const inputDisabled = formMode === "view";
 
-  const canManageRow = (u: UserResponse) => isAdmin || (isManager && STAFF_ROLES.includes(u.role));
-  const canDeleteRow = (u: UserResponse) => canManageRow(u) && u.role !== "ADMIN";
+  const canManageRow = (u: UserResponse) =>
+    isAdmin || (isManager && STAFF_ROLES.includes(u.role));
+  const canDeleteRow = (u: UserResponse) =>
+    canManageRow(u) && u.role !== "ADMIN";
   const canEditRow = (u: UserResponse) => canManageRow(u) && u.role !== "ADMIN";
 
-  const fieldClass = "mt-1 w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-gray-900 text-base shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const fieldClass =
+    "mt-1 w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-gray-900 text-base shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500";
   const fieldReadOnlyClass = `${fieldClass} read-only:bg-gray-50 read-only:border-gray-200`;
-  const selectDisabledClass = "disabled:bg-gray-50 disabled:text-gray-900 disabled:border-gray-200";
+  const selectDisabledClass =
+    "disabled:bg-gray-50 disabled:text-gray-900 disabled:border-gray-200";
 
   return (
     <AdminLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800">Quản lý nhân viên</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Quản lý nhân viên
+          </h3>
           <div className="flex items-center gap-2">
             <button
               onClick={loadData}
@@ -300,29 +312,60 @@ const UsersPage = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Họ tên</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Username</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">Thao tác</th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Họ tên
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Username
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold text-blue-800 uppercase tracking-wider">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 text-sm">Đang tải...</td>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-gray-500 text-sm"
+                    >
+                      Đang tải...
+                    </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 text-sm">Không có dữ liệu</td>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-gray-500 text-sm"
+                    >
+                      Không có dữ liệu
+                    </td>
                   </tr>
                 ) : (
                   users.map((u) => (
-                    <tr key={u.userId} className="hover:bg-blue-50 transition-colors duration-200">
-                      <td className="px-6 py-4 text-sm text-gray-900 text-center">{u.fullName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700 text-center">{u.username}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700 text-center">{u.email}</td>
+                    <tr
+                      key={u.userId}
+                      className="hover:bg-blue-50 transition-colors duration-200"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-900 text-center">
+                        {u.fullName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 text-center">
+                        {u.username}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 text-center">
+                        {u.email}
+                      </td>
                       <td className="px-6 py-4 text-sm text-center">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           {u.role}
@@ -330,9 +373,13 @@ const UsersPage = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-center">
                         {u.isActive ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Inactive</span>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            Inactive
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -347,7 +394,11 @@ const UsersPage = () => {
                           <button
                             onClick={() => canEditRow(u) && openEdit(u)}
                             disabled={!canEditRow(u)}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canEditRow(u) ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50" : "text-gray-300 cursor-not-allowed bg-gray-50"}`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
+                              canEditRow(u)
+                                ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                                : "text-gray-300 cursor-not-allowed bg-gray-50"
+                            }`}
                             title="Sửa"
                           >
                             <Edit size={18} />
@@ -355,7 +406,11 @@ const UsersPage = () => {
                           <button
                             onClick={() => canDeleteRow(u) && requestDelete(u)}
                             disabled={!canDeleteRow(u)}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canDeleteRow(u) ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" : "text-gray-300 cursor-not-allowed bg-gray-50"}`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
+                              canDeleteRow(u)
+                                ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                                : "text-gray-300 cursor-not-allowed bg-gray-50"
+                            }`}
                             title="Xóa"
                           >
                             <Trash2 size={18} />
@@ -373,71 +428,171 @@ const UsersPage = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm" onClick={closeModal} />
+          <div
+            className="absolute inset-0 bg-white/50 backdrop-blur-sm"
+            onClick={closeModal}
+          />
           <div className="relative bg-white w-full max-w-4xl mx-4 rounded-lg shadow-xl">
             <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-t-lg flex items-center justify-between">
               <h4 className="text-lg font-semibold">
-                {formMode === "create" ? "Thêm người dùng" : formMode === "edit" ? "Cập nhật người dùng" : "Xem thông tin người dùng"}
+                {formMode === "create"
+                  ? "Thêm người dùng"
+                  : formMode === "edit"
+                  ? "Cập nhật người dùng"
+                  : "Xem thông tin người dùng"}
               </h4>
-              <button onClick={closeModal} className="text-white/80 hover:text-white">✕</button>
+              <button
+                onClick={closeModal}
+                className="text-white/80 hover:text-white"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên</label>
-                  <input name="fullName" value={form.fullName} onChange={handleChange} readOnly={inputDisabled} className={fieldReadOnlyClass} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Họ tên
+                  </label>
+                  <input
+                    name="fullName"
+                    value={form.fullName}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={fieldReadOnlyClass}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
-                  <input type="date" name="dob" value={form.dob || ""} onChange={handleChange} readOnly={inputDisabled} className={fieldReadOnlyClass} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày sinh
+                  </label>
+                  <input
+                    type="date"
+                    name="dob"
+                    value={form.dob || ""}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={fieldReadOnlyClass}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                  <input name="username" value={form.username} onChange={handleChange} readOnly={inputDisabled} className={fieldReadOnlyClass} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username
+                  </label>
+                  <input
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={fieldReadOnlyClass}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange} readOnly={inputDisabled} className={fieldReadOnlyClass} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={fieldReadOnlyClass}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Điện thoại</label>
-                  <input name="phone" value={form.phone} onChange={handleChange} readOnly={inputDisabled} className={fieldReadOnlyClass} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Điện thoại
+                  </label>
+                  <input
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={fieldReadOnlyClass}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
-                  <select name="role" value={form.role} onChange={handleChange} disabled={inputDisabled} className={`${fieldClass} ${selectDisabledClass}`}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vai trò
+                  </label>
+                  <select
+                    name="role"
+                    value={form.role}
+                    onChange={handleChange}
+                    disabled={inputDisabled}
+                    className={`${fieldClass} ${selectDisabledClass}`}
+                  >
                     {filteredRoleOptions.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                 </div>
                 {formMode !== "view" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {formMode === "create" ? "Mật khẩu" : "Mật khẩu mới (để trống nếu không đổi)"}
+                      {formMode === "create"
+                        ? "Mật khẩu"
+                        : "Mật khẩu mới (để trống nếu không đổi)"}
                     </label>
-                    <input type="password" name="passwordHash" value={form.passwordHash || ""} onChange={handleChange} className={fieldClass} />
+                    <input
+                      type="password"
+                      name="passwordHash"
+                      value={form.passwordHash || ""}
+                      onChange={handleChange}
+                      className={fieldClass}
+                    />
                   </div>
                 )}
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-                  <textarea name="note" value={form.note} onChange={handleChange} readOnly={inputDisabled} className={`${fieldReadOnlyClass}`} rows={4} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    name="note"
+                    value={form.note}
+                    onChange={handleChange}
+                    readOnly={inputDisabled}
+                    className={`${fieldReadOnlyClass}`}
+                    rows={4}
+                  />
                 </div>
                 <div className="flex items-center">
-                  <label className="mr-3 text-sm font-medium text-gray-700">Kích hoạt</label>
-                  <input type="checkbox" name="isActive" checked={!!form.isActive} onChange={handleChange} disabled={inputDisabled} />
+                  <label className="mr-3 text-sm font-medium text-gray-700">
+                    Kích hoạt
+                  </label>
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={!!form.isActive}
+                    onChange={handleChange}
+                    disabled={inputDisabled}
+                  />
                 </div>
               </div>
 
               {error && (
-                <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-800 text-sm">{error}</div>
+                <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                  {error}
+                </div>
               )}
 
               <div className="pt-2 flex items-center justify-end gap-2">
-                <button type={formMode === "view" ? "button" : "button"} onClick={closeModal} className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200">Đóng</button>
+                <button
+                  type={formMode === "view" ? "button" : "button"}
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
+                >
+                  Đóng
+                </button>
                 {formMode !== "view" && (
-                  <button type="submit" className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  >
                     {formMode === "create" ? "Tạo" : "Lưu"}
                   </button>
                 )}
@@ -452,7 +607,9 @@ const UsersPage = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={confirmDelete}
         title="Xác nhận xóa người dùng"
-        message={`Bạn có chắc chắn muốn xóa người dùng${pendingDelete ? ` "${pendingDelete.fullName}"` : ""}? Hành động này không thể hoàn tác.`}
+        message={`Bạn có chắc chắn muốn xóa người dùng${
+          pendingDelete ? ` "${pendingDelete.fullName}"` : ""
+        }? Hành động này không thể hoàn tác.`}
       />
     </AdminLayout>
   );

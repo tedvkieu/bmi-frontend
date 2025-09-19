@@ -1,6 +1,6 @@
 // components/admin/CustomersContent.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Users,
   Search,
@@ -10,15 +10,12 @@ import {
   Eye,
   FileText,
   Calendar,
-  User,
   Mail,
   Phone,
-  MapPin,
   Filter,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
-  Building,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -76,7 +73,7 @@ const CustomersContent = () => {
 
   const router = useRouter();
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -105,11 +102,11 @@ const CustomersContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, customerTypeFilter, pageSize]); // ⚡ dependencies
 
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage, searchTerm, customerTypeFilter]);
+  }, [fetchCustomers]);
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);

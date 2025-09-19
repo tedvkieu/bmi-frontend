@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import "../styles/InspectionForm.css";
 import { InspectionFormData, ReceiptFormData } from "../types/inspection";
@@ -67,13 +67,7 @@ const InspectionForm: React.FC = () => {
     null
   );
 
-  useEffect(() => {
-    if (id) {
-      fetchCustomer();
-    }
-  }, [id]);
-
-  const fetchCustomer = async () => {
+  const fetchCustomer = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -95,7 +89,13 @@ const InspectionForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]); // 👈 dependency
+
+  useEffect(() => {
+    if (id) {
+      fetchCustomer();
+    }
+  }, [id, fetchCustomer]);
 
   const handleCustomerProfileSubmit = async () => {
     try {

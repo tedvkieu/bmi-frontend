@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Head from "next/head";
 import toast from "react-hot-toast";
 import NavbarClient from "./components/NavbarClient";
-import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaBuilding, FaCalendarAlt } from 'react-icons/fa';
+import {
+  FaPhoneAlt,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaBuilding,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import BannerClient from "./components/BannerClient";
 import Footer from "./components/Footer";
 import Image from "next/image";
-import { PublicContactRequest, sendPublicContact } from "./service/customerService";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -27,15 +31,16 @@ export default function ContactPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState("idle");
-  const [errorMessage, setErrorMessage] = useState("");
 
   const contactInfoRef = useRef<HTMLDivElement>(null);
   const contactFormRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const workingHoursRef = useRef<HTMLDivElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -53,36 +58,33 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus("idle"); // Reset status on new submission
-    setErrorMessage("");
 
     try {
-      const customerPublicContact: PublicContactRequest = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        note: formData.message,
-        customerType: "SERVICE_MANAGER",
-      };
+      // const customerPublicContact: PublicContactRequest = {
+      //   name: formData.name,
+      //   email: formData.email,
+      //   phone: formData.phone,
+      //   note: formData.message,
+      //   customerType: "SERVICE_MANAGER",
+      // };
 
-      const res = await sendPublicContact(customerPublicContact);
-      toast.success('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
-      setSubmitStatus("success");
+      toast.success(
+        "Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể."
+      );
+      // setSubmitStatus("success");
       console.log("Customer created successfully!");
 
-      setFormData({ // Clear form after successful submission
+      setFormData({
+        // Clear form after successful submission
         name: "",
         email: "",
         phone: "",
         subject: "",
         message: "",
       });
-
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error('Có lỗi xảy ra khi gửi liên hệ. Vui lòng thử lại.');
-      setSubmitStatus("error");
-      setErrorMessage("Có lỗi xảy ra khi gửi liên hệ. Vui lòng thử lại.");
+      toast.error("Có lỗi xảy ra khi gửi liên hệ. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -92,9 +94,9 @@ export default function ContactPage() {
   const handleLookupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Lookup form submitted:", lookupFormData);
-    toast.success('Đang tra cứu thông tin khách hàng...');
+    toast.success("Đang tra cứu thông tin khách hàng...");
     setTimeout(() => {
-      toast('Kết quả tra cứu sẽ hiển thị tại đây.', { icon: '🔍' });
+      toast("Kết quả tra cứu sẽ hiển thị tại đây.", { icon: "🔍" });
       setLookupFormData({
         certificateNumber: "",
         issueDate: "",
@@ -103,18 +105,26 @@ export default function ContactPage() {
     }, 1500);
   };
 
-
   // Function to scroll to the contact form
   const handleScrollToContact = (section: string) => {
     switch (section) {
-      case 'form':
-        contactFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      case "form":
+        contactFormRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
         break;
-      case 'info':
-        contactInfoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      case "info":
+        contactInfoRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
         break;
-      case 'search':
-        searchRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      case "search":
+        searchRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
         break;
       default:
         break;
@@ -173,7 +183,10 @@ export default function ContactPage() {
 
         <div className="container mx-auto px-6 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
-            <div ref={contactInfoRef} className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up">
+            <div
+              ref={contactInfoRef}
+              className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up"
+            >
               <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
                 THÔNG TIN LIÊN HỆ
               </h2>
@@ -183,14 +196,18 @@ export default function ContactPage() {
                     <FaBuilding className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-1">TRỤ SỞ CHÍNH</h3>
+                    <h3 className="font-semibold text-gray-800 mb-1">
+                      TRỤ SỞ CHÍNH
+                    </h3>
                     <p className="text-gray-600 leading-relaxed">
                       Số 85, Đường Hoàng Sa, Phường Tân Định, Quận 1
                     </p>
                     <p className="text-gray-600 leading-relaxed">
                       Thành phố Hồ Chí Minh, Việt Nam
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">Mã số thuế: 0315.978.642</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Mã số thuế: 0315.978.642
+                    </p>
                   </div>
                 </div>
 
@@ -199,17 +216,25 @@ export default function ContactPage() {
                     <FaMapMarkerAlt className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-2">VĂN PHÒNG GIAO DỊCH</h3>
+                    <h3 className="font-semibold text-gray-800 mb-2">
+                      VĂN PHÒNG GIAO DỊCH
+                    </h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="font-medium text-gray-700">Tại Hồ Chí Minh:</p>
+                        <p className="font-medium text-gray-700">
+                          Tại Hồ Chí Minh:
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
                           Số 13, đường số 3, Phường An Khánh, TP. Thủ Đức
                         </p>
-                        <p className="text-gray-600 leading-relaxed">Thành phố Hồ Chí Minh</p>
+                        <p className="text-gray-600 leading-relaxed">
+                          Thành phố Hồ Chí Minh
+                        </p>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-700">Tại Hải Phòng:</p>
+                        <p className="font-medium text-gray-700">
+                          Tại Hải Phòng:
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
                           Số 31A, đường Bùi Thị Tự Nhiên
                         </p>
@@ -227,7 +252,10 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">HOTLINE</h3>
-                    <a href="tel:0911768008" className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                    <a
+                      href="tel:0911768008"
+                      className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                    >
                       0911.76.80.08
                     </a>
                   </div>
@@ -239,7 +267,10 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">EMAIL</h3>
-                    <a href="mailto:info@baominhinspection.com" className="text-blue-600 hover:text-blue-800 transition-colors text-base">
+                    <a
+                      href="mailto:info@baominhinspection.com"
+                      className="text-blue-600 hover:text-blue-800 transition-colors text-base"
+                    >
                       info@baominhinspection.com
                     </a>
                   </div>
@@ -249,14 +280,20 @@ export default function ContactPage() {
 
             {/* Cột 2: GỬI LIÊN HỆ FORM + GIỜ LÀM VIỆC/BẢN ĐỒ (xếp chồng lên nhau) */}
             <div className="space-y-8">
-              <div ref={contactFormRef} className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up delay-100">
+              <div
+                ref={contactFormRef}
+                className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up delay-100"
+              >
                 <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
                   GỬI LIÊN HỆ
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-6 h-[580px]" >
+                <form onSubmit={handleSubmit} className="space-y-6 h-[580px]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Họ và tên <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -271,7 +308,10 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="phone"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Số điện thoại <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -288,7 +328,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Email <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -304,7 +347,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Chủ đề
                     </label>
                     <select
@@ -323,7 +369,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Nội dung <span className="text-red-500">*</span>
                     </label>
                     <textarea
@@ -342,7 +391,7 @@ export default function ContactPage() {
                     className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-md hover:shadow-lg"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Đang gửi...' : 'Gửi liên hệ'}
+                    {isSubmitting ? "Đang gửi..." : "Gửi liên hệ"}
                   </button>
                 </form>
               </div>
@@ -350,13 +399,19 @@ export default function ContactPage() {
           </div>
 
           {/* New Customer Lookup Section */}
-          <div ref={searchRef} className="mt-12 bg-white rounded-xl shadow-lg p-8 animate-fade-in-up delay-200">
+          <div
+            ref={searchRef}
+            className="mt-12 bg-white rounded-xl shadow-lg p-8 animate-fade-in-up delay-200"
+          >
             <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
               TRA CỨU THÔNG TIN KHÁCH HÀNG
             </h2>
             <form onSubmit={handleLookupSubmit} className="space-y-6">
               <div>
-                <label htmlFor="certificateNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="certificateNumber"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Số chứng nhận <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -371,7 +426,10 @@ export default function ContactPage() {
                 />
               </div>
               <div>
-                <label htmlFor="issueDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="issueDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Ngày cấp <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -390,7 +448,10 @@ export default function ContactPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="companyName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Tên Công ty <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -413,7 +474,6 @@ export default function ContactPage() {
             </form>
           </div>
           {/* End New Customer Lookup Section */}
-
         </div>
 
         {/* Footer */}
@@ -443,7 +503,8 @@ export default function ContactPage() {
         }
 
         @keyframes bounceSlow {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0);
           }
           50% {
@@ -467,7 +528,7 @@ export default function ContactPage() {
         }
 
         .animate-bounce-slow {
-            animation: bounceSlow 2s infinite ease-in-out;
+          animation: bounceSlow 2s infinite ease-in-out;
         }
       `}</style>
     </>

@@ -8,9 +8,7 @@ import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import ErrorMessage from "@/app/admin/component/document/ErrorMessage";
 import { InspectionReportApi } from "@/app/admin/types/inspection";
 import {
-  XCircle,
   FileText,
-  ClipboardList,
   User,
   Truck,
   Ship,
@@ -20,15 +18,10 @@ import {
   Clock,
   Tag,
   Hash,
-  Box,
   Container,
 } from "lucide-react"; // Import các icon mới
 
-interface EditDocumentPageProps {
-  // Nếu bạn muốn truyền props từ layout cha, nhưng với dynamic routes thì useParams sẽ phổ biến hơn
-}
-
-const EditDocumentContent: React.FC<EditDocumentPageProps> = () => {
+const EditDocumentContent: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string; // Lấy ID từ URL

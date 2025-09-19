@@ -5,7 +5,6 @@ import {
   FileText,
   Building,
   Users,
-  Folder,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -38,6 +37,14 @@ const Navbar: React.FC<NavbarProps> = ({
       label: "Hồ sơ giám định",
       badge: "24",
       href: "/admin/ho-so",
+    },
+
+    {
+      key: "evaluation",
+      icon: FileText,
+      label: "Phiếu đánh giá hồ sơ",
+      badge: null,
+      href: "/admin/evaluation",
     },
     {
       key: "clients",
@@ -76,7 +83,10 @@ const Navbar: React.FC<NavbarProps> = ({
     setRole(r);
   }, []);
 
-  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
+  const shouldHideItem = (
+    itemKey: string,
+    userRole: string | null
+  ): boolean => {
     if (!userRole || userRole === "ADMIN") return false;
     if (userRole === "MANAGER") {
       return itemKey === "settings";
@@ -93,14 +103,15 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div
-      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${isSidebarOpen
-        ? isMobile
-          ? "w-64"
-          : "w-64"
-        : isMobile
+      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${
+        isSidebarOpen
+          ? isMobile
+            ? "w-64"
+            : "w-64"
+          : isMobile
           ? "-translate-x-full w-64"
           : "w-16"
-        }`}
+      }`}
     >
       {/* Logo - Fixed at top */}
       <div className="p-5 border-b border-gray-200 flex-shrink-0">
@@ -128,10 +139,11 @@ const Navbar: React.FC<NavbarProps> = ({
             <button
               key={item.key}
               onClick={() => onPageChange(item.key)}
-              className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-colors ${currentPage === item.key
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100"
-                }`}
+              className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-colors ${
+                currentPage === item.key
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
               title={!isSidebarOpen && !isMobile ? item.label : undefined}
             >
               <item.icon size={20} className="flex-shrink-0" />

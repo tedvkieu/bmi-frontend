@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_API = `${process.env.API_BASE_URL}/api/customers/public`;
+const BACKEND_API = `${process.env.BACKEND_URL }/api/customers/public`;
 
 export async function POST(req: Request) {
   try {

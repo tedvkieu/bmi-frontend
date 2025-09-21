@@ -9,7 +9,7 @@ export async function GET(
     const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `${process.env.API_BASE_URL}/api/customers/${id}`,
+      `${process.env.BACKEND_URL }/api/customers/${id}`,
       {
         method: "GET",
         headers: {
@@ -48,7 +48,7 @@ export async function PUT(
     const token = req.cookies.get("token")?.value;
     
     const res = await fetch(
-      `${process.env.API_BASE_URL}/api/customers/${id}`,
+      `${process.env.BACKEND_URL }/api/customers/${id}`,
       {
         method: "PUT",
         headers: {

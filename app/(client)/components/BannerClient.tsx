@@ -6,7 +6,7 @@ export default function BannerClient() {
     <div className="relative w-full h-[541px]">
       {/* Background Image */}
       <Image
-        src="/images/banner-web2-01.jpg" 
+        src="/images/Banner-1-VESC.jpg" 
         alt="Banner"
         layout="fill"
         objectFit="cover"

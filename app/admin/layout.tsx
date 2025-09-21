@@ -1,19 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "../globals.css";
 import { Toaster } from "react-hot-toast";
 import AuthWrapper from "../(client)/authWrapper";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-
-});
 
 export const metadata: Metadata = {
   title: "BMI Dashboard - GIÁM ĐỊNH BẢO MINH",
@@ -29,16 +16,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable}  ${geistMono.variable} antialiased`}
-      >
-        <AuthWrapper allowedRoles={["ADMIN"]}>
-          {children}
-        </AuthWrapper>
-        {children}
-        <Toaster position="top-right" reverseOrder={false} />
-      </body>
-    </html>
+    <AuthWrapper
+      allowedRoles={[
+        "ADMIN",
+        "IMPORTER",
+        "DOCUMENT_STAFF",
+        "ISO_STAFF",
+      ]}
+    >
+      {children}
+      <Toaster position="top-right" reverseOrder={false} />
+    </AuthWrapper>
   );
 }

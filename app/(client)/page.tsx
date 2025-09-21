@@ -9,10 +9,35 @@ import {
   FaMapMarkerAlt,
   FaBuilding,
   FaCalendarAlt,
+  FaFileContract,
 } from "react-icons/fa";
 import BannerClient from "./components/BannerClient";
 import Footer from "./components/Footer";
 import Image from "next/image";
+
+// Định nghĩa kiểu dữ liệu cho Hồ sơ
+interface DossierResult {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  inspectionTypeId: string;
+  declarationNo: string;
+  billOfLading: string;
+  shipName: string;
+  cout10: number;
+  cout20: number;
+  bulkShip: boolean;
+  declarationDoc: string;
+  declarationPlace: string;
+  inspectionDate: string;
+  certificateDate: string;
+  inspectionLocation: string;
+  files: string;
+  certificateStatus: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -23,18 +48,21 @@ export default function ContactPage() {
     message: "",
   });
 
-  // State for the new customer lookup form
-  const [lookupFormData, setLookupFormData] = useState({
-    certificateNumber: "",
-    issueDate: "",
-    companyName: "",
+  const [dossierLookupFormData, setDossierLookupFormData] = useState({
+    registerNo: "",
+    certificateDate: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearchingDossier, setIsSearchingDossier] = useState(false);
+  const [dossierResult, setDossierResult] = useState<DossierResult | null>(
+    null
+  );
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const contactInfoRef = useRef<HTMLDivElement>(null);
   const contactFormRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const dossierSearchRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -47,10 +75,9 @@ export default function ContactPage() {
     });
   };
 
-  // Handler for the new lookup form
-  const handleLookupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLookupFormData({
-      ...lookupFormData,
+  const handleDossierLookupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDossierLookupFormData({
+      ...dossierLookupFormData,
       [e.target.name]: e.target.value,
     });
   };
@@ -60,22 +87,12 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // const customerPublicContact: PublicContactRequest = {
-      //   name: formData.name,
-      //   email: formData.email,
-      //   phone: formData.phone,
-      //   note: formData.message,
-      //   customerType: "SERVICE_MANAGER",
-      // };
-
       toast.success(
         "Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể."
       );
-      // setSubmitStatus("success");
       console.log("Customer created successfully!");
 
       setFormData({
-        // Clear form after successful submission
         name: "",
         email: "",
         phone: "",
@@ -90,22 +107,53 @@ export default function ContactPage() {
     }
   };
 
-  // Handler for the new lookup form submission
-  const handleLookupSubmit = (e: React.FormEvent) => {
+  const handleDossierLookupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Lookup form submitted:", lookupFormData);
-    toast.success("Đang tra cứu thông tin khách hàng...");
-    setTimeout(() => {
-      toast("Kết quả tra cứu sẽ hiển thị tại đây.", { icon: "🔍" });
-      setLookupFormData({
-        certificateNumber: "",
-        issueDate: "",
-        companyName: "",
+    setIsSearchingDossier(true);
+    setDossierResult(null);
+    setSearchError(null);
+
+    const { registerNo, certificateDate } = dossierLookupFormData;
+
+    if (!registerNo || !certificateDate) {
+      setSearchError("Vui lòng nhập đầy đủ Số chứng nhận và Ngày cấp.");
+      setIsSearchingDossier(false);
+      return;
+    }
+
+    try {
+      toast.loading("Đang tra cứu hồ sơ...", { id: "dossierSearchToast" });
+      const apiUrl = `/api/dossiers/searchByRegisterNoAndCertificateDate?registerNo=${registerNo}&certificateDate=${certificateDate}`;
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Không tìm thấy hồ sơ phù hợp.");
+        }
+        throw new Error(`Lỗi khi tra cứu: ${response.statusText}`);
+      }
+
+      const data: DossierResult = await response.json();
+
+      if (Object.keys(data).length === 0) {
+        throw new Error("Không tìm thấy hồ sơ phù hợp.");
+      }
+
+      setDossierResult(data);
+      toast.success("Tra cứu hồ sơ thành công!", {
+        id: "dossierSearchToast",
       });
-    }, 1500);
+    } catch (error: any) {
+      console.error("Dossier lookup error:", error);
+      setSearchError(error.message || "Có lỗi xảy ra khi tra cứu hồ sơ.");
+      toast.error(error.message || "Tra cứu hồ sơ thất bại!", {
+        id: "dossierSearchToast",
+      });
+    } finally {
+      setIsSearchingDossier(false);
+    }
   };
 
-  // Function to scroll to the contact form
   const handleScrollToContact = (section: string) => {
     switch (section) {
       case "form":
@@ -120,8 +168,8 @@ export default function ContactPage() {
           block: "start",
         });
         break;
-      case "search":
-        searchRef.current?.scrollIntoView({
+      case "dossierSearch":
+        dossierSearchRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
@@ -134,100 +182,100 @@ export default function ContactPage() {
   return (
     <>
       <NavbarClient onScrollToContact={handleScrollToContact} />
-      <div className="fixed left-4 bottom-6 flex flex-col space-y-3 z-50 w-64">
-        {/* Bubble text */}
-        <div className="bg-[#193cb8] text-white text-xl font-medium px-4 py-2 rounded-lg shadow-lg relative mb-2 animate-bounce">
-          Bạn muốn upload file thông qua trang web hãy liên hệ qua Zalo hoặc SĐT
-          <div className="absolute left-6 -bottom-2 w-3 h-3 bg-white rotate-45 shadow-md"></div>
+      <div className="fixed left-4 bottom-6 flex flex-col space-y-3 z-50">
+        <div className="bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md shadow-lg relative max-w-[200px]">
+          Nếu cần hỗ trợ upload file, vui lòng liên hệ qua Zalo hoặc số điện thoại để được hướng dẫn.
+          <div className="absolute left-4 -bottom-1.5 w-2.5 h-2.5 bg-blue-700 rotate-45"></div>
         </div>
 
-        {/* Hotline */}
         <a
           href="tel:0911768008"
-          className="flex items-center bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-300"
+          className="flex items-center bg-green-500 text-white text-sm px-3 py-1.5 rounded-full shadow-md hover:bg-green-600 transition-colors duration-200 max-w-fit"
           aria-label="Hotline Bảo Minh"
         >
-          <FaPhoneAlt className="text-lg mr-2" />
-          <span className="font-semibold">0911.76.80.08</span>
+          <FaPhoneAlt className="text-sm mr-2" />
+          <span className="font-medium">0911.76.80.08</span>
         </a>
 
-        {/* Zalo */}
         <a
           href="https://zalo.me/0911768008"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-300"
+          className="flex items-center bg-blue-600 text-white text-sm px-3 py-1.5 rounded-full shadow-md hover:bg-blue-700 transition-colors duration-200 max-w-fit"
           aria-label="Zalo Bảo Minh"
         >
           <Image
             src="/images/zalo-icon.jpg"
             alt="Zalo"
-            width={22}
-            height={22}
+            width={18}
+            height={18}
             className="mr-2 rounded-full"
           />
-          <span className="font-semibold">Nhắn tin Zalo</span>
+          <span className="font-medium">Nhắn tin Zalo</span>
         </a>
       </div>
 
-      <div className="min-h-screen bg-gray-100 pb-12">
-        <header className="bg-blue-800 text-white py-8 shadow-md">
-          <div className="container mx-auto px-6 text-center">
-            <h1 className="text-2xl font-bold mb-2">LIÊN HỆ VỚI CHÚNG TÔI</h1>
-            <p className="text-blue-200 text-sm font-light">
-              Chúng tôi luôn sẵn lòng lắng nghe và hỗ trợ bạn.
+      <div className="min-h-screen bg-gray-50 pb-12">
+        <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-12 shadow-md">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-3xl font-bold mb-2">
+              LIÊN HỆ VỚI CHÚNG TÔI
+            </h1>
+            <p className="text-blue-100 text-base opacity-90">
+              Chúng tôi luôn sẵn lòng lắng nghe và hỗ trợ bạn một cách nhanh chóng.
             </p>
           </div>
         </header>
         <BannerClient />
 
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12">
+        <div className="container mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Contact Information Section */}
             <div
               ref={contactInfoRef}
-              className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up"
+              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit"
             >
-              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
-                THÔNG TIN LIÊN HỆ
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
+                THÔNG TIN LIÊN HỆ CÔNG TY
               </h2>
-              <div className="space-y-6 text-base h-[580px]">
+              <div className="space-y-6 text-sm"> {/* Reduced text size */}
                 <div className="flex items-start space-x-4">
-                  <div className="bg-blue-50 text-blue-600 p-3 rounded-full flex-shrink-0 shadow-sm">
-                    <FaBuilding className="w-5 h-5" />
+                  <div className="text-blue-600 p-2 rounded-full flex-shrink-0 bg-blue-50">
+                    <FaBuilding className="w-4 h-4" /> {/* Smaller icon */}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-1">
+                    <h3 className="font-semibold text-gray-800 mb-0.5">
                       TRỤ SỞ CHÍNH
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-gray-600">
                       Số 85, Đường Hoàng Sa, Phường Tân Định, Quận 1
                     </p>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-gray-600">
                       Thành phố Hồ Chí Minh, Việt Nam
                     </p>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-gray-500 mt-1">
                       Mã số thuế: 0315.978.642
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="bg-green-50 text-green-600 p-3 rounded-full flex-shrink-0 shadow-sm">
-                    <FaMapMarkerAlt className="w-5 h-5" />
+                  <div className="text-green-600 p-2 rounded-full flex-shrink-0 bg-green-50">
+                    <FaMapMarkerAlt className="w-4 h-4" /> {/* Smaller icon */}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800 mb-2">
+                    <h3 className="font-semibold text-gray-800 mb-0.5">
                       VĂN PHÒNG GIAO DỊCH
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
                         <p className="font-medium text-gray-700">
                           Tại Hồ Chí Minh:
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600">
                           Số 13, đường số 3, Phường An Khánh, TP. Thủ Đức
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600">
                           Thành phố Hồ Chí Minh
                         </p>
                       </div>
@@ -235,10 +283,10 @@ export default function ContactPage() {
                         <p className="font-medium text-gray-700">
                           Tại Hải Phòng:
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600">
                           Số 31A, đường Bùi Thị Tự Nhiên
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600">
                           Phường Đông Hải 1, Quận Hải An, TP Hải Phòng
                         </p>
                       </div>
@@ -247,14 +295,14 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <div className="bg-blue-50 text-blue-600 p-3 rounded-full flex-shrink-0 shadow-sm">
-                    <FaPhoneAlt className="w-5 h-5" />
+                  <div className="text-blue-600 p-2 rounded-full flex-shrink-0 bg-blue-50">
+                    <FaPhoneAlt className="w-4 h-4" /> {/* Smaller icon */}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">HOTLINE</h3>
                     <a
                       href="tel:0911768008"
-                      className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                      className="text-lg font-bold text-blue-700 hover:text-blue-800 transition-colors"
                     >
                       0911.76.80.08
                     </a>
@@ -262,14 +310,14 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <div className="bg-red-50 text-red-600 p-3 rounded-full flex-shrink-0 shadow-sm">
-                    <FaEnvelope className="w-5 h-5" />
+                  <div className="text-red-600 p-2 rounded-full flex-shrink-0 bg-red-50">
+                    <FaEnvelope className="w-4 h-4" /> {/* Smaller icon */}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">EMAIL</h3>
                     <a
                       href="mailto:info@baominhinspection.com"
-                      className="text-blue-600 hover:text-blue-800 transition-colors text-base"
+                      className="text-blue-600 hover:text-blue-800 transition-colors text-sm"
                     >
                       info@baominhinspection.com
                     </a>
@@ -278,258 +326,300 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Cột 2: GỬI LIÊN HỆ FORM + GIỜ LÀM VIỆC/BẢN ĐỒ (xếp chồng lên nhau) */}
-            <div className="space-y-8">
-              <div
-                ref={contactFormRef}
-                className="bg-white rounded-xl shadow-lg p-8 h-fit animate-fade-in-up delay-100"
-              >
-                <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
-                  GỬI LIÊN HỆ
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-6 h-[580px]">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Họ và tên <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                        placeholder="Nguyễn Văn A"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Số điện thoại <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        required
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                        placeholder="0912 345 678"
-                      />
-                    </div>
-                  </div>
-
+            {/* Contact Form Section */}
+            <div
+              ref={contactFormRef}
+              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit"
+            >
+              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
+                GỬI LIÊN HỆ CHO CHÚNG TÔI
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-5"> {/* Reduced spacing */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="name"
+                      className="block text-xs font-medium text-gray-700 mb-1"
                     >
-                      Email <span className="text-red-500">*</span>
+                      Họ và tên <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="email"
-                      id="email"
-                      name="email"
+                      type="text"
+                      id="name"
+                      name="name"
                       required
-                      value={formData.email}
+                      value={formData.name}
                       onChange={handleChange}
-                      className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                      placeholder="nguyenvana@gmail.com"
+                      className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="Nguyễn Văn A"
                     />
                   </div>
-
                   <div>
                     <label
-                      htmlFor="subject"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      htmlFor="phone"
+                      className="block text-xs font-medium text-gray-700 mb-1"
                     >
-                      Chủ đề
+                      Số điện thoại <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm bg-white"
-                    >
-                      <option value="">Chọn dịch vụ</option>
-                      <option value="consultation">Tư vấn dịch vụ</option>
-                      <option value="inspection">Yêu cầu giám định</option>
-                      <option value="cooperation">Hợp tác kinh doanh</option>
-                      <option value="other">Khác</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Nội dung <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      rows={6}
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
                       required
-                      value={formData.message}
+                      value={formData.phone}
                       onChange={handleChange}
-                      className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-y shadow-sm"
-                      placeholder="Nhập nội dung..."
+                      className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="0912 345 678"
                     />
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-md hover:shadow-lg"
-                    disabled={isSubmitting}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-xs font-medium text-gray-700 mb-1"
                   >
-                    {isSubmitting ? "Đang gửi..." : "Gửi liên hệ"}
-                  </button>
-                </form>
-              </div>
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="nguyenvana@gmail.com"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="subject"
+                    className="block text-xs font-medium text-gray-700 mb-1"
+                  >
+                    Chủ đề
+                  </label>
+                  <select
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                  >
+                    <option value="">Chọn dịch vụ</option>
+                    <option value="consultation">Tư vấn dịch vụ</option>
+                    <option value="inspection">Yêu cầu giám định</option>
+                    <option value="cooperation">Hợp tác kinh doanh</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="message"
+                    className="block text-xs font-medium text-gray-700 mb-1"
+                  >
+                    Nội dung <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={5}
+                    required
+                    value={formData.message}
+                    onChange={handleChange}
+                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-y"
+                    placeholder="Nhập nội dung bạn muốn gửi..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2.5 px-5 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Đang gửi..." : "Gửi liên hệ"}
+                </button>
+              </form>
             </div>
           </div>
 
-          {/* New Customer Lookup Section */}
+          {/* Dossier Lookup Section */}
           <div
-            ref={searchRef}
-            className="mt-12 bg-white rounded-xl shadow-lg p-8 animate-fade-in-up delay-200"
+            ref={dossierSearchRef}
+            className="mt-12 bg-white rounded-lg border border-gray-100 p-8 shadow-sm"
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-600">
-              TRA CỨU THÔNG TIN KHÁCH HÀNG
+            <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
+              TRA CỨU HỒ SƠ
             </h2>
-            <form onSubmit={handleLookupSubmit} className="space-y-6">
+            <form onSubmit={handleDossierLookupSubmit} className="space-y-5">
               <div>
                 <label
-                  htmlFor="certificateNumber"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="registerNo"
+                  className="block text-xs font-medium text-gray-700 mb-1"
                 >
                   Số chứng nhận <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="certificateNumber"
-                  name="certificateNumber"
+                  id="registerNo"
+                  name="registerNo"
                   required
-                  value={lookupFormData.certificateNumber}
-                  onChange={handleLookupChange}
-                  className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                  placeholder=""
+                  value={dossierLookupFormData.registerNo}
+                  onChange={handleDossierLookupChange}
+                  className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  placeholder="Nhập số chứng nhận"
                 />
               </div>
               <div>
                 <label
-                  htmlFor="issueDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  htmlFor="certificateDate"
+                  className="block text-xs font-medium text-gray-700 mb-1"
                 >
                   Ngày cấp <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="date" // Changed to type="date" for native date picker
-                    id="issueDate"
-                    name="issueDate"
-                    required
-                    value={lookupFormData.issueDate}
-                    onChange={handleLookupChange}
-                    className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm pr-10" // Added pr-10 for icon
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <FaCalendarAlt className="h-5 w-5 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="companyName"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Tên Công ty <span className="text-red-500">*</span>
-                </label>
                 <input
-                  type="text"
-                  id="companyName"
-                  name="companyName"
+                  type="date"
+                  id="certificateDate"
+                  name="certificateDate"
                   required
-                  value={lookupFormData.companyName}
-                  onChange={handleLookupChange}
-                  className="w-full text-gray-700 text-sm px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
-                  placeholder=""
+                  value={dossierLookupFormData.certificateDate}
+                  onChange={handleDossierLookupChange}
+                  className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 />
               </div>
               <button
                 type="submit"
-                className="w-52 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-base shadow-md hover:shadow-lg"
+                className="w-48 bg-blue-600 text-white py-2.5 px-5 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={isSearchingDossier}
               >
-                Tìm kiếm
+                {isSearchingDossier ? "Đang tìm..." : "Tìm kiếm hồ sơ"}
               </button>
             </form>
+
+            {/* Dossier Lookup Results */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                KẾT QUẢ TRA CỨU
+              </h3>
+              {isSearchingDossier && (
+                <p className="text-gray-600 text-center text-sm">Đang tải...</p>
+              )}
+              {searchError && (
+                <div
+                  className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md relative text-sm"
+                  role="alert"
+                >
+                  <strong className="font-semibold">Lỗi!</strong>
+                  <span className="block sm:inline ml-2">{searchError}</span>
+                </div>
+              )}
+              {dossierResult && (
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-5 text-sm"> {/* Reduced padding and text size */}
+                  <p className="text-gray-800 text-base font-semibold mb-3">
+                    Hồ sơ:{" "}
+                    <span className="text-blue-700">
+                      {dossierResult.registrationNo}
+                    </span>
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-gray-700">
+                    <p>
+                      <span className="font-medium">Mã biên nhận:</span>{" "}
+                      {dossierResult.receiptId}
+                    </p>
+                    <p>
+                      <span className="font-medium">Loại giám định:</span>{" "}
+                      {dossierResult.inspectionTypeId}
+                    </p>
+                    <p>
+                      <span className="font-medium">Số tờ khai:</span>{" "}
+                      {dossierResult.declarationNo}
+                    </p>
+                    <p>
+                      <span className="font-medium">Số vận đơn:</span>{" "}
+                      {dossierResult.billOfLading}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tên tàu:</span>{" "}
+                      {dossierResult.shipName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Địa điểm khai báo:</span>{" "}
+                      {dossierResult.declarationPlace}
+                    </p>
+                    <p>
+                      <span className="font-medium">Ngày giám định:</span>{" "}
+                      {new Date(dossierResult.inspectionDate).toLocaleDateString("vi-VN")}
+                    </p>
+                    <p>
+                      <span className="font-medium">Ngày cấp chứng nhận:</span>{" "}
+                      {new Date(dossierResult.certificateDate).toLocaleDateString("vi-VN")}
+                    </p>
+                    <p className="md:col-span-2">
+                      <span className="font-medium">Địa điểm giám định:</span>{" "}
+                      {dossierResult.inspectionLocation}
+                    </p>
+                    <p>
+                      <span className="font-medium">Số lượng cont 10:</span>{" "}
+                      {dossierResult.cout10}
+                    </p>
+                    <p>
+                      <span className="font-medium">Số lượng cont 20:</span>{" "}
+                      {dossierResult.cout20}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tàu rời:</span>{" "}
+                      {dossierResult.bulkShip ? "Có" : "Không"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Trạng thái chứng nhận:</span>{" "}
+                      <span
+                        className={`font-semibold ${dossierResult.certificateStatus === "PENDING"
+                            ? "text-orange-600"
+                            : "text-green-600"
+                          }`}
+                      >
+                        {dossierResult.certificateStatus === "PENDING"
+                          ? "Đang chờ"
+                          : dossierResult.certificateStatus}
+                      </span>
+                    </p>
+                    {dossierResult.files && (
+                      <p className="md:col-span-2">
+                        <span className="font-medium">Tài liệu đính kèm:</span>{" "}
+                        <a
+                          href={dossierResult.files}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Xem tệp
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4 text-right">
+                    Cập nhật lần cuối:{" "}
+                    {new Date(dossierResult.updatedAt).toLocaleDateString("vi-VN")}{" "}
+                    {new Date(dossierResult.updatedAt).toLocaleTimeString("vi-VN")}
+                  </p>
+                </div>
+              )}
+              {!isSearchingDossier && !dossierResult && !searchError && (
+                <p className="text-gray-500 text-center text-sm">
+                  Vui lòng nhập thông tin để tra cứu hồ sơ.
+                </p>
+              )}
+            </div>
           </div>
-          {/* End New Customer Lookup Section */}
         </div>
 
-        {/* Footer */}
         <Footer />
       </div>
 
       <style jsx>{`
-        /* Custom Keyframes for Animations */
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes bounceSlow {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .animate-fade-in-up.delay-100 {
-          animation-delay: 0.1s;
-        }
-        .animate-fade-in-up.delay-200 {
-          animation-delay: 0.2s;
-        }
-
-        .animate-bounce-slow {
-          animation: bounceSlow 2s infinite ease-in-out;
-        }
+        /* Removed custom keyframes for now, relying more on Tailwind defaults and simpler transitions */
+        /* If specific animations are desired, they can be re-added with subtle designs */
       `}</style>
     </>
   );

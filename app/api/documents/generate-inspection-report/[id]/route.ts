@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8080";
+
+
+const BACKEND_URL  = process.env.BACKEND_URL  || "http://localhost:8080";
 
 export async function GET(
   req: Request,
@@ -11,7 +13,7 @@ export async function GET(
     console.log("Generating inspection report for ID:", id);
 
     const springResponse = await fetch(
-      `${API_BASE_URL}/api/documents/generate-inspection-report/${id}`,
+      `${BACKEND_URL}/api/documents/generate-inspection-report/${id}`,
       {
         method: "GET",
       }

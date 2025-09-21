@@ -10,6 +10,7 @@ import { ReceiptFormSection } from "./ReceiptFormSection";
 import { CompletionSection } from "./CompletionSection";
 import { CustomerProfileSection } from "./CustomerProfileSection";
 import { MachineryFormSection } from "./MachineSectionForm";
+import LoadingSpinner from "./document/LoadingSpinner";
 
 interface MachineryFormData {
   receiptId: number;
@@ -173,10 +174,7 @@ const InspectionForm: React.FC = () => {
 
   if (loading && !customer) {
     return (
-      <div className="inspection-form-loading">
-        <div className="spinner"></div>
-        <p>Đang tải...</p>
-      </div>
+     <LoadingSpinner />
     );
   }
 

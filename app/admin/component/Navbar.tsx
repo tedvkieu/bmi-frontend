@@ -23,6 +23,30 @@ const Navbar: React.FC<NavbarProps> = ({
   isMobile,
   onPageChange,
 }) => {
+  const [role, setRole] = useState<string | null>(null);
+  const [stats, setStats] = useState<{
+    users?: number;
+    customers?: number;
+    dossiers?: number;
+    evaluationResults?: number;
+  }>({});
+
+  useEffect(() => {
+    const r = authApi.getRoleFromToken();
+    setRole(r);
+
+   fetch("/api/misc")
+    .then((res) => res.json())
+    .then((data) => {
+      setStats({
+        users: data.users,
+        customers: data.customers,
+        dossiers: data.dossiers,
+        evaluationResults: data.evaluationResults,
+      });
+    })
+  }, []);
+
   const navItems = [
     {
       key: "dashboard",
@@ -35,29 +59,28 @@ const Navbar: React.FC<NavbarProps> = ({
       key: "documents",
       icon: FileText,
       label: "Hồ sơ giám định",
-      badge: "24",
+      badge: stats.dossiers ? String(stats.dossiers) : null,
       href: "/admin/ho-so",
     },
-
     {
       key: "evaluation",
       icon: FileText,
       label: "Phiếu đánh giá hồ sơ",
-      badge: null,
+      badge: stats.evaluationResults ? String(stats.evaluationResults) : null,
       href: "/admin/evaluation",
     },
     {
       key: "clients",
       icon: Building,
       label: "Khách hàng",
-      badge: null,
+      badge: stats.customers ? String(stats.customers) : null,
       href: "/admin/khach-hang",
     },
     {
       key: "users",
       icon: Users,
       label: "Quản lý nhân viên",
-      badge: null,
+      badge: stats.users ? String(stats.users) : null,
       href: "/admin/quan-ly-nhan-vien",
     },
     {
@@ -76,17 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({
     },
   ];
 
-  const [role, setRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    const r = authApi.getRoleFromToken();
-    setRole(r);
-  }, []);
-
-  const shouldHideItem = (
-    itemKey: string,
-    userRole: string | null
-  ): boolean => {
+  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
     if (!userRole || userRole === "ADMIN") return false;
     if (userRole === "MANAGER") {
       return itemKey === "settings";
@@ -113,7 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({
           : "w-16"
       }`}
     >
-      {/* Logo - Fixed at top */}
+      {/* Logo */}
       <div className="p-5 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -132,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Navigation - Scrollable area */}
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <div className="space-y-1">
           {filteredNavItems.map((item) => (

@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "./document/LoadingSpinner";
 
 interface Customer {
   customerId: number;
@@ -238,9 +239,7 @@ const CustomersContent = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
+      <LoadingSpinner />
     );
   }
 
@@ -251,7 +250,7 @@ const CustomersContent = () => {
   return (
     <div className="space-y-6">
       {/* Search and Filter Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-800">
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="relative flex-1">
@@ -273,7 +272,7 @@ const CustomersContent = () => {
               <select
                 value={customerTypeFilter}
                 onChange={(e) => handleCustomerTypeFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
+                className="border border-gray-300  rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
               >
                 <option value="all">Tất cả loại KH</option>
                 <option value="USER">Cá nhân</option>

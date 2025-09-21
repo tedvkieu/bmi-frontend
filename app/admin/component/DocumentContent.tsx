@@ -13,7 +13,7 @@ import DocumentViewModal from "./document/DocumentViewModal";
 import toast from "react-hot-toast";
 import ConfirmationModal from "./document/ConfirmationModal"; // Import the new ConfirmationModal
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8080";
+const BACKEND_URL  = process.env.BACKEND_URL  || "http://localhost:8080";
 const DocumentsContent = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -158,7 +158,7 @@ const DocumentsContent = () => {
       }
 
       // 3. Gọi API export để lấy file (blob)
-      const fileRes = await fetch(`${API_BASE_URL}/api/exports/${fileName}`);
+      const fileRes = await fetch(`${BACKEND_URL}/api/exports/${fileName}`);
 
       if (!fileRes.ok) {
         throw new Error("Không thể tải file");

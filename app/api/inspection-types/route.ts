@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const BACKEND_API = `${process.env.API_BASE_URL}/api/inspection-types`;
+    const BACKEND_API = `${process.env.BACKEND_URL }/api/inspection-types`;
     const token = request.cookies.get("token")?.value;
     const res = await fetch(BACKEND_API, {
       method: "GET",

@@ -46,7 +46,7 @@ const FormInput: React.FC<FormInputProps> = ({
                     onChange={onChange}
                     placeholder={placeholder}
                     required={required}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${icon ? "pl-10" : ""
+                    className={`w-full text-black px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${icon ? "pl-10" : ""
                         } ${error
                             ? "border-red-300 bg-red-50"
                             : "border-gray-300 focus:border-blue-500"

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authApi, User } from "../../services/authApi";
 
+
 const UserMenu: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,10 @@ const UserMenu: React.FC = () => {
         authApi.clearAuthData();
         router.push("/auth/login");
     };
+
+    const showProfile = () => {
+        router.push("/profile");
+    }
 
     if (!user) return null;
 
@@ -54,7 +59,7 @@ const UserMenu: React.FC = () => {
 
                     {/* Dropdown */}
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                        <div className="p-4 border-b border-gray-200">
+                        <div onClick={showProfile} className="p-4 border-b border-gray-200 hover:bg-gray-200 cursor-pointer">
                             <p className="font-medium text-gray-900">{user.fullName}</p>
                             <p className="text-sm text-gray-500">{user.email}</p>
                             <p className="text-sm text-gray-500">{user.role}</p>

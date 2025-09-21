@@ -1,4 +1,4 @@
-const BASE_URL = process.env.API_BASE_URL || "http://localhost:8080";
+const BASE_URL = process.env.BACKEND_URL  || "http://localhost:8080";
 
 export async function proxyRequest(request: Request, targetPath: string) {
   const url = `${BASE_URL}${targetPath}`;

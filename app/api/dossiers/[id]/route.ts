@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const BACKEND_URL  =
+  process.env.NEXT_PUBLIC_BACKEND_URL  || "http://localhost:8080";
 
 // GET /api/receipts/[id]
 export async function GET(
@@ -14,7 +14,7 @@ export async function GET(
     const { id } = await params;
     const token = req.cookies.get("token")?.value;
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
+    const springResponse = await fetch(`${BACKEND_URL}/api/dossiers/${id}`, {
       method: "GET",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -50,7 +50,7 @@ export async function PUT(
     const body = await req.json(); // Lấy request body từ client
     const token = req.cookies.get("token")?.value;
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
+    const springResponse = await fetch(`${BACKEND_URL}/api/dossiers/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export async function DELETE(
     const { id } = await params;
     const token = req.cookies.get("token")?.value;
 
-    const springResponse = await fetch(`${API_BASE_URL}/api/dossiers/${id}`, {
+    const springResponse = await fetch(`${BACKEND_URL}/api/dossiers/${id}`, {
       method: "DELETE",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -5,6 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 export async function GET(req: NextRequest) {
   try {
     const registerNo = req.nextUrl.searchParams.get("registerNo");
+    const certificateDate = req.nextUrl.searchParams.get("certificateDate");
 
     if (!registerNo) {
       return NextResponse.json(
@@ -13,15 +14,22 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Build query string động
+    const queryParams = new URLSearchParams();
+    queryParams.append("registerNo", registerNo);
+    if (certificateDate) {
+      queryParams.append("certificateDate", certificateDate);
+    }
+
     // Gọi sang Spring Boot API
     const res = await fetch(
-      `${BACKEND_URL}/api/dossiers/search?registerNo=${registerNo}`,
+      `${BACKEND_URL}/api/dossiers/searchByRegisterNoAndCertificateDate?${queryParams.toString()}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-        cache: "no-store", // tránh cache khi proxy
+        cache: "no-store",
       }
     );
 

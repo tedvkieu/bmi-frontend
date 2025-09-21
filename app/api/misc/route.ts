@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API = `${process.env.BACKEND_URL }/api/inspection-files`;
+const BACKEND_URL  =
+  process.env.NEXT_PUBLIC_BACKEND_URL  || "http://localhost:8080";
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const body = await req.json();
+    const token = req.cookies.get("token")?.value;
 
-    // Gọi trực tiếp sang BE Spring Boot
     const springResponse = await fetch(
-      BACKEND_API,
+      `${BACKEND_URL}/api/stats`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(body),
       }
     );
 

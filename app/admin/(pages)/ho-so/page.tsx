@@ -1,4 +1,3 @@
-// app/tai-lieu-giam-dinh/page.tsx
 import React from "react";
 import DocumentsContent from "../../component/DocumentContent";
 import AdminLayout from "../../component/AdminLayout";

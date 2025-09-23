@@ -8,8 +8,6 @@ import {
   FaEnvelope,
   FaMapMarkerAlt,
   FaBuilding,
-  FaCalendarAlt,
-  FaFileContract,
 } from "react-icons/fa";
 import BannerClient from "./components/BannerClient";
 import Footer from "./components/Footer";
@@ -75,7 +73,9 @@ export default function ContactPage() {
     });
   };
 
-  const handleDossierLookupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDossierLookupChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setDossierLookupFormData({
       ...dossierLookupFormData,
       [e.target.name]: e.target.value,
@@ -184,7 +184,8 @@ export default function ContactPage() {
       <NavbarClient onScrollToContact={handleScrollToContact} />
       <div className="fixed left-4 bottom-6 flex flex-col space-y-3 z-50">
         <div className="bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md shadow-lg relative max-w-[200px]">
-          Nếu cần hỗ trợ upload file, vui lòng liên hệ qua Zalo hoặc số điện thoại để được hướng dẫn.
+          Nếu cần hỗ trợ upload file, vui lòng liên hệ qua Zalo hoặc số điện
+          thoại để được hướng dẫn.
           <div className="absolute left-4 -bottom-1.5 w-2.5 h-2.5 bg-blue-700 rotate-45"></div>
         </div>
 
@@ -218,11 +219,10 @@ export default function ContactPage() {
       <div className="min-h-screen bg-gray-50 pb-12">
         <header className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-12 shadow-md">
           <div className="container mx-auto px-4 text-center">
-            <h1 className="text-3xl font-bold mb-2">
-              LIÊN HỆ VỚI CHÚNG TÔI
-            </h1>
+            <h1 className="text-3xl font-bold mb-2">LIÊN HỆ VỚI CHÚNG TÔI</h1>
             <p className="text-blue-100 text-base opacity-90">
-              Chúng tôi luôn sẵn lòng lắng nghe và hỗ trợ bạn một cách nhanh chóng.
+              Chúng tôi luôn sẵn lòng lắng nghe và hỗ trợ bạn một cách nhanh
+              chóng.
             </p>
           </div>
         </header>
@@ -238,7 +238,9 @@ export default function ContactPage() {
               <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
                 THÔNG TIN LIÊN HỆ CÔNG TY
               </h2>
-              <div className="space-y-6 text-sm"> {/* Reduced text size */}
+              <div className="space-y-6 text-sm">
+                {" "}
+                {/* Reduced text size */}
                 <div className="flex items-start space-x-4">
                   <div className="text-blue-600 p-2 rounded-full flex-shrink-0 bg-blue-50">
                     <FaBuilding className="w-4 h-4" /> {/* Smaller icon */}
@@ -258,7 +260,6 @@ export default function ContactPage() {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-start space-x-4">
                   <div className="text-green-600 p-2 rounded-full flex-shrink-0 bg-green-50">
                     <FaMapMarkerAlt className="w-4 h-4" /> {/* Smaller icon */}
@@ -275,9 +276,7 @@ export default function ContactPage() {
                         <p className="text-gray-600">
                           Số 13, đường số 3, Phường An Khánh, TP. Thủ Đức
                         </p>
-                        <p className="text-gray-600">
-                          Thành phố Hồ Chí Minh
-                        </p>
+                        <p className="text-gray-600">Thành phố Hồ Chí Minh</p>
                       </div>
                       <div>
                         <p className="font-medium text-gray-700">
@@ -293,7 +292,6 @@ export default function ContactPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-4">
                   <div className="text-blue-600 p-2 rounded-full flex-shrink-0 bg-blue-50">
                     <FaPhoneAlt className="w-4 h-4" /> {/* Smaller icon */}
@@ -308,7 +306,6 @@ export default function ContactPage() {
                     </a>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-4">
                   <div className="text-red-600 p-2 rounded-full flex-shrink-0 bg-red-50">
                     <FaEnvelope className="w-4 h-4" /> {/* Smaller icon */}
@@ -334,7 +331,9 @@ export default function ContactPage() {
               <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
                 GỬI LIÊN HỆ CHO CHÚNG TÔI
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-5"> {/* Reduced spacing */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {" "}
+                {/* Reduced spacing */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
@@ -373,7 +372,6 @@ export default function ContactPage() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label
                     htmlFor="email"
@@ -392,7 +390,6 @@ export default function ContactPage() {
                     placeholder="nguyenvana@gmail.com"
                   />
                 </div>
-
                 <div>
                   <label
                     htmlFor="subject"
@@ -414,7 +411,6 @@ export default function ContactPage() {
                     <option value="other">Khác</option>
                   </select>
                 </div>
-
                 <div>
                   <label
                     htmlFor="message"
@@ -515,7 +511,9 @@ export default function ContactPage() {
                 </div>
               )}
               {dossierResult && (
-                <div className="bg-blue-50 border border-blue-100 rounded-md p-5 text-sm"> {/* Reduced padding and text size */}
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-5 text-sm">
+                  {" "}
+                  {/* Reduced padding and text size */}
                   <p className="text-gray-800 text-base font-semibold mb-3">
                     Hồ sơ:{" "}
                     <span className="text-blue-700">
@@ -549,11 +547,15 @@ export default function ContactPage() {
                     </p>
                     <p>
                       <span className="font-medium">Ngày giám định:</span>{" "}
-                      {new Date(dossierResult.inspectionDate).toLocaleDateString("vi-VN")}
+                      {new Date(
+                        dossierResult.inspectionDate
+                      ).toLocaleDateString("vi-VN")}
                     </p>
                     <p>
                       <span className="font-medium">Ngày cấp chứng nhận:</span>{" "}
-                      {new Date(dossierResult.certificateDate).toLocaleDateString("vi-VN")}
+                      {new Date(
+                        dossierResult.certificateDate
+                      ).toLocaleDateString("vi-VN")}
                     </p>
                     <p className="md:col-span-2">
                       <span className="font-medium">Địa điểm giám định:</span>{" "}
@@ -572,12 +574,15 @@ export default function ContactPage() {
                       {dossierResult.bulkShip ? "Có" : "Không"}
                     </p>
                     <p>
-                      <span className="font-medium">Trạng thái chứng nhận:</span>{" "}
+                      <span className="font-medium">
+                        Trạng thái chứng nhận:
+                      </span>{" "}
                       <span
-                        className={`font-semibold ${dossierResult.certificateStatus === "PENDING"
+                        className={`font-semibold ${
+                          dossierResult.certificateStatus === "PENDING"
                             ? "text-orange-600"
                             : "text-green-600"
-                          }`}
+                        }`}
                       >
                         {dossierResult.certificateStatus === "PENDING"
                           ? "Đang chờ"
@@ -600,8 +605,12 @@ export default function ContactPage() {
                   </div>
                   <p className="text-xs text-gray-500 mt-4 text-right">
                     Cập nhật lần cuối:{" "}
-                    {new Date(dossierResult.updatedAt).toLocaleDateString("vi-VN")}{" "}
-                    {new Date(dossierResult.updatedAt).toLocaleTimeString("vi-VN")}
+                    {new Date(dossierResult.updatedAt).toLocaleDateString(
+                      "vi-VN"
+                    )}{" "}
+                    {new Date(dossierResult.updatedAt).toLocaleTimeString(
+                      "vi-VN"
+                    )}
                   </p>
                 </div>
               )}

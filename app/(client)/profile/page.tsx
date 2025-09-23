@@ -12,14 +12,12 @@ import {
   KeyIcon, // For Change Password
   MagnifyingGlassIcon, // For Dossier Search
   FolderIcon, // For Dossier Management
-  CalendarDaysIcon, // For Transaction History - not used in this version but kept for context
   HomeModernIcon, // For Overview
   BuildingOffice2Icon, // For Address if needed
 } from "@heroicons/react/24/outline";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import NavbarClient from "../components/NavbarClient"; // Assuming this is your main navigation bar
 
 // --- Dossier Result  ---
 interface DossierResult {
@@ -45,17 +43,6 @@ interface DossierResult {
   updatedAt: string;
 }
 
-// --- Dummy Data (for demonstration) ---
-interface Dossier {
-  id: string;
-  type: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  submissionDate: string;
-  lastUpdate: string;
-}
-
-
-
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,15 +66,18 @@ export default function ProfilePage() {
 
   const role = authApi.getRoleFromToken();
 
-
   const handleGoToHomePage = () => {
-    if (role === "ADMIN" || role === "ISO_STAFF" || role === "IMPORTER" || role === "DOCUMENT_STAFF") {
+    if (
+      role === "ADMIN" ||
+      role === "ISO_STAFF" ||
+      role === "IMPORTER" ||
+      role === "DOCUMENT_STAFF"
+    ) {
       router.push("/admin");
     } else if (role === "CUSTOMER") {
       router.push("/");
     }
-
-  }
+  };
 
   if (loading) {
     return (
@@ -124,16 +114,17 @@ export default function ProfilePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-blue-900/60 to-blue-600/40" />
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <button onClick={handleGoToHomePage} className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 
+          <button
+            onClick={handleGoToHomePage}
+            className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 
   bg-white text-gray-800 text-sm font-semibold rounded-lg shadow 
-  ">
+  "
+          >
             <IoIosArrowRoundBack className="text-xl" />
             Trang chủ
           </button>
-
         </div>
       </div>
-
       {/* Content (overlay) */}
       <div className="relative -mt-36 md:-mt-40 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[600px]">
@@ -201,8 +192,7 @@ export default function ProfilePage() {
             {selectedSection === "dossiers" && (
               <span className="text-blue-600">Comming</span>
             )}
-            {selectedSection === "dossier-search" && <DossierSearchSection />}
-            {" "}
+            {selectedSection === "dossier-search" && <DossierSearchSection />}{" "}
             {/* New section for editing profile */}
           </div>
         </div>
@@ -306,106 +296,110 @@ function OverviewSection({ user, router }: { user: User; router: any }) {
   );
 }
 
-function DossierManagementSection({ dossiers }: { dossiers: Dossier[] }) {
-  return (
-    <div className="animate-fade-in">
-      <h3 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b-2 border-blue-600">
-        Quản lý hồ sơ
-      </h3>
-      {dossiers.length === 0 ? (
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 text-blue-700">
-          <p className="font-medium text-lg">
-            Bạn chưa có hồ sơ nào. Hãy tạo hồ sơ mới!
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-lg shadow-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-blue-600 text-white">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                >
-                  Mã Hồ sơ
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                >
-                  Loại
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                >
-                  Trạng thái
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                >
-                  Ngày nộp
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
-                >
-                  Cập nhật cuối
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Chi tiết</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {dossiers.map((dossier) => (
-                <tr key={dossier.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {dossier.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {dossier.type}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${dossier.status === "APPROVED"
-                        ? "bg-green-100 text-green-800"
-                        : dossier.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
-                        }`}
-                    >
-                      {dossier.status === "APPROVED"
-                        ? "Đã duyệt"
-                        : dossier.status === "PENDING"
-                          ? "Đang chờ"
-                          : "Từ chối"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {dossier.submissionDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {dossier.lastUpdate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a
-                      href="#"
-                      className="text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      Chi tiết
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+// function DossierManagementSection({ dossiers }: { dossiers: Dossier[] }) {
+//   return (
+//     <div className="animate-fade-in">
+//       <h3 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b-2 border-blue-600">
+//         Quản lý hồ sơ
+//       </h3>
+//       {dossiers.length === 0 ? (
+//         <div className="bg-blue-50 border-l-4 border-blue-400 p-4 text-blue-700">
+//           <p className="font-medium text-lg">
+//             Bạn chưa có hồ sơ nào. Hãy tạo hồ sơ mới!
+//           </p>
+//         </div>
+//       ) : (
+//         <div className="overflow-x-auto rounded-lg shadow-lg">
+//           <table className="min-w-full divide-y divide-gray-200">
+//             <thead className="bg-blue-600 text-white">
+//               <tr>
+//                 <th
+//                   scope="col"
+//                   className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+//                 >
+//                   Mã Hồ sơ
+//                 </th>
+//                 <th
+//                   scope="col"
+//                   className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+//                 >
+//                   Loại
+//                 </th>
+//                 <th
+//                   scope="col"
+//                   className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+//                 >
+//                   Trạng thái
+//                 </th>
+//                 <th
+//                   scope="col"
+//                   className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+//                 >
+//                   Ngày nộp
+//                 </th>
+//                 <th
+//                   scope="col"
+//                   className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+//                 >
+//                   Cập nhật cuối
+//                 </th>
+//                 <th scope="col" className="relative px-6 py-3">
+//                   <span className="sr-only">Chi tiết</span>
+//                 </th>
+//               </tr>
+//             </thead>
+//             <tbody className="bg-white divide-y divide-gray-200">
+//               {dossiers.map((dossier) => (
+//                 <tr
+//                   key={dossier.id}
+//                   className="hover:bg-gray-50 transition-colors duration-150"
+//                 >
+//                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+//                     {dossier.id}
+//                   </td>
+//                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                     {dossier.type}
+//                   </td>
+//                   <td className="px-6 py-4 whitespace-nowrap text-sm">
+//                     <span
+//                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+//                         dossier.status === "APPROVED"
+//                           ? "bg-green-100 text-green-800"
+//                           : dossier.status === "PENDING"
+//                           ? "bg-yellow-100 text-yellow-800"
+//                           : "bg-red-100 text-red-800"
+//                       }`}
+//                     >
+//                       {dossier.status === "APPROVED"
+//                         ? "Đã duyệt"
+//                         : dossier.status === "PENDING"
+//                         ? "Đang chờ"
+//                         : "Từ chối"}
+//                     </span>
+//                   </td>
+//                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                     {dossier.submissionDate}
+//                   </td>
+//                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                     {dossier.lastUpdate}
+//                   </td>
+//                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+//                     <a
+//                       href="#"
+//                       className="text-blue-600 hover:text-blue-700 hover:underline"
+//                     >
+//                       Chi tiết
+//                     </a>
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
 
 function DossierSearchSection() {
   const [dossierLookupFormData, setDossierLookupFormData] = useState({
@@ -419,7 +413,9 @@ function DossierSearchSection() {
   );
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleDossierLookupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDossierLookupChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setDossierLookupFormData({
       ...dossierLookupFormData,
       [e.target.name]: e.target.value,
@@ -482,7 +478,10 @@ function DossierSearchSection() {
       <h3 className="text-2xl font-bold text-gray-800 mb-8 pb-4 border-b-2 border-blue-600">
         Tra cứu hồ sơ
       </h3>
-      <form onSubmit={handleDossierLookupSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+      <form
+        onSubmit={handleDossierLookupSubmit}
+        className="space-y-6 bg-white p-6 rounded-lg shadow-md"
+      >
         <div>
           <label
             htmlFor="registerNo"
@@ -549,7 +548,10 @@ function DossierSearchSection() {
             </>
           ) : (
             <>
-              <MagnifyingGlassIcon className="-ml-1 mr-3 h-5 w-5" aria-hidden="true" />
+              <MagnifyingGlassIcon
+                className="-ml-1 mr-3 h-5 w-5"
+                aria-hidden="true"
+              />
               Tìm kiếm hồ sơ
             </>
           )}
@@ -639,10 +641,11 @@ function DossierSearchSection() {
               <p>
                 <span className="font-semibold">Trạng thái chứng nhận:</span>{" "}
                 <span
-                  className={`font-bold ${dossierResult.certificateStatus === "PENDING"
-                    ? "text-orange-600"
-                    : "text-green-700"
-                    }`}
+                  className={`font-bold ${
+                    dossierResult.certificateStatus === "PENDING"
+                      ? "text-orange-600"
+                      : "text-green-700"
+                  }`}
                 >
                   {dossierResult.certificateStatus === "PENDING"
                     ? "Đang chờ"

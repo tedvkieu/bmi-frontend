@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaPhoneAlt, FaEnvelope, FaClock, FaMapMarkerAlt } from 'react-icons/fa'; // Added FaMapMarkerAlt
+import React from "react";
+import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa"; // Added FaMapMarkerAlt
 
 const Footer = () => {
   return (
@@ -15,9 +15,12 @@ const Footer = () => {
             <h3 className="text-2xl font-bold text-white mb-3 tracking-wide">
               BẢO MINH INSPECTION
             </h3>
-            <p className="text-blue-400 text-lg mb-6 font-semibold italic">Chuyên nghiệp - Uy tín - Chất lượng</p>
+            <p className="text-blue-400 text-lg mb-6 font-semibold italic">
+              Chuyên nghiệp - Uy tín - Chất lượng
+            </p>
             <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-              CÔNG TY CỔ PHẦN DỊCH VỤ VÀ GIÁM ĐỊNH BẢO MINH tự hào là đối tác tin cậy, mang đến các giải pháp giám định toàn diện và hiệu quả.
+              CÔNG TY CỔ PHẦN DỊCH VỤ VÀ GIÁM ĐỊNH BẢO MINH tự hào là đối tác
+              tin cậy, mang đến các giải pháp giám định toàn diện và hiệu quả.
             </p>
           </div>
 
@@ -31,20 +34,21 @@ const Footer = () => {
                 href="tel:0911768008"
                 className="text-gray-300 hover:text-blue-400 transition-colors flex items-center justify-center md:justify-start font-medium group"
               >
-                <FaPhoneAlt className="mr-3 text-blue-500 group-hover:scale-110 transition-transform" />{' '}
+                <FaPhoneAlt className="mr-3 text-blue-500 group-hover:scale-110 transition-transform" />{" "}
                 <span>0911.76.80.08</span>
               </a>
               <a
                 href="mailto:info@baominhinspection.com"
                 className="text-gray-300 hover:text-blue-400 transition-colors flex items-center justify-center md:justify-start font-medium group"
               >
-                <FaEnvelope className="mr-3 text-blue-500 group-hover:scale-110 transition-transform" />{' '}
+                <FaEnvelope className="mr-3 text-blue-500 group-hover:scale-110 transition-transform" />{" "}
                 <span>info@baominhinspection.com</span>
               </a>
               <p className="text-gray-300 flex items-start justify-center md:justify-start font-medium pt-2">
-                <FaMapMarkerAlt className="mr-3 text-blue-500 mt-1 flex-shrink-0" />{' '}
+                <FaMapMarkerAlt className="mr-3 text-blue-500 mt-1 flex-shrink-0" />{" "}
                 <span>
-                  Tầng 4, Tòa nhà Indochina Riverside Tower, 74 Bạch Đằng, Quận Hải Châu, TP. Đà Nẵng
+                  Tầng 4, Tòa nhà Indochina Riverside Tower, 74 Bạch Đằng, Quận
+                  Hải Châu, TP. Đà Nẵng
                 </span>
               </p>
             </div>
@@ -53,7 +57,8 @@ const Footer = () => {
 
         <div className="border-t border-gray-700 mt-12 pt-8 text-center">
           <p className="text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} Bảo Minh Inspection. All rights reserved.
+            &copy; {new Date().getFullYear()} Bảo Minh Inspection. All rights
+            reserved.
           </p>
         </div>
       </div>

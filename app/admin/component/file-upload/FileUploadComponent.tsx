@@ -532,7 +532,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
     formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("/api/customers/upload-excel", {
+      const res = await fetch("/api/dossiers/upload-excel", {
         method: "POST",
         body: formData,
       });

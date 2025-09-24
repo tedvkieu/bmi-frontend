@@ -74,7 +74,7 @@ export default function ProfilePage() {
       role === "DOCUMENT_STAFF"
     ) {
       router.push("/admin");
-    } else if (role === "CUSTOMER") {
+    } else if (role === "SERVICE_MANAGER" || role === "IMPORTER") {
       router.push("/");
     }
   };
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-xl font-bold">Profile</h2>
                   <p className="text-sm text-blue-300">
-                    {user.role === "CUSTOMER" ? "Khách hàng" : user.role}
+                    {user.role === "SERVICE_MANAGER" ? "Quản lý dịch vụ" : user.role === "IMPORTER" ? "Người nhập khẩu" : user.role}
                   </p>
                 </div>
               </div>
@@ -277,12 +277,12 @@ function OverviewSection({ user, router }: { user: User; router: any }) {
         <InfoCard
           icon={<PhoneIcon className="w-6 h-6 text-blue-600" />}
           label="Số điện thoại"
-          value="0912 345 678 (Dummy)" // Dummy data
+          value={user.phoneNumber || "Chưa cập nhật"} 
         />
         <InfoCard
           icon={<BuildingOffice2Icon className="w-6 h-6 text-blue-600" />}
           label="Địa chỉ"
-          value="TP. Hồ Chí Minh (Dummy)" // Dummy data
+          value={user.address || "Chưa cập nhật"} 
         />
       </div>
       <button

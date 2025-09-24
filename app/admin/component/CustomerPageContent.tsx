@@ -16,9 +16,14 @@ import {
   MoreVertical,
   ChevronLeft,
   ChevronRight,
+  UserCheck, // New icon for unapproved customers
+  UserX, // New icon for rejecting customers
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "./document/LoadingSpinner";
+import { authApi } from "../../services/authApi"; // Import authApi to get user role
+import { customerApi, UnactiveCustomer } from "../services/customerApi";
+import toast from "react-hot-toast";
 
 interface Customer {
   customerId: number;
@@ -28,7 +33,7 @@ interface Customer {
   dob: string | null;
   phone: string;
   note: string;
-  customerType: "IMPORTER" | "SERVICE_MANAGER";
+  customerType: "IMPORTER" | "SERVICE_MANAGER"; // Ensure these match your backend
   createdAt: string;
   updatedAt: string;
 }
@@ -72,29 +77,59 @@ const CustomersContent = () => {
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 10;
 
+  // New state for unapproved customers feature
+  const [unapprovedCustomers, setUnapprovedCustomers] = useState<UnactiveCustomer[]>([]);
+  const [unactiveCount, setUnactiveCount] = useState(0);
+  const [isUnapprovedModalOpen, setIsUnapprovedModalOpen] = useState<boolean>(false);
+  const [loadingUnapproved, setLoadingUnapproved] = useState<boolean>(false);
+  const [unapprovedError, setUnapprovedError] = useState<string>("");
+
   const router = useRouter();
+
+  // Get current user role
+  const roleFromToken = authApi.getRoleFromToken() as string | null;
+  const isAdminOrManager = roleFromToken === "ADMIN" || roleFromToken === "MANAGER";
+
+  const fetchUnactiveCount = useCallback(async () => {
+  try {
+    setLoadingUnapproved(true);
+    setUnapprovedError("");
+    const token = authApi.getToken();
+    if (!token) throw new Error("No authentication token");
+
+    const res = await fetch(`/api/customers/unactive/count`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to fetch unactive count");
+    }
+
+    const count = await res.json();
+    setUnactiveCount(count); // Lưu vào state
+  } catch (error: any) {
+    console.error("Error fetching unactive count:", error);
+    setUnapprovedError(error.message);
+  } finally {
+    setLoadingUnapproved(false);
+  }
+}, []);
+
 
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        size: pageSize.toString(),
-      });
-
-      if (searchTerm) {
-        params.append("search", searchTerm);
-      }
-      if (customerTypeFilter !== "all") {
-        params.append("customerType", customerTypeFilter);
-      }
-
-      const response = await fetch(`/api/customers?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
-
-      const data: CustomerResponse = await response.json();
+      // Use customerApi for fetching customers
+      const data: CustomerResponse = await customerApi.getAllCustomers(
+        currentPage,
+        pageSize,
+        searchTerm,
+        customerTypeFilter
+      );
       setCustomers(data.content);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
@@ -103,11 +138,62 @@ const CustomersContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, customerTypeFilter, pageSize]); // ⚡ dependencies
+  }, [currentPage, searchTerm, customerTypeFilter, pageSize]);
 
   useEffect(() => {
     fetchCustomers();
+  fetchUnactiveCount();
   }, [fetchCustomers]);
+
+
+  // New function to load unapproved customers
+  const loadUnapprovedCustomers = useCallback(async () => {
+    setLoadingUnapproved(true);
+    setUnapprovedError("");
+    try {
+      const list = await customerApi.getUnactiveCustomers();
+      setUnapprovedCustomers(list);
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Không thể tải danh sách khách hàng chờ duyệt");
+    } finally {
+      setLoadingUnapproved(false);
+    }
+  }, []);
+
+  // New functions for unapproved customers modal
+  const openUnapprovedCustomersModal = () => {
+    loadUnapprovedCustomers(); // Load data when opening
+    setIsUnapprovedModalOpen(true);
+  };
+
+  const closeUnapprovedCustomersModal = () => {
+    setIsUnapprovedModalOpen(false);
+    setUnapprovedCustomers([]); // Clear data on close
+    fetchCustomers(); // Optionally refresh main customer list after closing unapproved modal
+  };
+
+  const handleApproveCustomer = async (customerId: number) => {
+    setUnapprovedError("");
+    try {
+      await customerApi.approveCustomer(customerId);
+      await loadUnapprovedCustomers(); // Reload list after approval
+      toast.success("Khách hàng đã được duyệt thành công!"); // Simple alert for feedback
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Duyệt khách hàng thất bại");
+    }
+  };
+
+  const handleRejectCustomer = async (customerId: number) => {
+    setUnapprovedError("");
+    try {
+      await customerApi.rejectCustomer(customerId);
+      await loadUnapprovedCustomers(); // Reload list after rejection
+      toast.success("Khách hàng đã bị từ chối."); // Simple alert for feedback
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Từ chối khách hàng thất bại");
+    }
+  };
+
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -132,16 +218,18 @@ const CustomersContent = () => {
 
   const getCustomerTypeColor = (type: string) => {
     switch (type) {
-      case "USER":
+      case "IMPORTER": // Using "IMPORTER" and "SERVICE_MANAGER" as examples
         return "bg-blue-100 text-blue-800";
-      case "BUSINESS":
+      case "SERVICE_MANAGER":
         return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
+
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("vi-VN", {
       day: "2-digit",
@@ -272,19 +360,34 @@ const CustomersContent = () => {
               <select
                 value={customerTypeFilter}
                 onChange={(e) => handleCustomerTypeFilter(e.target.value)}
-                className="border border-gray-300  rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
+                className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
               >
                 <option value="all">Tất cả loại KH</option>
-                <option value="USER">Cá nhân</option>
-                <option value="BUSINESS">Doanh nghiệp</option>
+                {/* Ensure these values match your backend's customer types */}
+                <option value="IMPORTER">Nhà nhập khẩu</option>
+                <option value="SERVICE_MANAGER">Quản lý dịch vụ</option>
               </select>
             </div>
           </div>
 
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium">
-            <Plus size={16} />
-            <span>Thêm khách hàng mới</span>
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+          {isAdminOrManager && (
+  <button
+    onClick={openUnapprovedCustomersModal}
+    className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1"
+  >
+    <UserCheck size={16} />
+    <span>
+      Duyệt tài khoản {loadingUnapproved ? "..." : `(${unactiveCount})`}
+    </span>
+  </button>
+)}
+
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1">
+              <Plus size={16} />
+              <span>Thêm khách hàng mới</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -348,7 +451,10 @@ const CustomersContent = () => {
                 <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600">
                   <Eye size={16} />
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600">
+                <button
+                  onClick={() => handleClickPage(customer.customerId)}
+                  className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
+                >
                   <FileText size={16} />
                 </button>
                 <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600">
@@ -492,6 +598,87 @@ const CustomersContent = () => {
           <p className="text-gray-500">
             Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
           </p>
+        </div>
+      )}
+
+
+      {/* Unapproved Customers Modal */}
+      {isUnapprovedModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm" onClick={closeUnapprovedCustomersModal} />
+          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-t-lg flex items-center justify-between">
+              <h4 className="text-lg font-semibold">Danh sách khách hàng chờ duyệt</h4>
+              <button onClick={closeUnapprovedCustomersModal} className="text-white/80 hover:text-white">✕</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              {loadingUnapproved ? (
+                <div className="flex justify-center items-center h-48">
+                  <LoadingSpinner />
+                </div>
+              ) : unapprovedError ? (
+                <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                  {unapprovedError}
+                </div>
+              ) : unapprovedCustomers.length === 0 ? (
+                <div className="text-center py-12">
+                  <UserCheck size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Không có khách hàng nào chờ duyệt
+                  </h3>
+                  <p className="text-gray-500">
+                    Tất cả khách hàng đã được duyệt hoặc chưa có yêu cầu mới.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tên công ty</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Điện thoại</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Loại KH</th>
+                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {unapprovedCustomers.map((customer) => (
+                        <tr key={customer.customerId} className="hover:bg-blue-50 transition-colors duration-200">
+                          <td className="px-6 py-4 text-sm text-gray-900">{customer.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{customer.email}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{customer.phone}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{getCustomerTypeText(customer.customerType)}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={() => handleApproveCustomer(customer.customerId)}
+                                className="p-2.5 rounded-full text-green-600 hover:bg-green-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                                title="Duyệt"
+                              >
+                                <UserCheck size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleRejectCustomer(customer.customerId)}
+                                className="p-2.5 rounded-full text-red-600 hover:bg-red-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                                title="Từ chối"
+                              >
+                                <UserX size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end">
+              <button type={"button"} onClick={closeUnapprovedCustomersModal} className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200">Đóng</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

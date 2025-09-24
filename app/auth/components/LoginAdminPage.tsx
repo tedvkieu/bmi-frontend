@@ -7,7 +7,7 @@ import FormInput from "../components/FormInput";
 import { authApi, LoginRequest } from "../../services/authApi";
 import { MdHome } from "react-icons/md";
 
-const LoginPage: React.FC = () => {
+const LoginPageAdmin: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
@@ -79,13 +79,15 @@ const LoginPage: React.FC = () => {
         password: formData.password,
       };
 
-      const response = await authApi.login(loginData);
+      const response = await authApi.loginAdmin(loginData);
 
       authApi.saveAuthData(response);
 
       const role = authApi.getRoleFromToken();
 
-        router.push("/");
+      if (role === "ADMIN" || role === "ISO_STAFF" || role === "IMPORTER" || role === "DOCUMENT_STAFF") {
+        router.push("/admin");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setErrors({
@@ -100,7 +102,7 @@ const LoginPage: React.FC = () => {
     <div>
 
       <button
-        onClick={() => router.push('/')}
+        onClick={() => router.push('/admin')}
         className="absolute top-4 left-4 flex items-center gap-1 px-4 py-2 text-gray-800 text-xs font-semibold z-10" // Added z-10 for good measure
       >
         <MdHome className="text-2xl text-gray-600 hover:text-blue-500" size={26} />
@@ -259,4 +261,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default LoginPageAdmin;

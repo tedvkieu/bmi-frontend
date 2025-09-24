@@ -19,7 +19,7 @@ export default function ClientLayout({
   return (
     <AuthWrapper
       allowedRoles={[
-        "CUSTOMER",
+        "SERVICE_MANAGER",
         "ADMIN",
         "IMPORTER",
         "DOCUMENT_STAFF",

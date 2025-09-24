@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 
 type Period = "DAY" | "WEEK" | "MONTH" | "YEAR";
@@ -178,6 +179,7 @@ const ReportsClient: React.FC = () => {
             });
             if (!res.ok) throw new Error("Xuất Excel thất bại");
             const blob = await res.blob();
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -191,6 +193,7 @@ const ReportsClient: React.FC = () => {
             setLoading(false);
         }
     }
+
 
     const totalQuantity = React.useMemo(
         () => (totals?.totalQuantity ?? data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)),

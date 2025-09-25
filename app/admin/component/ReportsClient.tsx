@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { reportApi } from "../services/reportApi";
 
 type Period = "DAY" | "WEEK" | "MONTH" | "YEAR";
 
@@ -48,6 +49,17 @@ const ReportsClient: React.FC = () => {
     const [error, setError] = React.useState<string | null>(null);
     const [info, setInfo] = React.useState<string | null>(null);
     const [hasData, setHasData] = React.useState<boolean>(false);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+    type ToastType = "success" | "error" | "info";
+    type Toast = { id: number; message: string; type: ToastType };
+    const [toasts, setToasts] = React.useState<Toast[]>([]);
+    const showToast = (message: string, type: ToastType = "info") => {
+        const id = Date.now() + Math.random();
+        setToasts((prev) => [...prev, { id, message, type }]);
+        setTimeout(() => {
+            setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, 3000);
+    };
     const [totals, setTotals] = React.useState<ReportTotals | null>(null);
 
     React.useEffect(() => {
@@ -159,9 +171,13 @@ const ReportsClient: React.FC = () => {
             setHasData(list.length > 0);
             if (list.length === 0) {
                 setInfo("Không có dữ liệu phù hợp với bộ lọc.");
+                showToast("Không có dữ liệu phù hợp với bộ lọc", "info");
+            } else {
+                showToast(`Đã tải ${list.length} bản ghi`, "success");
             }
         } catch (e: any) {
             setError(e?.message || "Lỗi không xác định");
+            showToast(e?.message || "Lỗi không xác định", "error");
         } finally {
             setLoading(false);
         }
@@ -191,6 +207,31 @@ const ReportsClient: React.FC = () => {
             setError(e.message || "Lỗi không xác định");
         } finally {
             setLoading(false);
+        }
+    }
+
+    function handleUploadClick() {
+        fileInputRef.current?.click();
+    }
+
+    async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setLoading(true);
+            setError(null);
+            setInfo(null);
+            await reportApi.importExcel(file);
+            setInfo("Tải lên thành công.");
+            showToast("Tải lên thành công", "success");
+            // Sau upload có thể tự động refresh kết quả
+            await handleSearch();
+        } catch (err: any) {
+            setError(err?.message || "Tải lên thất bại");
+            showToast(err?.message || "Tải lên thất bại", "error");
+        } finally {
+            setLoading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     }
 
@@ -275,32 +316,52 @@ const ReportsClient: React.FC = () => {
                         </div>
                     )}
                 </div>
-                <div className="mt-4 flex items-center gap-3">
-                    <button
-                        className={classNames(
-                            "px-4 py-2 rounded-md text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-                            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            )}
+                            onClick={handleSearch}
+                            disabled={loading}
+                        >
+                            {loading ? "Đang tải..." : "Xem báo cáo"}
+                        </button>
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                loading || !hasData ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 cursor-pointer"
+                            )}
+                            onClick={handleExport}
+                            disabled={loading || !hasData}
+                        >
+                            Xuất Excel
+                        </button>
+                        {error && (
+                            <div className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
+                                {error}
+                            </div>
                         )}
-                        onClick={handleSearch}
-                        disabled={loading}
-                    >
-                        {loading ? "Đang tải..." : "Xem báo cáo"}
-                    </button>
-                    <button
-                        className={classNames(
-                            "px-4 py-2 rounded-md border border-gray-300 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-                            loading || !hasData ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 cursor-pointer"
-                        )}
-                        onClick={handleExport}
-                        disabled={loading || !hasData}
-                    >
-                        Xuất Excel
-                    </button>
-                    {error && (
-                        <div className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
-                            {error}
-                        </div>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            )}
+                            onClick={handleUploadClick}
+                            type="button"
+                        >
+                            Tải lên báo cáo
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls"
+                            className="hidden"
+                            onChange={handleFileSelected}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -444,6 +505,23 @@ const ReportsClient: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+            </div>
+            {/* Toasts */}
+            <div className="fixed top-4 right-4 z-50 space-y-2">
+                {toasts.map((t) => (
+                    <div
+                        key={t.id}
+                        className={
+                            t.type === "success"
+                                ? "px-4 py-2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shadow"
+                                : t.type === "error"
+                                    ? "px-4 py-2 rounded-md bg-red-50 text-red-800 border border-red-200 shadow"
+                                    : "px-4 py-2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shadow"
+                        }
+                    >
+                        {t.message}
+                    </div>
+                ))}
             </div>
         </div>
     );

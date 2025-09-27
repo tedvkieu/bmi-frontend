@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { ReceiptFormData } from "../types/inspection";
 import { Customer } from "../types/customer";
 import { inspectionApi } from "../services/inspectionApi";
-import { CustomerRelatedForm } from "./CustomerRelatedForm";
 
 interface ReceiptFormSectionProps {
   customer: Customer;
@@ -30,9 +29,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
 }) => {
   const [internalLoading, setInternalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [relatedCustomerId, setRelatedCustomerId] = useState<number | null>(
-    formData.customerRelatedId || null
-  );
+  // customerRelatedId is now provided via formData from Section 1
 
   const handleInputChange = (
     field: keyof ReceiptFormData,
@@ -49,13 +46,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
     }));
   };
 
-  const handleCustomerCreated = (customerId: number) => {
-    setRelatedCustomerId(customerId);
-    setFormData((prev) => ({
-      ...prev,
-      customerRelatedId: customerId,
-    }));
-  };
+  // CustomerRelatedForm moved to Section 1
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +60,8 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
       const dataToSubmit = {
         ...formData,
         customerRelatedId:
-          (relatedCustomerId || formData.customerRelatedId) &&
-          (relatedCustomerId || formData.customerRelatedId) !== 0
-            ? relatedCustomerId || formData.customerRelatedId
+          formData.customerRelatedId && formData.customerRelatedId !== 0
+            ? formData.customerRelatedId
             : formData.customerSubmitId,
       };
 
@@ -225,38 +215,7 @@ export const ReceiptFormSection: React.FC<ReceiptFormSectionProps> = ({
           </div>
         )}
 
-        {/* Customer Related Form */}
-        <div className="mb-8">
-          <CustomerRelatedForm
-            onCustomerCreated={handleCustomerCreated}
-            loading={isLoading}
-            setLoading={setInternalLoading}
-          />
-        </div>
-
-        {/* Success Message for Related Customer */}
-        {relatedCustomerId && (
-          <div className="bg-green-50 border border-green-300 rounded-xl p-6 mb-8 shadow-sm">
-            <div className="flex items-center">
-              <svg
-                className="w-6 h-6 text-green-600 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <span className="text-green-800 font-bold text-lg">
-                Đã tạo khách hàng liên quan thành công (ID: {relatedCustomerId})
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Customer Related moved to Section 1 */}
 
         {/* Main Form */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8">

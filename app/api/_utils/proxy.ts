@@ -1,4 +1,4 @@
-const BASE_URL = process.env.BACKEND_URL  || "http://localhost:8080";
+const BASE_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 export async function proxyRequest(request: Request, targetPath: string) {
   const url = `${BASE_URL}${targetPath}`;
@@ -19,30 +19,41 @@ export async function proxyRequest(request: Request, targetPath: string) {
     if (token) headers.set("authorization", `Bearer ${token}`);
   }
 
-  // Content-Type for JSON
+  // Content-Type
   const method = request.method.toUpperCase();
   const contentType = request.headers.get("content-type") || "application/json";
   if (method !== "GET" && method !== "HEAD") {
     headers.set("content-type", contentType);
   }
 
-  const init: RequestInit = {
+  const init: RequestInit & { duplex?: string } = {
     method,
     headers,
-    // Only attach body for non-GET/HEAD
-    body: method === "GET" || method === "HEAD" ? undefined : await request.text(),
+    body:
+      method === "GET" || method === "HEAD"
+        ? undefined
+        : request.body,
     cache: "no-store",
-  };
+    duplex: "half", // không báo lỗi nữa
+  };  
 
   const res = await fetch(url, init);
-  const text = await res.text();
 
-  return new Response(text, {
+  // Lấy content-type từ backend
+  const contentTypeRes = res.headers.get("content-type") || "";
+
+  // Nếu là JSON, parse ra để có thể xử lý/log dễ hơn
+  if (contentTypeRes.includes("application/json")) {
+    const json = await res.json();
+    return new Response(JSON.stringify(json), {
+      status: res.status,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // Còn lại (Excel, PDF, ảnh, zip...) → forward raw stream
+  return new Response(res.body, {
     status: res.status,
-    headers: {
-      "content-type": res.headers.get("content-type") || "application/json",
-    },
+    headers: res.headers,
   });
 }
-
-

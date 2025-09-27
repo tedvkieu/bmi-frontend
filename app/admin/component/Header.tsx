@@ -7,6 +7,7 @@ import {
   Bell,
 } from "lucide-react";
 import UserMenu from "./UserMenu";
+import NotificationBell from "./NotificationBell";
 
 interface HeaderProps {
   currentPage: string;
@@ -32,6 +33,8 @@ const Header: React.FC<HeaderProps> = ({
         return "Quản lý Khách hàng";
       case "users":
         return "Quản lý nhân viên";
+      case "approve-users":
+        return "Phê duyệt khách hàng";
       case "reports":
         return "Báo cáo";
       case "settings":
@@ -57,12 +60,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative flex-shrink-0">
-            <Bell size={18} className="text-gray-600" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              3
-            </span>
-          </button>
+            <NotificationBell />
 
           <div className="pl-3 border-l border-gray-200">
             <UserMenu />

@@ -19,12 +19,31 @@ export interface User {
     role: string;
     fullName: string;
     userId: number;
+    phoneNumber?: string;
+    address?: string;
 }
 
 export const authApi = {
-    async login(credentials: LoginRequest): Promise<LoginResponse> {
+    async loginAdmin(credentials: LoginRequest): Promise<LoginResponse> {
         // Use Next.js API proxy
         const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Đăng nhập thất bại');
+        }
+
+        return response.json();
+    },
+    async login(credentials: LoginRequest): Promise<LoginResponse> {
+        // Use Next.js API proxy
+        const response = await fetch('/api/customers/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -12,6 +12,7 @@ import {
 import BannerClient from "./components/BannerClient";
 import Footer from "./components/Footer";
 import Image from "next/image";
+import { createCustomer, CustomerRequest } from "./service/customerService";
 
 // Định nghĩa kiểu dữ liệu cho Hồ sơ
 interface DossierResult {
@@ -87,6 +88,17 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
+       const customer: CustomerRequest = {
+        name: formData.name,
+        address: "", // You might want to add an address field to your form
+        email: formData.email,
+        dob: "", // You might want to add a DOB field
+        phone: formData.phone,
+        customerType: "SERVICE_MANAGER", // This seems like a fixed value, consider if it should be dynamic
+        note: formData.message,
+      };
+      await createCustomer(customer);
+
       toast.success(
         "Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể."
       );

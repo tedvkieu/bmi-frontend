@@ -27,7 +27,7 @@ const FormInput: React.FC<FormInputProps> = ({
     icon,
 }) => {
     return (
-        <div className="mb-4">
+        <div className="mb-4 text-gray-800">
             <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
                 {label}
                 {required && <span className="text-red-500 ml-1">*</span>}

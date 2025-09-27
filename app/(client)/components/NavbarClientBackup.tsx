@@ -7,29 +7,20 @@ import { useEffect, useState } from "react";
 import { authApi, User } from "../../services/authApi";
 import UserMenu from "@/app/admin/component/UserMenu";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { customerApi } from "@/app/admin/services/customerApi";
 
 interface NavbarClientProps {
-  onScrollToContact?: (section: string) => void; // 🔹 optional
-}
-
-export interface Customer {
-  username: string;
-  email: string;
-  role: string;
-  fullName: string;
-  userId: number;
+  onScrollToContact: (section: string) => void;
 }
 
 export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
   const [role, setRole] = useState<string | null>(null);
-  const [user, setUser] = useState<Customer | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const u = customerApi.getUser();
+    const u = authApi.getUser();
     if (u) {
       setUser(u);
       setRole(u.role);
@@ -62,24 +53,12 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
-          {onScrollToContact && (
-            <>
-              <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
-              <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
-              <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
-            </>
-          )}
+          <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
+          <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
+          <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
 
-          {user ? (
-            <>
-              <button
-                onClick={() => router.push(`/tao-ho-so/${user.userId}`)}
-                className="block text-gray-700 hover:text-blue-700 transition-colors text-sm font-medium"
-              >
-                Tải hồ sơ
-              </button>
-              <UserMenu />
-            </>
+          {user && role === "CUSTOMER" ? (
+            <UserMenu />
           ) : (
             <button
               onClick={handleLoginClick}
@@ -106,13 +85,9 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
       {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden bg-white border-t mt-2 px-4 py-3 space-y-3">
-          {onScrollToContact && (
-            <>
-              <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
-              <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
-              <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
-            </>
-          )}
+          <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
+          <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
+          <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
 
           {user && role === "CUSTOMER" ? (
             <UserMenu />

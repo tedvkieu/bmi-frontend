@@ -22,7 +22,7 @@ export default function SearchSection({
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <h2 className="text-xl text-gray-700 font-semibold mb-4">
+      <h2 className="text-base text-gray-700 font-semibold mb-4">
         Tìm kiếm hồ sơ
       </h2>
       <div className="flex gap-4">
@@ -32,7 +32,7 @@ export default function SearchSection({
           value={registerNo}
           onChange={(e) => setRegisterNo(e.target.value)}
           onKeyPress={handleKeyPress}
-          className="flex-1 text-gray-600 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 text-gray-600 text-sm px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
         <button
           onClick={onSearch}

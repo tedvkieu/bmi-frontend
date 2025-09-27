@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_API = process.env.BACKEND_URL;
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const token = request.cookies.get("token")?.value;
-  const { id } = params;
+  const { id } = await params;
 
   const res = await fetch(`${BACKEND_API}/api/notifications/${id}/read`, {
     method: "PUT",

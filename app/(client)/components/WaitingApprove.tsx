@@ -24,12 +24,13 @@ const WaitingApprove: React.FC = () => {
     value !== null && value.trim() !== '' && value !== 'Chưa có';
 
   useEffect(() => {
-    let intervalId: number | undefined;
-    let hasRedirected = false; // flag đảm bảo redirect 1 lần
+    if (!email || email === 'Chưa có') {
+      setLoading(false);
+      return;
+    }
 
-    const fetchActivationStatus = async () => {
-      if (!email || email === 'Chưa có') return setLoading(false);
-
+    let hasRedirected = false;
+    const intervalId = window.setInterval(async () => {
       try {
         const res = await fetch(`/api/customers/email?email=${encodeURIComponent(email)}`);
         const result = await res.json();
@@ -38,35 +39,26 @@ const WaitingApprove: React.FC = () => {
         setIsActivated(status);
         setLoading(false);
 
-        if (!hasRedirected) {
-          if (status === 1) {
-            hasRedirected = true;
-            toast.success('🎉 Tài khoản của bạn đã được duyệt!');
-            // const audio = new Audio('/mp3/notification.mp3');
-            // audio.play();
-            const audio = new Audio('/mp3/notification.mp3');
-            audio.play().catch((err) => {
-              console.log("Audio không thể phát:", err);
-            });
-          }
+        if (!hasRedirected && status === 1) {
+          hasRedirected = true;
+          toast.success('Tài khoản của bạn đã được duyệt!');
+          const audio = new Audio('/mp3/notification.mp3');
+          audio.play().catch(err => console.log("Audio không thể phát:", err));
+          clearInterval(intervalId); // dừng interval sau khi đã redirect
+        }
 
-          if (status === 2 && intervalId) {
-            clearInterval(intervalId);
-          }
+        if (status === 2) {
+          clearInterval(intervalId); // dừng interval nếu status = 2
         }
       } catch (err) {
         console.error('Lỗi khi gọi API:', err);
         setLoading(false);
       }
-    };
+    }, 5000);
 
-    fetchActivationStatus();
-    intervalId = window.setInterval(fetchActivationStatus, POLL_INTERVAL);
+    return () => clearInterval(intervalId); // cleanup khi unmount
+  }, [email]);
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [email, router]);
 
   if (loading) {
     return <LoadingSpinner />;

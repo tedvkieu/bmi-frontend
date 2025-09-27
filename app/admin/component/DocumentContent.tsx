@@ -73,7 +73,7 @@ const DocumentsContent = () => {
             apiDoc.registrationNo ||
             apiDoc.billOfLading ||
             `Document ${apiDoc.receiptId}`,
-          client: `${apiDoc.customerRelatedId}`, // Tạm thời hiển thị ID
+          client: `${apiDoc.customerRelatedId}`, 
           inspector: "N/A",
           date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
             year: "numeric",

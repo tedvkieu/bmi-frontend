@@ -1,11 +1,12 @@
+// components/Header.tsx
 "use client";
 
 import React from "react";
 import {
-  Menu,
+  AlignLeft,
   X,
-  Bell,
 } from "lucide-react";
+
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
 
@@ -13,7 +14,7 @@ interface HeaderProps {
   currentPage: string;
   isSidebarOpen: boolean;
   isMobile: boolean;
-  onSidebarToggle: () => void;
+  onSidebarToggle: () => void; // Prop này sẽ được sử dụng cho nút toggle
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -26,9 +27,11 @@ const Header: React.FC<HeaderProps> = ({
   const getPageTitle = (page: string) => {
     switch (page) {
       case "dashboard":
-        return "Tổng quan";
+        return "Dashboard";
       case "documents":
         return "Quản lý Tài liệu Giám định";
+      case "evaluation":
+        return "Đánh giá hồ sơ";
       case "clients":
         return "Quản lý Khách hàng";
       case "users":
@@ -40,28 +43,31 @@ const Header: React.FC<HeaderProps> = ({
       case "settings":
         return "Cài đặt";
       default:
-        return "Tổng quan";
+        return "Dashboard";
     }
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-4 sticky top-0 z-30">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 min-w-0">
+    <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
+      <div className="flex items-center justify-between h-14">
+        {/* Left side: Nút toggle sidebar và tiêu đề trang */}
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onSidebarToggle}
-            className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg flex-shrink-0"
+            className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg flex items-center justify-center"
+            aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
-            {isSidebarOpen && isMobile ? <X size={20} /> : <Menu size={20} />}
+            {isSidebarOpen && isMobile ? <X size={22} /> : <AlignLeft size={22} />}
           </button>
+            
           <h2 className="text-lg lg:text-xl font-semibold text-gray-800 truncate">
             {getPageTitle(currentPage)}
           </h2>
         </div>
 
-        <div className="flex items-center space-x-2">
-            <NotificationBell />
-
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          <NotificationBell />
           <div className="pl-3 border-l border-gray-200">
             <UserMenu />
           </div>

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "./document/LoadingSpinner";
-import { authApi } from "../../services/authApi"; // Import authApi to get user role
+import { authApi } from "../../services/authApi";
 import { customerApi, UnactiveCustomer } from "../services/customerApi";
 import toast from "react-hot-toast";
 
@@ -33,7 +33,7 @@ interface Customer {
   dob: string | null;
   phone: string;
   note: string;
-  customerType: "IMPORTER" | "SERVICE_MANAGER"; // Ensure these match your backend
+  customerType: "IMPORTER" | "SERVICE_MANAGER";
   createdAt: string;
   updatedAt: string;
 }
@@ -77,53 +77,52 @@ const CustomersContent = () => {
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 10;
 
-  // New state for unapproved customers feature
-  const [unapprovedCustomers, setUnapprovedCustomers] = useState<UnactiveCustomer[]>([]);
+  const [unapprovedCustomers, setUnapprovedCustomers] = useState<
+    UnactiveCustomer[]
+  >([]);
   const [unactiveCount, setUnactiveCount] = useState(0);
-  const [isUnapprovedModalOpen, setIsUnapprovedModalOpen] = useState<boolean>(false);
+  const [isUnapprovedModalOpen, setIsUnapprovedModalOpen] =
+    useState<boolean>(false);
   const [loadingUnapproved, setLoadingUnapproved] = useState<boolean>(false);
   const [unapprovedError, setUnapprovedError] = useState<string>("");
 
   const router = useRouter();
 
-  // Get current user role
   const roleFromToken = authApi.getRoleFromToken() as string | null;
   const isAdminOrManager = roleFromToken === "ADMIN" || roleFromToken === "MANAGER";
 
   const fetchUnactiveCount = useCallback(async () => {
-  try {
-    setLoadingUnapproved(true);
-    setUnapprovedError("");
-    const token = authApi.getToken();
-    if (!token) throw new Error("No authentication token");
+    try {
+      setLoadingUnapproved(true);
+      setUnapprovedError("");
+      const token = authApi.getToken();
+      if (!token) throw new Error("No authentication token");
 
-    const res = await fetch(`/api/customers/unactive/count`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      const res = await fetch(`/api/customers/unactive/count`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Failed to fetch unactive count");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to fetch unactive count");
+      }
+
+      const count = await res.json();
+      setUnactiveCount(count);
+    } catch (error: any) {
+      console.error("Error fetching unactive count:", error);
+      setUnapprovedError(error.message);
+    } finally {
+      setLoadingUnapproved(false);
     }
-
-    const count = await res.json();
-    setUnactiveCount(count); // Lưu vào state
-  } catch (error: any) {
-    console.error("Error fetching unactive count:", error);
-    setUnapprovedError(error.message);
-  } finally {
-    setLoadingUnapproved(false);
-  }
-}, []);
-
+  }, []);
 
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      // Use customerApi for fetching customers
       const data: CustomerResponse = await customerApi.getAllCustomers(
         currentPage,
         pageSize,
@@ -142,11 +141,9 @@ const CustomersContent = () => {
 
   useEffect(() => {
     fetchCustomers();
-  fetchUnactiveCount();
-  }, [fetchCustomers]);
+    fetchUnactiveCount();
+  }, [fetchCustomers, fetchUnactiveCount]); // Added fetchUnactiveCount to dependencies
 
-
-  // New function to load unapproved customers
   const loadUnapprovedCustomers = useCallback(async () => {
     setLoadingUnapproved(true);
     setUnapprovedError("");
@@ -160,24 +157,24 @@ const CustomersContent = () => {
     }
   }, []);
 
-  // New functions for unapproved customers modal
   const openUnapprovedCustomersModal = () => {
-    loadUnapprovedCustomers(); // Load data when opening
+    loadUnapprovedCustomers();
     setIsUnapprovedModalOpen(true);
   };
 
   const closeUnapprovedCustomersModal = () => {
     setIsUnapprovedModalOpen(false);
-    setUnapprovedCustomers([]); // Clear data on close
-    fetchCustomers(); // Optionally refresh main customer list after closing unapproved modal
+    setUnapprovedCustomers([]);
+    fetchCustomers();
+    fetchUnactiveCount(); // Refresh count when closing modal
   };
 
   const handleApproveCustomer = async (customerId: number) => {
     setUnapprovedError("");
     try {
       await customerApi.approveCustomer(customerId);
-      await loadUnapprovedCustomers(); // Reload list after approval
-      toast.success("Khách hàng đã được duyệt thành công!"); // Simple alert for feedback
+      await loadUnapprovedCustomers();
+      toast.success("Khách hàng đã được duyệt thành công!");
     } catch (e: any) {
       setUnapprovedError(e?.message || "Duyệt khách hàng thất bại");
     }
@@ -187,22 +184,21 @@ const CustomersContent = () => {
     setUnapprovedError("");
     try {
       await customerApi.rejectCustomer(customerId);
-      await loadUnapprovedCustomers(); // Reload list after rejection
-      toast.success("Khách hàng đã bị từ chối."); // Simple alert for feedback
+      await loadUnapprovedCustomers();
+      toast.success("Khách hàng đã bị từ chối.");
     } catch (e: any) {
       setUnapprovedError(e?.message || "Từ chối khách hàng thất bại");
     }
   };
 
-
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(0); // Reset to first page when searching
+    setCurrentPage(0);
   };
 
   const handleCustomerTypeFilter = (value: string) => {
     setCustomerTypeFilter(value);
-    setCurrentPage(0); // Reset to first page when filtering
+    setCurrentPage(0);
   };
 
   const getCustomerTypeText = (type: string) => {
@@ -218,7 +214,7 @@ const CustomersContent = () => {
 
   const getCustomerTypeColor = (type: string) => {
     switch (type) {
-      case "IMPORTER": // Using "IMPORTER" and "SERVICE_MANAGER" as examples
+      case "IMPORTER":
         return "bg-blue-100 text-blue-800";
       case "SERVICE_MANAGER":
         return "bg-purple-100 text-purple-800";
@@ -226,7 +222,6 @@ const CustomersContent = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
-
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -238,7 +233,6 @@ const CustomersContent = () => {
     });
   };
 
-  // Pagination component
   const Pagination = () => {
     const startItem = currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
@@ -281,7 +275,6 @@ const CustomersContent = () => {
                 <ChevronLeft size={20} />
               </button>
 
-              {/* Page numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -298,7 +291,7 @@ const CustomersContent = () => {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                    className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium ${
                       currentPage === pageNum
                         ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
                         : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
@@ -326,13 +319,11 @@ const CustomersContent = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingSpinner />
-    );
+    return <LoadingSpinner />;
   }
 
   const handleClickPage = (id: number) => {
-    router.push(`/admin/tao-ho-so/${id}`); // Pages are 1-indexed in the URL
+    router.push(`/admin/tao-ho-so/${id}`);
   };
 
   return (
@@ -363,7 +354,6 @@ const CustomersContent = () => {
                 className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
               >
                 <option value="all">Tất cả loại KH</option>
-                {/* Ensure these values match your backend's customer types */}
                 <option value="IMPORTER">Nhà nhập khẩu</option>
                 <option value="SERVICE_MANAGER">Quản lý dịch vụ</option>
               </select>
@@ -371,17 +361,17 @@ const CustomersContent = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-          {isAdminOrManager && (
-  <button
-    onClick={openUnapprovedCustomersModal}
-    className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1"
-  >
-    <UserCheck size={16} />
-    <span>
-      Duyệt tài khoản {loadingUnapproved ? "..." : `(${unactiveCount})`}
-    </span>
-  </button>
-)}
+            {isAdminOrManager && (
+              <button
+                onClick={openUnapprovedCustomersModal}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1"
+              >
+                {/* <UserCheck size={16} /> */}
+                <span>
+                  Tài khoản chờ duyệt {loadingUnapproved ? "..." : `(${unactiveCount})`}
+                </span>
+              </button>
+            )}
 
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1">
               <Plus size={16} />
@@ -475,22 +465,22 @@ const CustomersContent = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                   Khách hàng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   Liên hệ
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Loại KH
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   Ghi chú
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Ngày tạo
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Thao tác
                 </th>
               </tr>
@@ -498,11 +488,11 @@ const CustomersContent = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {customers.map((customer) => (
                 <tr key={customer.customerId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <Users size={16} className="text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <Users size={16} className="text-gray-400 flex-shrink-0" />
+                      <div className="truncate max-w-[150px]">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                           {customer.name}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -511,17 +501,17 @@ const CustomersContent = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <Mail size={14} className="text-gray-400" />
-                        <span className="text-sm text-gray-900">
+                        <Mail size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-900 truncate max-w-[180px]">
                           {customer.email}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Phone size={14} className="text-gray-400" />
-                        <span className="text-sm text-gray-900">
+                        <Phone size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-900 truncate max-w-[180px]">
                           {customer.phone}
                         </span>
                       </div>
@@ -536,14 +526,14 @@ const CustomersContent = () => {
                       {getCustomerTypeText(customer.customerType)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900 max-w-xs truncate block">
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-900 max-w-[200px] truncate block">
                       {customer.note || "Không có ghi chú"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      <Calendar size={16} className="text-gray-400" />
+                      <Calendar size={16} className="text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-900">
                         {formatDate(customer.createdAt)}
                       </span>
@@ -601,15 +591,24 @@ const CustomersContent = () => {
         </div>
       )}
 
-
       {/* Unapproved Customers Modal */}
       {isUnapprovedModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm" onClick={closeUnapprovedCustomersModal} />
-          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-t-lg flex items-center justify-between">
-              <h4 className="text-lg font-semibold">Danh sách khách hàng chờ duyệt</h4>
-              <button onClick={closeUnapprovedCustomersModal} className="text-white/80 hover:text-white">✕</button>
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" // Changed overlay color for better contrast
+            onClick={closeUnapprovedCustomersModal}
+          />
+          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-5 bg-blue-600 text-white rounded-t-lg flex items-center justify-between">
+              <h4 className="text-lg font-semibold">
+                Danh sách khách hàng chờ duyệt
+              </h4>
+              <button
+                onClick={closeUnapprovedCustomersModal}
+                className="text-white/80 hover:text-white"
+              >
+                ✕
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -636,31 +635,62 @@ const CustomersContent = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tên công ty</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Điện thoại</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Loại KH</th>
-                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]">
+                          Tên công ty
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                          Điện thoại
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                          Loại KH
+                        </th>
+                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
+                          Thao tác
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
                       {unapprovedCustomers.map((customer) => (
-                        <tr key={customer.customerId} className="hover:bg-blue-50 transition-colors duration-200">
-                          <td className="px-6 py-4 text-sm text-gray-900">{customer.name}</td>
-                          <td className="px-6 py-4 text-sm text-gray-700">{customer.email}</td>
-                          <td className="px-6 py-4 text-sm text-gray-700">{customer.phone}</td>
-                          <td className="px-6 py-4 text-sm text-gray-700">{getCustomerTypeText(customer.customerType)}</td>
+                        <tr
+                          key={customer.customerId}
+                          className="hover:bg-blue-50 transition-colors duration-200"
+                        >
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            <span className="block truncate max-w-[150px]">
+                              {customer.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            <span className="block truncate max-w-[180px]">
+                              {customer.email}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            <span className="block truncate max-w-[120px]">
+                              {customer.phone}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {getCustomerTypeText(customer.customerType)}
+                          </td>
                           <td className="px-6 py-4 text-sm">
                             <div className="flex justify-center gap-2">
                               <button
-                                onClick={() => handleApproveCustomer(customer.customerId)}
+                                onClick={() =>
+                                  handleApproveCustomer(customer.customerId)
+                                }
                                 className="p-2.5 rounded-full text-green-600 hover:bg-green-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
                                 title="Duyệt"
                               >
                                 <UserCheck size={18} />
                               </button>
                               <button
-                                onClick={() => handleRejectCustomer(customer.customerId)}
+                                onClick={() =>
+                                  handleRejectCustomer(customer.customerId)
+                                }
                                 className="p-2.5 rounded-full text-red-600 hover:bg-red-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                                 title="Từ chối"
                               >
@@ -676,7 +706,13 @@ const CustomersContent = () => {
               )}
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end">
-              <button type={"button"} onClick={closeUnapprovedCustomersModal} className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200">Đóng</button>
+              <button
+                type={"button"}
+                onClick={closeUnapprovedCustomersModal}
+                className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>

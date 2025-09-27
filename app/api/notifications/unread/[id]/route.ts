@@ -5,9 +5,10 @@ const BACKEND_API = process.env.BACKEND_URL;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } } // lấy userId từ URL
+ { params }: { params: Promise<{ id: string }> }
 ) {
-  const userId = params.id;
+  const { id } = await params;
+  const userId = id;
   const token = request.cookies.get("token")?.value;
 
   const res = await fetch(`${BACKEND_API}/api/notifications/unread/${userId}`, {

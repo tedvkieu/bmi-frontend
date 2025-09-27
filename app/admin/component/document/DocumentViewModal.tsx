@@ -226,12 +226,12 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
               "Container 40 Feets",
               Container
             )}
-            {renderDetailItem(
+            {/* {renderDetailItem(
               "Trạng thái rời cảng",
               document.bulkShip,
               "Bulk Ship",
               Ship
-            )}
+            )} */}
             {renderDetailItem(
               "Tài liệu khai báo",
               document.declarationDoc,

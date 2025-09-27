@@ -9,6 +9,7 @@ import {
 import { InspectionReport } from "../../types/inspection";
 import StatusBadge from "./StatusBadge";
 import { authApi } from "@/app/services/authApi";
+import axios from "axios";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -26,10 +27,59 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   onDelete,
 }) => {
   const [role, setRole] = useState<string | null>(null);
+  const [customerSubmit, setCustomerSubmit] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setRole(authApi.getRoleFromToken());
   }, []);
+
+  // Load khách hàng từ API theo doc.client
+  useEffect(() => {
+    const fetchCustomersSubmit = async () => {
+      const newCustomers: Record<string, string> = {};
+
+      for (const doc of documents) {
+        if (doc.customerSubmitId && !customerSubmit[doc.customerSubmitId]) {
+          try {
+            const res = await axios.get(`/api/customers/${doc.id}`);
+            newCustomers[doc.customerSubmitId] = res.data.name;
+          } catch (err) {
+            console.error("Lỗi tải khách hàng:", err);
+            newCustomers[doc.customerSubmitId] = "Không rõ khách hàng";
+          }
+        }
+      }
+
+      if (Object.keys(newCustomers).length > 0) {
+        setCustomerSubmit((prev) => ({ ...prev, ...newCustomers }));
+      }
+    };
+
+    // const fetchCustomersRelated = async () => {
+    //   const newCustomers: Record<string, string> = {};
+
+    //   for (const doc of documents) {
+    //     if (doc.customerRelatedId && !customerRelated[doc.customerRelatedId]) {
+    //       try {
+    //         const res = await axios.get(`/api/customers/${doc.id}`);
+    //         newCustomers[doc.customerSubmitId] = res.data.name;
+    //       } catch (err) {
+    //         console.error("Lỗi tải khách hàng:", err);
+    //         newCustomers[doc.customerSubmitId] = "Không rõ khách hàng";
+    //       }
+    //     }
+    //   }
+
+    //   if (Object.keys(newCustomers).length > 0) {
+    //     setCustomerRelated((prev) => ({ ...prev, ...newCustomers }));
+    //   }
+    // };
+
+    if (documents.length > 0) {
+      fetchCustomersSubmit();
+      // fetchCustomersRelated();
+    }
+  }, [documents]);
 
   return (
     <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
@@ -84,10 +134,12 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
               </tr>
             ) : (
               documents.map((doc) => {
-                const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
+                const isAdminOrManager =
+                  role === "ADMIN" || role === "MANAGER";
                 const isCompleted = doc.status === "obtained";
-                const canDelete = isAdminOrManager; // Only Admin/Manager can delete
-                const canEdit = isAdminOrManager || !isCompleted; // Staff cannot edit when completed
+                const canDelete = isAdminOrManager;
+                const canEdit = isAdminOrManager || !isCompleted;
+
                 return (
                   <tr
                     key={doc.id}
@@ -101,7 +153,9 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-800">{doc.client}</span>
+                      <span className="text-sm text-gray-800">
+                        {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={doc.status} size="md" />
@@ -109,7 +163,9 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <Calendar size={18} className="text-gray-500" />
-                        <span className="text-sm text-gray-800">{doc.date}</span>
+                        <span className="text-sm text-gray-800">
+                          {doc.date}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -129,23 +185,33 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           <Download size={20} />
                         </button>
                         <button
-                          onClick={() => { if (canEdit) onEdit(doc.id); }}
+                          onClick={() => {
+                            if (canEdit) onEdit(doc.id);
+                          }}
                           disabled={!canEdit}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
-                            ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
-                            : "text-gray-300 cursor-not-allowed"
-                            }`}
-                          title={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                            canEdit
+                              ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
+                              : "text-gray-300 cursor-not-allowed"
+                          }`}
+                          title={
+                            canEdit
+                              ? "Chỉnh sửa"
+                              : "Không có quyền chỉnh sửa"
+                          }
                         >
                           <Edit2 size={20} />
                         </button>
                         <button
-                          onClick={() => { if (canDelete) onDelete(doc.id); }}
+                          onClick={() => {
+                            if (canDelete) onDelete(doc.id);
+                          }}
                           disabled={!canDelete}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
-                            ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
-                            : "text-gray-300 cursor-not-allowed"
-                            }`}
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                            canDelete
+                              ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
+                              : "text-gray-300 cursor-not-allowed"
+                          }`}
                           title={canDelete ? "Xóa" : "Không có quyền xóa"}
                         >
                           <Trash2 size={20} />

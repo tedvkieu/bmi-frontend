@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { authApi, User } from "../../services/authApi";
 import UserMenu from "@/app/admin/component/UserMenu";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { customerApi } from "@/app/admin/services/customerApi";
+import NotificationBell from "@/app/admin/component/NotificationBell";
 
 interface NavbarClientProps {
   onScrollToContact?: (section: string) => void; // 🔹 optional
@@ -64,12 +64,11 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
         <div className="hidden md:flex items-center space-x-6">
           {onScrollToContact && (
             <>
-              <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
               <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
+              <NavButton label="Gửi yêu cầu giám định" onClick={() => onScrollToContact("form")} />
               <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
             </>
           )}
-
           {user ? (
             <>
               <button
@@ -78,6 +77,7 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
               >
                 Tải hồ sơ
               </button>
+              <NotificationBell />
               <UserMenu />
             </>
           ) : (

@@ -563,10 +563,19 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
 
         {/* Related Customer Form placed below the submit button */}
         <div className="mt-8">
-          <CustomerRelatedForm
+          {/* <CustomerRelatedForm
             onCustomerCreated={(id) => {
               setRelatedCustomerId(id);
               onRelatedCustomerCreated && onRelatedCustomerCreated(id);
+            }}
+            loading={relatedLoading}
+            setLoading={setRelatedLoading}
+          /> */}
+
+          <CustomerRelatedForm
+            onCustomerCreated={(id) => {
+              setRelatedCustomerId(id);
+              onRelatedCustomerCreated?.(id);
             }}
             loading={relatedLoading}
             setLoading={setRelatedLoading}

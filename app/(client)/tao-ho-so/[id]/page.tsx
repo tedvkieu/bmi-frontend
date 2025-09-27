@@ -1,4 +1,3 @@
-import AdminLayout from "@/app/admin/component/AdminLayout";
 import NavbarClient from "../../components/NavbarClient";
 import InspectionFormClient from "@/app/admin/component/InspectionFormClient";
 

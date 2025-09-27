@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } } // trực tiếp object
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } =  await params;
     const token = req.cookies.get("token")?.value;
 
     if (!token) {
@@ -31,3 +31,4 @@ export async function PUT(
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
+

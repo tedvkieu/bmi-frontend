@@ -15,6 +15,7 @@ import {
   DocumentCheckData,
   InspectorUser,
 } from "./types/evaluation";
+import toast from "react-hot-toast";
 
 export default function EvaluationPage() {
   const [registerNo, setRegisterNo] = useState("");
@@ -306,11 +307,12 @@ export default function EvaluationPage() {
       if (!res.ok) {
         const txt = await res.text();
         console.error("Save failed:", txt);
-        alert("Lưu thất bại");
+        toast.error("Lưu thất bại");
+
       } else {
         await fetchSavedForm(dossierInfo.receiptId);
         setLastSavedAt(new Date());
-        alert("Đã lưu đánh giá");
+        toast.success("Đã lưu đánh giá");
       }
     } catch (e) {
       console.error("Save error:", e);
@@ -348,7 +350,7 @@ export default function EvaluationPage() {
     <AdminLayout>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Biểu mẫu đánh giá quy trình giám định
           </h1>
 
@@ -400,11 +402,11 @@ export default function EvaluationPage() {
                 if (!res.ok) {
                   const txt = await res.text();
                   console.error("Assign B failed:", txt);
-                  alert("Lưu phân công B thất bại: " + txt);
+                  toast.error("Lưu phân công B thất bại: " + txt);
                 } else {
                   fetchTeamMembers(dossierInfo.receiptId);
                   setLastSavedAt(new Date());
-                  alert("Đã lưu phân công mục B");
+                  toast.success("Đã lưu phân công mục B");
                 }
               } catch (e) {
                 console.error(e);

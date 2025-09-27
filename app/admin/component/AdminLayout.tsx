@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "./Navbar";
-import Header from "./Header";
 import LoginWrapper from "./LoginWrapper";
+import Header from "./Header";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -16,15 +16,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Determine current page based on pathname
   const getCurrentPage = () => {
-    if (pathname === "/admin") return "admin";
+    if (pathname === "/admin") return "dashboard";
+    if (pathname === "/") return "dashboard_overview";
+    if (pathname.startsWith("/analytic")) return "dashboard_analytic";
     if (pathname.startsWith("/admin/ho-so")) return "documents";
     if (pathname.startsWith("/admin/evaluation")) return "evaluation";
     if (pathname.startsWith("/admin/khach-hang")) return "clients";
     if (pathname.startsWith("/admin/quan-ly-nhan-vien")) return "users";
     if (pathname.startsWith("/admin/danh-muc")) return "categories";
-    if (pathname.startsWith("/admin/bao-cao")) return "reports";
+    if (pathname.startsWith("/bao-cao")) return "reports";
     if (pathname.startsWith("/admin/cai-dat")) return "settings";
     return "dashboard";
   };
@@ -33,8 +34,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth >= 1024) {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
         setIsSidebarOpen(true);
       } else {
         setIsSidebarOpen(false);
@@ -47,12 +49,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   }, []);
 
   const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+    setIsSidebarOpen((prev) => !prev);
   };
 
   const handlePageChange = (page: string) => {
     const routes = {
       dashboard: "/admin",
+      dashboard_overview: "/admin",        // <-- thêm
+      dashboard_analytic: "/admin/analytic", // <-- thêm
       documents: "/admin/ho-so",
       evaluation: "/admin/evaluation",
       clients: "/admin/khach-hang",
@@ -62,12 +66,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       settings: "/admin/cai-dat",
     };
 
-    router.push(routes[page as keyof typeof routes] || "/");
+    router.push(routes[page as keyof typeof routes] || "/admin");
 
     if (isMobile) {
       setIsSidebarOpen(false);
     }
   };
+
 
   return (
     <LoginWrapper>
@@ -90,16 +95,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Main Content with dynamic margin */}
         <div
-          className={`min-h-screen transition-all duration-300 ${
-            isMobile ? "ml-0" : isSidebarOpen ? "ml-64" : "ml-16"
-          }`}
+          className={`min-h-screen transition-all duration-300 ${isMobile ? "ml-0" : isSidebarOpen ? "ml-72" : "ml-20"
+            }`}
         >
           {/* Header */}
           <Header
             currentPage={currentPage}
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
-            onSidebarToggle={handleSidebarToggle}
+            onSidebarToggle={handleSidebarToggle} // Truyền prop vào Header
           />
 
           {/* Page Content */}

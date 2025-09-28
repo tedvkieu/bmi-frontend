@@ -21,6 +21,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     if (pathname === "/") return "dashboard_overview";
     if (pathname.startsWith("/analytic")) return "dashboard_analytic";
     if (pathname.startsWith("/admin/ho-so")) return "documents";
+    if (pathname.startsWith("/admin/phan-cong")) return "assignment";
     if (pathname.startsWith("/admin/evaluation")) return "evaluation";
     if (pathname.startsWith("/admin/khach-hang")) return "clients";
     if (pathname.startsWith("/admin/quan-ly-nhan-vien")) return "users";
@@ -55,9 +56,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const handlePageChange = (page: string) => {
     const routes = {
       dashboard: "/admin",
-      dashboard_overview: "/admin",        // <-- thêm
+      dashboard_overview: "/admin", // <-- thêm
       dashboard_analytic: "/admin/analytic", // <-- thêm
       documents: "/admin/ho-so",
+      assignment: "/admin/phan-cong",
       evaluation: "/admin/evaluation",
       clients: "/admin/khach-hang",
       users: "/admin/quan-ly-nhan-vien",
@@ -72,7 +74,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       setIsSidebarOpen(false);
     }
   };
-
 
   return (
     <LoginWrapper>
@@ -95,8 +96,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Main Content with dynamic margin */}
         <div
-          className={`min-h-screen transition-all duration-300 ${isMobile ? "ml-0" : isSidebarOpen ? "ml-72" : "ml-20"
-            }`}
+          className={`min-h-screen transition-all duration-300 ${
+            isMobile ? "ml-0" : isSidebarOpen ? "ml-72" : "ml-20"
+          }`}
         >
           {/* Header */}
           <Header

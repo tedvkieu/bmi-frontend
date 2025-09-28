@@ -5,11 +5,14 @@ import {
   Eye,
   Download,
   Calendar,
+  UserPlus,
+  ClipboardCheck,
 } from "lucide-react";
 import { InspectionReport } from "../../types/inspection";
 import StatusBadge from "./StatusBadge";
 import { authApi } from "@/app/services/authApi";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -26,6 +29,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [customerSubmit, setCustomerSubmit] = useState<Record<string, string>>({});
 
@@ -183,6 +187,34 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           title="Tải xuống"
                         >
                           <Download size={20} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reg = doc.registrationNo || doc.name;
+                            router.push(
+                              `/admin/phan-cong?registerNo=${encodeURIComponent(
+                                reg
+                              )}`
+                            );
+                          }}
+                          className="p-2.5 rounded-full text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+                          title="Gán người dùng"
+                        >
+                          <UserPlus size={20} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reg = doc.registrationNo || doc.name;
+                            router.push(
+                              `/admin/evaluation?registerNo=${encodeURIComponent(
+                                reg
+                              )}`
+                            );
+                          }}
+                          className="p-2.5 rounded-full text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+                          title="Đánh giá"
+                        >
+                          <ClipboardCheck size={20} />
                         </button>
                         <button
                           onClick={() => {

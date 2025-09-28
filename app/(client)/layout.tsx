@@ -2,6 +2,8 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import AuthWrapper from "./authWrapper";
+import GuideOver from "./components/GuideOver";
+import GuideOverWrapper from "./guideWrapper";
 
 export const metadata: Metadata = {
   title: "LIÊN HỆ - GIÁM ĐỊNH BẢO MINH",
@@ -27,6 +29,7 @@ export default function ClientLayout({
       ]}
     >
       {children}
+      <GuideOverWrapper />
       <Toaster position="top-right" reverseOrder={false} />
     </AuthWrapper>
   );

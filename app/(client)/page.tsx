@@ -13,6 +13,7 @@ import BannerClient from "./components/BannerClient";
 import Footer from "./components/Footer";
 import Image from "next/image";
 import { createCustomer, CustomerRequest } from "./service/customerService";
+import GuideOver from "./components/GuideOver"; // Import GuideOver component
 
 // Định nghĩa kiểu dữ liệu cho Hồ sơ
 interface DossierResult {
@@ -52,6 +53,18 @@ export default function ContactPage() {
     certificateDate: "",
   });
 
+  const [showGuide, setShowGuide] = useState(false); // State để kiểm soát việc hiển thị tour
+
+  const startTour = () => {
+    setShowGuide(true);
+  };
+
+  const handleTourEnd = () => {
+    setShowGuide(false);
+    // Optional: Lưu trạng thái đã xem tour vào localStorage để không hiện lại
+    localStorage.setItem('hasSeenContactPageTour', 'true');
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearchingDossier, setIsSearchingDossier] = useState(false);
   const [dossierResult, setDossierResult] = useState<DossierResult | null>(
@@ -88,7 +101,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-       const customer: CustomerRequest = {
+      const customer: CustomerRequest = {
         name: formData.name,
         address: "", // You might want to add an address field to your form
         email: formData.email,
@@ -194,7 +207,11 @@ export default function ContactPage() {
   return (
     <>
       <NavbarClient onScrollToContact={handleScrollToContact} />
-      <div className="fixed left-4 bottom-6 flex flex-col space-y-3 z-50">
+
+      {/* GuideOver Component */}
+      <GuideOver run={showGuide} onTourEnd={handleTourEnd} />
+
+      <div className="fixed left-4 bottom-6 flex flex-col space-y-3 z-50 floating-contact-support"> {/* Added class for tour */}
         <div className="bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md shadow-lg relative max-w-[200px]">
           Nếu cần hỗ trợ upload file, vui lòng liên hệ qua Zalo hoặc số điện
           thoại để được hướng dẫn.
@@ -245,7 +262,7 @@ export default function ContactPage() {
             {/* Contact Information Section */}
             <div
               ref={contactInfoRef}
-              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit"
+              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit contact-info-section" // Added class for tour
             >
               <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
                 THÔNG TIN LIÊN HỆ CÔNG TY
@@ -338,14 +355,20 @@ export default function ContactPage() {
             {/* Contact Form Section */}
             <div
               ref={contactFormRef}
-              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit"
+              className="bg-white rounded-lg border border-gray-100 p-8 shadow-sm h-fit contact-form-section" // Added class for tour
             >
-              <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
-                GỬI LIÊN HỆ CHO CHÚNG TÔI
+              <h2 className="text-xl font-bold text-gray-800 mb-4 pb-4 border-b border-gray-200">
+                Liên hệ với chúng tôi
               </h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Vui lòng điền thông tin vào form dưới đây. Chúng tôi sẽ phản hồi trong thời
+                gian sớm nhất. Đăng ký tài khoản để theo dõi tiến độ xử lý yêu cầu.
+                <span className="block mt-2 text-xs italic text-gray-500">
+                  Các trường có dấu <span className="text-red-500">*</span> là bắt buộc.
+                </span>
+              </p>
+
               <form onSubmit={handleSubmit} className="space-y-5">
-                {" "}
-                {/* Reduced spacing */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
@@ -361,8 +384,8 @@ export default function ContactPage() {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="Nguyễn Văn A"
+                      className="w-full text-sm px-3 py-2 border border-gray-200 rounded-md text-gray-700 focus:ring-blue-500 focus:border-blue-500 transition"
                     />
                   </div>
                   <div>
@@ -379,11 +402,12 @@ export default function ContactPage() {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="0912 345 678"
+                      className="w-full text-sm px-3 py-2 border border-gray-200 rounded-md text-gray-700 focus:ring-blue-500 focus:border-blue-500 transition"
                     />
                   </div>
                 </div>
+
                 <div>
                   <label
                     htmlFor="email"
@@ -398,23 +422,24 @@ export default function ContactPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     placeholder="nguyenvana@gmail.com"
+                    className="w-full text-sm px-3 py-2 border border-gray-200 rounded-md text-gray-700 focus:ring-blue-500 focus:border-blue-500 transition"
                   />
                 </div>
+
                 <div>
                   <label
                     htmlFor="subject"
                     className="block text-xs font-medium text-gray-700 mb-1"
                   >
-                    Chủ đề
+                    Chủ đề  <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="subject"
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white"
+                    className="w-full text-sm px-3 py-2 border border-gray-200 rounded-md text-gray-700 focus:ring-blue-500 focus:border-blue-500 transition bg-white"
                   >
                     <option value="">Chọn dịch vụ</option>
                     <option value="consultation">Tư vấn dịch vụ</option>
@@ -422,7 +447,9 @@ export default function ContactPage() {
                     <option value="cooperation">Hợp tác kinh doanh</option>
                     <option value="other">Khác</option>
                   </select>
+
                 </div>
+
                 <div>
                   <label
                     htmlFor="message"
@@ -437,25 +464,27 @@ export default function ContactPage() {
                     required
                     value={formData.message}
                     onChange={handleChange}
-                    className="w-full text-gray-700 text-sm px-3 py-2 border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-y"
                     placeholder="Nhập nội dung bạn muốn gửi..."
+                    className="w-full text-sm px-3 py-2 border border-gray-200 rounded-md text-gray-700 focus:ring-blue-500 focus:border-blue-500 transition resize-y"
                   />
                 </div>
+
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-2.5 px-5 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
+                  className="w-full py-2.5 px-5 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-60 disabled:cursor-not-allowed contact-submit-button" // Added class for tour
                 >
                   {isSubmitting ? "Đang gửi..." : "Gửi liên hệ"}
                 </button>
               </form>
             </div>
+
           </div>
 
           {/* Dossier Lookup Section */}
           <div
             ref={dossierSearchRef}
-            className="mt-12 bg-white rounded-lg border border-gray-100 p-8 shadow-sm"
+            className="mt-12 bg-white rounded-lg border border-gray-100 p-8 shadow-sm dossier-search-section" // Added class for tour
           >
             <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200">
               TRA CỨU HỒ SƠ
@@ -498,7 +527,7 @@ export default function ContactPage() {
               </div>
               <button
                 type="submit"
-                className="w-48 bg-blue-600 text-white py-2.5 px-5 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-48 bg-blue-600 text-white py-2.5 px-5 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed dossier-search-button" // Added class for tour
                 disabled={isSearchingDossier}
               >
                 {isSearchingDossier ? "Đang tìm..." : "Tìm kiếm hồ sơ"}
@@ -590,11 +619,10 @@ export default function ContactPage() {
                         Trạng thái chứng nhận:
                       </span>{" "}
                       <span
-                        className={`font-semibold ${
-                          dossierResult.certificateStatus === "PENDING"
-                            ? "text-orange-600"
-                            : "text-green-600"
-                        }`}
+                        className={`font-semibold ${dossierResult.certificateStatus === "PENDING"
+                          ? "text-orange-600"
+                          : "text-green-600"
+                          }`}
                       >
                         {dossierResult.certificateStatus === "PENDING"
                           ? "Đang chờ"

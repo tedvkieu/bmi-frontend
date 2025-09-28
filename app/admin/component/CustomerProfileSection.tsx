@@ -5,6 +5,7 @@ import { Customer } from "../types/customer";
 import { InspectionFormData } from "../types/inspection";
 import { FileUploadComponent } from "./file-upload/FileUploadComponent";
 import { CustomerRelatedForm } from "./CustomerRelatedForm";
+import toast from "react-hot-toast";
 
 interface CustomerProfileSectionProps {
   customer: Customer | null;
@@ -119,7 +120,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
       setError(null);
 
       // Show success message
-      alert("Cập nhật thông tin khách hàng thành công!");
+      toast.success("Cập nhật thông tin khách hàng thành công!");
     } catch (err) {
       setError(
         err instanceof Error
@@ -163,7 +164,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8 lg:mb-12">

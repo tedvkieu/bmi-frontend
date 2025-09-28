@@ -4,6 +4,7 @@ import {
   PanelsTopLeft,
   ChartSpline,
   Users,
+  UserPlus,
   BarChart3,
   Settings,
   LayoutDashboard,
@@ -93,8 +94,16 @@ const Navbar: React.FC<NavbarProps> = ({
       icon: ScrollText,
       label: "Hồ sơ giám định",
       badge: null,
-       href: "/admin/ho-so",
+      href: "/admin/ho-so",
       // badge: stats.dossiers ? String(stats.dossiers) : null,
+    },
+    {
+      key: "assignment",
+      icon: UserPlus,
+      label: "Phân công hồ sơ",
+      // badge: stats.evaluationResults ? String(stats.evaluationResults) : null,
+      badge: null,
+      href: "/admin/phan-cong",
     },
     {
       key: "evaluation",
@@ -120,13 +129,13 @@ const Navbar: React.FC<NavbarProps> = ({
       // badge: stats.users ? String(stats.users) : null,
       href: "/admin/quan-ly-nhan-vien",
     },
-     {
+    {
       key: "reports",
       icon: BarChart3,
       label: "Báo cáo",
       badge: null,
       // badge: stats.users ? String(stats.users) : null,
-      href: "/admin/bao-cao"
+      href: "/admin/bao-cao",
     },
     {
       key: "settings",
@@ -137,7 +146,10 @@ const Navbar: React.FC<NavbarProps> = ({
     },
   ];
 
-  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
+  const shouldHideItem = (
+    itemKey: string,
+    userRole: string | null
+  ): boolean => {
     if (!userRole || userRole === "ADMIN") return false;
     if (userRole === "MANAGER") {
       return itemKey === "settings";
@@ -171,13 +183,19 @@ const Navbar: React.FC<NavbarProps> = ({
 
   // Mở dropdown khi trang hiện tại nằm trong sub-item của nó
   useEffect(() => {
-    const findParentKeyOfActivePage = (items: NavItem[], currentPath: string): string | null => {
+    const findParentKeyOfActivePage = (
+      items: NavItem[],
+      currentPath: string
+    ): string | null => {
       for (const item of items) {
         if (item.subItems) {
-          if (item.subItems.some(sub => sub.href === currentPath)) {
+          if (item.subItems.some((sub) => sub.href === currentPath)) {
             return item.key;
           }
-          const subParentKey = findParentKeyOfActivePage(item.subItems, currentPath);
+          const subParentKey = findParentKeyOfActivePage(
+            item.subItems,
+            currentPath
+          );
           if (subParentKey) return item.key;
         }
       }
@@ -190,7 +208,6 @@ const Navbar: React.FC<NavbarProps> = ({
       setOpenDropdown(parentKey);
     }
   }, [currentPage, filteredNavItems]);
-
 
   const handleItemClick = (item: NavItem) => {
     if (item.subItems) {
@@ -230,26 +247,45 @@ const Navbar: React.FC<NavbarProps> = ({
         <button
           onClick={() => handleItemClick(item)}
           className={`w-full flex items-center ${paddingLeft} py-3 rounded-lg text-left transition-colors relative
-            ${isActive ? "bg-blue-500 text-white" : "text-gray-600 hover:bg-gray-100"}
+            ${
+              isActive
+                ? "bg-blue-500 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }
           `}
-          title={!isSidebarOpen && !isMobile && !item.subItems && item.label ? item.label : undefined}
+          title={
+            !isSidebarOpen && !isMobile && !item.subItems && item.label
+              ? item.label
+              : undefined
+          }
         >
           {item.icon && (
-            <item.icon size={20} className={`flex-shrink-0 ${isSidebarOpen || isMobile ? "" : "mx-auto"}`} />
+            <item.icon
+              size={20}
+              className={`flex-shrink-0 ${
+                isSidebarOpen || isMobile ? "" : "mx-auto"
+              }`}
+            />
           )}
 
           {(isSidebarOpen || isMobile) && (
-            <div className="flex-grow flex items-center min-w-0"> {/* Wrapper để căn chỉnh */}
+            <div className="flex-grow flex items-center min-w-0">
+              {" "}
+              {/* Wrapper để căn chỉnh */}
               <span className="ml-3 font-medium truncate flex-grow">
                 {item.label}
               </span>
               {item.badge && (
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-2"> {/* ml-2 thay vì ml-auto */}
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                  {" "}
+                  {/* ml-2 thay vì ml-auto */}
                   {item.badge}
                 </span>
               )}
               {item.subItems && (
-                <span className="ml-2 flex-shrink-0"> {/* Điều chỉnh khoảng cách cho icon dropdown */}
+                <span className="ml-2 flex-shrink-0">
+                  {" "}
+                  {/* Điều chỉnh khoảng cách cho icon dropdown */}
                   {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </span>
               )}
@@ -267,14 +303,15 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div
-      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${isSidebarOpen
-        ? isMobile
-          ? "w-72"
-          : "w-72"
-        : isMobile
+      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${
+        isSidebarOpen
+          ? isMobile
+            ? "w-72"
+            : "w-72"
+          : isMobile
           ? "-translate-x-full w-72"
           : "w-20"
-        }`}
+      }`}
     >
       {/* Logo */}
       <div className="p-5 border-b border-gray-200 flex-shrink-0">

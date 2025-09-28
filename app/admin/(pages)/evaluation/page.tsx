@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminLayout from "../../component/AdminLayout";
 import SearchSection from "./components/SearchSection";
 import DossierInfo from "./components/DossierInfo";
@@ -18,6 +19,7 @@ import {
 import toast from "react-hot-toast";
 
 export default function EvaluationPage() {
+  const searchParams = useSearchParams();
   const [registerNo, setRegisterNo] = useState("");
   const [dossierInfo, setDossierInfo] = useState<DossierInfoType | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,6 +40,7 @@ export default function EvaluationPage() {
     Record<string, number | undefined | null>
   >({ A: undefined, C: undefined, D: undefined });
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [autoSearched, setAutoSearched] = useState(false);
 
   // Fetch inspectors immediately when page loads
   const fetchInspectors = async () => {
@@ -62,9 +65,9 @@ export default function EvaluationPage() {
       try {
         const [categoriesRes, criteriaRes, documentTypesRes] =
           await Promise.all([
-            fetch("http://localhost:3000/api/evaluations/categories/all"),
-            fetch("http://localhost:3000/api/evaluations/criteria/all"),
-            fetch("http://localhost:3000/api/evaluations/document-types/all"),
+            fetch("/api/evaluations/categories/all"),
+            fetch("/api/evaluations/criteria/all"),
+            fetch("/api/evaluations/document-types/all"),
           ]);
 
         if (categoriesRes.ok) {
@@ -122,6 +125,45 @@ export default function EvaluationPage() {
       setLoading(false);
     }
   };
+
+  // Read registerNo from query and auto search once
+  useEffect(() => {
+    const qReg = (searchParams?.get("registerNo") || "").trim();
+    if (qReg && !autoSearched) {
+      setRegisterNo(qReg);
+      // Wait for state to settle and then search
+      const t = setTimeout(() => {
+        setAutoSearched(true);
+        // Use current state value which we just set
+        (async () => {
+          if (!qReg) return;
+          setLoading(true);
+          setError("");
+          try {
+            const response = await fetch(
+              `/api/dossiers/search?registerNo=${encodeURIComponent(qReg)}`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              setDossierInfo(data);
+              await fetchTeamMembers(data.receiptId);
+              await fetchSavedForm(data.receiptId);
+            } else {
+              setError("Không tìm thấy hồ sơ với số đăng ký này");
+              setDossierInfo(null);
+            }
+          } catch (error) {
+            setError("Lỗi khi tìm kiếm hồ sơ");
+            console.log("check error: ", error);
+            setDossierInfo(null);
+          } finally {
+            setLoading(false);
+          }
+        })();
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [searchParams, autoSearched]);
 
   const fetchTeamMembers = async (dossierId: number) => {
     try {
@@ -240,9 +282,13 @@ export default function EvaluationPage() {
       try {
         if (!dossierInfo) return;
         const hasPhysicalCopy =
-          type === "hasHardCopy" ? value : documentCheckData[documentTypeId]?.hasHardCopy || false;
+          type === "hasHardCopy"
+            ? value
+            : documentCheckData[documentTypeId]?.hasHardCopy || false;
         const hasElectronicCopy =
-          type === "hasElectronic" ? value : documentCheckData[documentTypeId]?.hasElectronic || false;
+          type === "hasElectronic"
+            ? value
+            : documentCheckData[documentTypeId]?.hasElectronic || false;
         await fetch(`/api/evaluations/form/save-document`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -273,8 +319,10 @@ export default function EvaluationPage() {
         const d = documentCheckData[doc.documentTypeId];
         return !!(d?.hasHardCopy || d?.hasElectronic);
       }).length;
-      const criteriaCompleted = totalCriteria > 0 && criteriaAnswered === totalCriteria;
-      const docsCompleted = totalDocuments > 0 && documentsCompleted === totalDocuments;
+      const criteriaCompleted =
+        totalCriteria > 0 && criteriaAnswered === totalCriteria;
+      const docsCompleted =
+        totalDocuments > 0 && documentsCompleted === totalDocuments;
 
       const resultsPayload = Object.entries(evaluationData)
         .filter(([, v]) => v === "YES" || v === "NO")
@@ -295,7 +343,10 @@ export default function EvaluationPage() {
         dossierId: dossierInfo.receiptId,
         results: resultsPayload,
         documents: docsPayload,
-        status: criteriaCompleted && docsCompleted && teamReadyForACD ? "COMPLETED" : undefined,
+        status:
+          criteriaCompleted && docsCompleted && teamReadyForACD
+            ? "COMPLETED"
+            : undefined,
       };
 
       const res = await fetch(`/api/evaluations/form/submit`, {
@@ -308,7 +359,6 @@ export default function EvaluationPage() {
         const txt = await res.text();
         console.error("Save failed:", txt);
         toast.error("Lưu thất bại");
-
       } else {
         await fetchSavedForm(dossierInfo.receiptId);
         setLastSavedAt(new Date());
@@ -331,7 +381,9 @@ export default function EvaluationPage() {
         .map((s) => s.trim().toUpperCase())
         .includes("B")
     );
-    const leaderCount = teamMembers.filter((m) => m.roleCode === "TEAM_LEADER").length;
+    const leaderCount = teamMembers.filter(
+      (m) => m.roleCode === "TEAM_LEADER"
+    ).length;
     return hasB && leaderCount === 1;
   })();
 
@@ -365,94 +417,104 @@ export default function EvaluationPage() {
           {dossierInfo && <DossierInfo dossierInfo={dossierInfo} />}
 
           {dossierInfo && categories.length > 0 && criteria.length > 0 && (
-          <EvaluationForm
-            dossierInfo={dossierInfo}
-            categories={categories}
-            criteria={criteria}
-            teamMembers={teamMembers}
-            documentTypes={documentTypes}
-            evaluationData={evaluationData}
-            documentCheckData={documentCheckData}
-            inspectors={inspectors}
-            showBSelector={showBSelector}
-            selectedBUsers={selectedBUsers}
-            saving={saving}
-            criteriaAnswered={criteriaAnswered}
-            totalCriteria={totalCriteria}
-            documentsCompleted={documentsCompleted}
-            totalDocuments={totalDocuments}
-            lastSavedAt={lastSavedAt}
-            onEvaluationChange={handleEvaluationChange}
-            onDocumentCheckChange={handleDocumentCheckChange}
-            onToggleBSelector={() => {
-              setShowBSelector((v) => !v);
-            }}
-            onSelectBUsers={setSelectedBUsers}
-            onAssignB={async (members) => {
-              if (!dossierInfo) return;
-              try {
-                const res = await fetch(
-                  `/api/evaluations/teams/assign-b-with-roles/${dossierInfo.receiptId}`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ members }),
+            <EvaluationForm
+              dossierInfo={dossierInfo}
+              categories={categories}
+              criteria={criteria}
+              teamMembers={teamMembers}
+              documentTypes={documentTypes}
+              evaluationData={evaluationData}
+              documentCheckData={documentCheckData}
+              inspectors={inspectors}
+              showBSelector={showBSelector}
+              selectedBUsers={selectedBUsers}
+              saving={saving}
+              criteriaAnswered={criteriaAnswered}
+              totalCriteria={totalCriteria}
+              documentsCompleted={documentsCompleted}
+              totalDocuments={totalDocuments}
+              lastSavedAt={lastSavedAt}
+              onEvaluationChange={handleEvaluationChange}
+              onDocumentCheckChange={handleDocumentCheckChange}
+              onToggleBSelector={() => {
+                setShowBSelector((v) => !v);
+              }}
+              onSelectBUsers={setSelectedBUsers}
+              onAssignB={async (members) => {
+                if (!dossierInfo) return;
+                try {
+                  const res = await fetch(
+                    `/api/evaluations/teams/assign-b-with-roles/${dossierInfo.receiptId}`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ members }),
+                    }
+                  );
+                  if (!res.ok) {
+                    const txt = await res.text();
+                    console.error("Assign B failed:", txt);
+                    toast.error("Lưu phân công B thất bại: " + txt);
+                  } else {
+                    fetchTeamMembers(dossierInfo.receiptId);
+                    setLastSavedAt(new Date());
+                    toast.success("Đã lưu phân công mục B");
                   }
-                );
-                if (!res.ok) {
-                  const txt = await res.text();
-                  console.error("Assign B failed:", txt);
-                  toast.error("Lưu phân công B thất bại: " + txt);
-                } else {
-                  fetchTeamMembers(dossierInfo.receiptId);
-                  setLastSavedAt(new Date());
-                  toast.success("Đã lưu phân công mục B");
+                } catch (e) {
+                  console.error(e);
+                  alert("Lỗi khi lưu phân công B");
                 }
-              } catch (e) {
-                console.error(e);
-                alert("Lỗi khi lưu phân công B");
-              }
-            }}
-            onAssignTaskLetter={async (task, userId) => {
-              if (!dossierInfo) return;
-              try {
-                // Only one assignee allowed: backend will remove others
-                const res = await fetch(
-                  `/api/evaluations/teams/assign-task/${dossierInfo.receiptId}`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ task, userIds: userId ? [userId] : [] }),
+              }}
+              onAssignTaskLetter={async (task, userId) => {
+                if (!dossierInfo) return;
+                try {
+                  // Only one assignee allowed: backend will remove others
+                  const res = await fetch(
+                    `/api/evaluations/teams/assign-task/${dossierInfo.receiptId}`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        task,
+                        userIds: userId ? [userId] : [],
+                      }),
+                    }
+                  );
+                  if (!res.ok) {
+                    const txt = await res.text();
+                    console.error("Assign", task, "failed:", txt);
+                    alert(`Lưu phân công mục ${task} thất bại`);
+                  } else {
+                    setSelectedAssigneesByTask((prev) => ({
+                      ...prev,
+                      [task]: userId || undefined,
+                    }));
+                    fetchTeamMembers(dossierInfo.receiptId);
+                    setLastSavedAt(new Date());
                   }
-                );
-                if (!res.ok) {
-                  const txt = await res.text();
-                  console.error("Assign", task, "failed:", txt);
-                  alert(`Lưu phân công mục ${task} thất bại`);
-                } else {
-                  setSelectedAssigneesByTask((prev) => ({ ...prev, [task]: userId || undefined }));
-                  fetchTeamMembers(dossierInfo.receiptId);
-                  setLastSavedAt(new Date());
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            selectedAssigneesByTask={selectedAssigneesByTask}
-            teamReadyForACD={teamReadyForACD}
-            onSave={handleSaveEvaluation}
-            onBack={() => {
-              setDossierInfo(null);
-              setRegisterNo("");
-              setTeamMembers([]);
-              setEvaluationData({});
-              setDocumentCheckData({});
-              setSelectedBUsers([]);
-              setSelectedAssigneesByTask({ A: undefined, C: undefined, D: undefined });
-              setLastSavedAt(null);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
+              }}
+              selectedAssigneesByTask={selectedAssigneesByTask}
+              teamReadyForACD={teamReadyForACD}
+              onSave={handleSaveEvaluation}
+              onBack={() => {
+                setDossierInfo(null);
+                setRegisterNo("");
+                setTeamMembers([]);
+                setEvaluationData({});
+                setDocumentCheckData({});
+                setSelectedBUsers([]);
+                setSelectedAssigneesByTask({
+                  A: undefined,
+                  C: undefined,
+                  D: undefined,
+                });
+                setLastSavedAt(null);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
           )}
 
           {!dossierInfo && !loading && registerNo && (

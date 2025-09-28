@@ -18,9 +18,18 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // ref lưu số lượng cũ
+  const prevCountRef = useRef<number>(0);
+
+  // ref audio
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     const userData = authApi.getUser();
     setUser(userData);
+
+    // chuẩn bị audio
+    audioRef.current = new Audio("/mp3/notification.mp3");
   }, []);
 
   async function fetchNotifications(userId: number) {
@@ -30,6 +39,16 @@ export default function NotificationBell() {
       const sorted = data.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
+
+      // Nếu số lượng mới > số lượng cũ → phát âm thanh
+      if (sorted.length > prevCountRef.current) {
+        audioRef.current?.play().catch(() => {
+          // Nếu user chưa click gì, browser có thể chặn autoplay
+          console.warn("Âm thanh bị chặn do autoplay policy");
+        });
+      }
+
+      prevCountRef.current = sorted.length;
       setNotifications(sorted);
     }
   }
@@ -38,22 +57,20 @@ export default function NotificationBell() {
     const res = await fetch(`/api/notifications/${id}/read`, { method: "PUT" });
     if (res.ok) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      prevCountRef.current = prevCountRef.current - 1;
     }
   }
 
   useEffect(() => {
     if (!user) return;
     fetchNotifications(user.userId);
-    const interval = setInterval(() => fetchNotifications(user.userId), 5000); // Poll every 5 seconds
+    const interval = setInterval(() => fetchNotifications(user.userId), 5000);
     return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
@@ -66,9 +83,6 @@ export default function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <div className="flex items-center space-x-2 text-sm">
-        <div className="text-gray-700 font-medium px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 cursor-default hidden md:block">
-          Thông báo
-        </div>
         <button
           onClick={() => setOpen(!open)}
           className="relative p-2 rounded-full hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -85,7 +99,7 @@ export default function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-gray-200 rounded-xl shadow-lg transform translate-y-2 opacity-100 transition-all duration-300 ease-out z-50">
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-            <h3 className="text-lg font-bold text-blue-600">Thông báo</h3> {/* Đã thay đổi màu chữ tại đây */}
+            <h3 className="text-lg font-bold text-blue-600">Thông báo</h3>
             <button
               onClick={() => setOpen(false)}
               className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -108,14 +122,11 @@ export default function NotificationBell() {
                   className="relative group flex items-start p-4 hover:bg-blue-50 transition-colors duration-150"
                 >
                   <Link
-                    href="/admin/khach-hang" // Or a more dynamic link based on notification type
-                    className="flex-1 min-w-0 pr-10" // Add pr to make space for the "Mark as read" button
+                    href="/admin/khach-hang"
+                    className="flex-1 min-w-0 pr-10"
                     onClick={() => markAsRead(n.id)}
                   >
-                    <p className="text-sm text-gray-800 leading-snug">
-                      {n.message}
-                    </p>
-                    {/* Thêm thẻ "Mới!" nếu thông báo chưa đọc */}
+                    <p className="text-sm text-gray-800 leading-snug">{n.message}</p>
                     {!n.isRead && (
                       <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                         Mới!

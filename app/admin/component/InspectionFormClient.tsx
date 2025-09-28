@@ -180,40 +180,6 @@ const InspectionFormClient: React.FC = () => {
 
   return (
     <div className="inspection-form-container">
-      <div className="inspection-form-header">
-        <h1>Tạo Hồ Sơ Kiểm Tra</h1>
-        <div className="progress-indicator">
-          <div
-            className={`step ${currentSection >= 1 ? "active" : ""} ${
-              currentSection > 1 ? "completed" : ""
-            }`}
-          >
-            <span className="step-number">1</span>
-            <span className="step-label">Hồ sơ khách hàng</span>
-          </div>
-          <div
-            className={`step ${currentSection >= 2 ? "active" : ""} ${
-              currentSection > 2 ? "completed" : ""
-            }`}
-          >
-            <span className="step-number">2</span>
-            <span className="step-label">Thông tin biên nhận</span>
-          </div>
-          <div
-            className={`step ${currentSection >= 3 ? "active" : ""} ${
-              currentSection > 3 ? "completed" : ""
-            }`}
-          >
-            <span className="step-number">3</span>
-            <span className="step-label">Máy móc giám định</span>
-          </div>
-          <div className={`step ${currentSection >= 4 ? "active" : ""}`}>
-            <span className="step-number">4</span>
-            <span className="step-label">Hoàn thành</span>
-          </div>
-        </div>
-      </div>
-
       {error && (
         <div className="error-message">
           <span className="error-icon">⚠</span>

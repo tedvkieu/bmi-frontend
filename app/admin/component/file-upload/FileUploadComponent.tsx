@@ -1,6 +1,4 @@
 import React, { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-
 interface Machine {
   machineId: number;
   receiptId: number;
@@ -18,7 +16,6 @@ interface Machine {
   createdAt: string;
   updatedAt: string;
 }
-
 interface Customer {
   customerId: number;
   name: string;
@@ -32,7 +29,6 @@ interface Customer {
   createdAt: string;
   updatedAt: string;
 }
-
 interface UploadResultData {
   receiptId: number;
   declarationNo: string;
@@ -41,17 +37,19 @@ interface UploadResultData {
   registrationDate: string;
   billOfLading: string;
   billOfLadingDate: string;
+  invoiceNo?: string | null;
+  invoiceDate?: string | null;
+  inspectionDate?: string | null;
+  inspectionLocation?: string | null;
   customer: Customer;
   machines: Machine[];
 }
-
 interface FileUploadProps {
   onUploadSuccess: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
 }
-
 const UploadResultDisplay: React.FC<{
   data: UploadResultData;
   onStartNew: () => void;
@@ -133,51 +131,91 @@ const UploadResultDisplay: React.FC<{
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Mã Biên Nhận
               </label>
-              <span className="text-xl font-bold text-green-600">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 #{data.receiptId}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Số Đăng Ký
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.registrationNo}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Ngày Đăng Ký
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {formatDate(data.registrationDate)}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Bill of Lading
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.billOfLading || "Chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Ngày B/L
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {formatDate(data.billOfLadingDate)}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Số Tờ Khai
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.declarationNo || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
+                Ngày Tờ Khai
+              </label>
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
+                {formatDate(data.declarationDate)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
+                Số Hóa Đơn
+              </label>
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
+                {data.invoiceNo || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
+                Ngày Hóa Đơn
+              </label>
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
+                {formatDate(data.invoiceDate ?? null)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
+                Dự Kiến Thời Gian Giám Định
+              </label>
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
+                {data.inspectionDate ?? null}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
+                Dự Kiến Địa Điểm Giám Định
+              </label>
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
+                {data.inspectionLocation || "Chưa có"}
               </span>
             </div>
           </div>
@@ -213,42 +251,42 @@ const UploadResultDisplay: React.FC<{
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Tên Công Ty
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.customer.name}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Loại Khách Hàng
               </label>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {getCustomerTypeLabel(data.customer.customerType)}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Số Điện Thoại
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.customer.phone}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Địa Chỉ
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.customer.address}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
+              <label className="block text-xs font-bold text-gray-600 mb-1">
                 Email
               </label>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.customer.email}
               </span>
             </div>
@@ -302,83 +340,83 @@ const UploadResultDisplay: React.FC<{
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="col-span-full">
-                    <label className="block text-sm font-medium text-gray-500 mb-2">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Tên Thiết Bị
                     </label>
-                    <p className="text-base font-semibold text-gray-900 leading-relaxed">
+                    <p className="text-sm text-gray-900 leading-relaxed break-words whitespace-normal">
                       {machine.itemName}
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Thương Hiệu
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800 break-words whitespace-normal">
                       {machine.brand || "Chưa có"}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Model
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800 break-words whitespace-normal">
                       {machine.model || "Chưa có"}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Số Serial
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800 break-all whitespace-normal">
                       {machine.serialNumber || "Chưa có"}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Nước Sản Xuất
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800 break-words whitespace-normal">
                       {machine.manufactureCountry}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Nhà Sản Xuất
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800 break-words whitespace-normal">
                       {machine.manufacturerName}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Năm Sản Xuất
                     </label>
-                    <span className="text-base font-medium text-gray-800">
+                    <span className="text-sm text-gray-800">
                       {machine.manufactureYear}
                     </span>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">
                       Số Lượng
                     </label>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       {machine.quantity} đơn vị
                     </span>
                   </div>
 
                   {machine.note && (
                     <div className="col-span-full">
-                      <label className="block text-sm font-medium text-gray-500 mb-2">
+                      <label className="block text-xs font-bold text-gray-600 mb-1">
                         Ghi Chú
                       </label>
-                      <p className="text-base text-gray-700 bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 break-words whitespace-normal">
                         {machine.note}
                       </p>
                     </div>
@@ -533,7 +571,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
     formData.append("file", selectedFile);
 
     try {
-      const res = await fetch("/api/customers/upload-excel", {
+      const res = await fetch("/api/dossiers/upload-excel", {
         method: "POST",
         body: formData,
       });

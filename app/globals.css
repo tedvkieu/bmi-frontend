@@ -5,6 +5,11 @@
   --foreground: #171717;
 }
 
+* {
+  font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif !important;
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

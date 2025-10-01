@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SPRINGBOOT_API =
-  process.env.SPRINGBOOT_API_URL || "http://localhost:8080/api/customers";
+const BACKEND_API = `${process.env.BACKEND_URL}/api/customers`;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const res = await fetch(SPRINGBOOT_API, {
+    const res = await fetch(BACKEND_API, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -56,16 +55,22 @@ export async function GET(request: NextRequest) {
       params.append("customerType", customerType);
     }
 
+    console.log("BACKEND_URL  =", process.env.BACKEND_URL);
+    const token = request.cookies.get("token")?.value;
+
     const response = await fetch(
-      `http://localhost:8080/api/customers?${params.toString()}`,
+      `${process.env.BACKEND_URL}/api/customers?${params.toString()}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store", // Disable caching for real-time data
       }
     );
+
+    console.log("Response from Spring Boot API:", response);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch customers: ${response.statusText}`);

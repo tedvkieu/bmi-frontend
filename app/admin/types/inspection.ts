@@ -69,3 +69,115 @@ export interface CertificateStatusOption {
   value: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
   label: string;
 }
+
+
+// components/types/inspection.ts
+export interface InspectionReport {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  inspectionTypeId: string;
+  declarationNo: string | null;
+  billOfLading: string;
+  shipName: string | null;
+  cout10: string | null;
+  cout20: string | null;
+  bulkShip: boolean;
+  declarationDoc: string | null;
+  declarationPlace: string | null;
+  inspectionDate: string | null;
+  certificateDate: string | null;
+  inspectionLocation: string | null;
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust as per actual statuses
+  createdAt: string;
+  updatedAt: string;
+
+  // Add these for UI display, mapping from API fields
+  id: string; // Mapped from registrationNo or receiptId
+  name: string; // Mapped from registrationNo or billOfLading
+  client: string; // You'll need to fetch customer details separately or use a placeholder
+  inspector: string; // You'll need to fetch inspector details separately or use a placeholder
+  date: string; // Mapped from createdAt or inspectionDate
+  type: string; // Mapped from inspectionTypeId
+  status: "pending" | "not_within_scope" | "not_obtained" | "obtained"; // Mapped from certificateStatus
+}
+
+
+
+
+// Full API response structure if needed for context
+export interface ApiResponse {
+  content: InspectionReportApi[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      empty: boolean;
+      sorted: boolean;
+      unsorted: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  last: boolean;
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  sort: {
+    empty: boolean;
+    sorted: boolean;
+    unsorted: boolean;
+  };
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+// Type ReceiptData for getReceiptById response
+export interface ReceiptData {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  inspectionTypeId: string;
+  declarationNo: string | null;
+  billOfLading: string;
+  shipName: string | null;
+  cout10: string | null;
+  cout20: string | null;
+  bulkShip: boolean;
+  declarationDoc: string | null;
+  declarationPlace: string | null;
+  inspectionDate: string | null;
+  certificateDate: string | null;
+  inspectionLocation: string | null;
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED";
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Type matching the API's 'content' array directly
+export interface InspectionReportApi {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  inspectionTypeId: string;
+  declarationNo: string | null;
+  billOfLading: string;
+  shipName: string | null;
+  cout10: string | null;
+  cout20: string | null;
+  bulkShip: boolean;
+  declarationDoc: string | null;
+  declarationPlace: string | null;
+  inspectionDate: string | null;
+  certificateDate: string | null;
+  inspectionLocation: string | null;
+  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust based on actual values
+  createdAt: string;
+  updatedAt: string;
+}

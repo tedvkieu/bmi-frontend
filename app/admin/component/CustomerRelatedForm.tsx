@@ -7,6 +7,7 @@ interface CustomerRelatedData {
   email: string;
   dob: string | null;
   phone: string;
+  taxCode: string | null;
   customerType: string;
 }
 
@@ -34,6 +35,7 @@ export const CustomerRelatedForm: React.FC<CustomerRelatedFormProps> = ({
     email: "",
     dob: null,
     phone: "",
+    taxCode: null,
     customerType: "SERVICE_MANAGER",
   });
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export const CustomerRelatedForm: React.FC<CustomerRelatedFormProps> = ({
       };
 
       // Gọi API tạo khách hàng
-      const response = await fetch("http://localhost:3000/api/customers", {
+      const response = await fetch("api/customers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +123,7 @@ export const CustomerRelatedForm: React.FC<CustomerRelatedFormProps> = ({
       email: "",
       dob: null,
       phone: "",
+      taxCode: null,
       customerType: "SERVICE_MANAGER",
     });
     setError(null);
@@ -270,6 +273,22 @@ export const CustomerRelatedForm: React.FC<CustomerRelatedFormProps> = ({
               value={formData.address || ""}
               onChange={(e) => handleInputChange("address", e.target.value)}
               placeholder="Nhập địa chỉ (không bắt buộc)"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="relatedCustomerTaxCode" className="form-label">
+              Mã số thuế{" "}
+              <span className="text-gray-400 text-sm">(tùy chọn)</span>
+            </label>
+            <input
+              type="text"
+              id="relatedCustomerTaxCode"
+              className="form-input"
+              value={formData.taxCode || ""}
+              onChange={(e) => handleInputChange("taxCode", e.target.value)}
+              placeholder="Nhập mã số thuế (không bắt buộc)"
               disabled={loading}
             />
           </div>

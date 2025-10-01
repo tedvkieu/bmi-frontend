@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Customer } from "../types/customer";
 import { InspectionFormData } from "../types/inspection";
 import { FileUploadComponent } from "./file-upload/FileUploadComponent";
+import { CustomerRelatedForm } from "./CustomerRelatedForm";
+import toast from "react-hot-toast";
 
 interface CustomerProfileSectionProps {
   customer: Customer | null;
@@ -12,14 +14,7 @@ interface CustomerProfileSectionProps {
   onSubmit: () => void;
   loading: boolean;
   onUploadSuccess?: (data: any) => void;
-}
-
-interface InspectionType {
-  inspectionTypeId: string;
-  name: string;
-  note: string;
-  createdAt: string;
-  updatedAt: string;
+  onRelatedCustomerCreated?: (customerId: number) => void;
 }
 
 interface CustomerUpdateData {
@@ -40,14 +35,10 @@ const customerTypeOptions = [
 
 export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   customer,
-  formData,
-  setFormData,
-  onSubmit,
-  loading,
   onUploadSuccess,
+  onRelatedCustomerCreated,
 }) => {
-  const [inspectionTypes, setInspectionTypes] = useState<InspectionType[]>([]);
-  const [inspectionTypesLoading, setInspectionTypesLoading] = useState(false);
+  // Inspection type selection removed from Section 1
   const [error, setError] = useState<string | null>(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -61,6 +52,10 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   const [updatedCustomer, setUpdatedCustomer] = useState<Customer | null>(
     customer
   );
+  const [relatedCustomerId, setRelatedCustomerId] = useState<number | null>(
+    null
+  );
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   // Initialize customer data when customer prop changes
   useEffect(() => {
@@ -79,37 +74,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
     }
   }, [customer]);
 
-  useEffect(() => {
-    const fetchInspectionTypes = async () => {
-      setInspectionTypesLoading(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/inspection-types");
-        if (!response.ok) {
-          throw new Error("Failed to fetch inspection types");
-        }
-        const data: InspectionType[] = await response.json();
-        setInspectionTypes(data);
-      } catch (err) {
-        setError("Không thể tải danh sách loại hình giám định");
-        console.error("Error fetching inspection types:", err);
-      } finally {
-        setInspectionTypesLoading(false);
-      }
-    };
-
-    fetchInspectionTypes();
-  }, []);
-
-  const handleInputChange = (
-    field: keyof InspectionFormData,
-    value: string | number
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  // Removed fetching inspection types
 
   const handleCustomerDataChange = (
     field: keyof CustomerUpdateData,
@@ -121,18 +86,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit();
-  };
-
-  const isFormValid = () => {
-    return formData.inspectionTypeId.trim() !== "";
-  };
-
-  const selectedInspectionType = inspectionTypes.find(
-    (type) => type.inspectionTypeId === formData.inspectionTypeId
-  );
+  // No inspection type selection in this section
 
   const handleUploadSuccess = (data: any) => {
     if (onUploadSuccess) {
@@ -166,7 +120,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
       setError(null);
 
       // Show success message
-      alert("Cập nhật thông tin khách hàng thành công!");
+      toast.success("Cập nhật thông tin khách hàng thành công!");
     } catch (err) {
       setError(
         err instanceof Error
@@ -210,7 +164,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8 lg:mb-12">
@@ -239,47 +193,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
           </p>
         </div>
 
-        {/* Upload Option */}
-        <div className="bg-gradient-to-r from-orange-100 via-yellow-100 to-amber-100 rounded-2xl shadow-xl border border-orange-200 p-6 lg:p-8 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <div className="bg-orange-100 p-3 rounded-full mr-4">
-                <svg
-                  className="w-6 h-6 text-orange-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-orange-800">
-                  Tùy Chọn Nhanh
-                </h3>
-                <p className="text-orange-700 font-medium">
-                  Upload file Excel/CSV để tạo hồ sơ tự động
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowUploadForm(true)}
-              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Upload File
-            </button>
-          </div>
-          <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-3">
-            <strong>Mẹo:</strong> Sử dụng tính năng upload để tạo hồ sơ nhanh
-            chóng từ file dữ liệu có sẵn. Hệ thống sẽ tự động xử lý và tạo biên
-            nhận cùng thông tin máy móc.
-          </p>
-        </div>
+        {/* Upload Option moved to bottom */}
 
         {/* Error Message */}
         {error && (
@@ -619,145 +533,18 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
           </div>
         )}
 
-        {/* Inspection Type Selection */}
-        <div className="bg-gradient-to-r from-white via-green-50 to-blue-50 rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8 mb-8">
-          <div className="flex items-center mb-8">
-            <div className="bg-green-100 p-3 rounded-full mr-4">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-xl lg:text-2xl font-bold text-gray-900">
-                Loại hình giám định <span className="text-red-500">*</span>
-              </h3>
-              <p className="text-gray-700 font-medium mt-1">
-                Chọn loại hình giám định phù hợp với nhu cầu của bạn
-              </p>
-            </div>
-          </div>
-
-          {inspectionTypesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="text-gray-800 font-semibold text-lg">
-                  Đang tải danh sách...
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                {inspectionTypes.map((inspectionType) => (
-                  <div
-                    key={inspectionType.inspectionTypeId}
-                    className={`relative rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                      formData.inspectionTypeId ===
-                      inspectionType.inspectionTypeId
-                        ? "border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg"
-                        : "border-gray-200 bg-white hover:border-gray-400 hover:shadow-md"
-                    }`}
-                    onClick={() =>
-                      handleInputChange(
-                        "inspectionTypeId",
-                        inspectionType.inspectionTypeId
-                      )
-                    }
-                  >
-                    <div className="p-6">
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          id={`inspection-${inspectionType.inspectionTypeId}`}
-                          name="inspectionType"
-                          value={inspectionType.inspectionTypeId}
-                          checked={
-                            formData.inspectionTypeId ===
-                            inspectionType.inspectionTypeId
-                          }
-                          onChange={(e) =>
-                            handleInputChange(
-                              "inspectionTypeId",
-                              e.target.value
-                            )
-                          }
-                          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300"
-                        />
-                        <div className="ml-4 flex-1">
-                          <label
-                            htmlFor={`inspection-${inspectionType.inspectionTypeId}`}
-                            className="block text-base font-bold text-gray-900 cursor-pointer"
-                          >
-                            {inspectionType.name}
-                          </label>
-                          <p className="text-sm text-gray-700 mt-2 font-medium leading-relaxed">
-                            {inspectionType.note}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {selectedInspectionType && (
-                <div className="mt-6 p-6 bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-xl shadow-sm">
-                  <div className="flex items-start">
-                    <svg
-                      className="w-6 h-6 text-blue-600 mr-3 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>
-                      <h4 className="text-base font-bold text-blue-900">
-                        Đã chọn: {selectedInspectionType.name}
-                      </h4>
-                      <p className="text-sm text-blue-800 mt-2 font-medium leading-relaxed">
-                        {selectedInspectionType.note}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Inspection Type Selection removed from Section 1 */}
 
         {/* Submit Button */}
-        <div className="flex justify-center pt-8">
+        {/* <div className="flex justify-center pt-8">
           <button
             type="submit"
             onClick={handleSubmit}
             disabled={
-              loading ||
-              !isFormValid() ||
-              inspectionTypesLoading ||
-              editingCustomer
+              loading || editingCustomer
             }
             className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform ${
-              loading ||
-              !isFormValid() ||
-              inspectionTypesLoading ||
-              editingCustomer
+              loading || editingCustomer
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 hover:scale-105 shadow-xl hover:shadow-2xl"
             } min-w-[280px]`}
@@ -773,6 +560,92 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
               "Hoàn thành hồ sơ khách hàng"
             )}
           </button>
+        </div> */}
+
+        {/* Related Customer Form placed below the submit button */}
+        <div className="mt-8">
+          {/* <CustomerRelatedForm
+            onCustomerCreated={(id) => {
+              setRelatedCustomerId(id);
+              onRelatedCustomerCreated && onRelatedCustomerCreated(id);
+            }}
+            loading={relatedLoading}
+            setLoading={setRelatedLoading}
+          /> */}
+
+          <CustomerRelatedForm
+            onCustomerCreated={(id) => {
+              setRelatedCustomerId(id);
+              onRelatedCustomerCreated?.(id);
+            }}
+            loading={relatedLoading}
+            setLoading={setRelatedLoading}
+          />
+          {relatedCustomerId && (
+            <div className="bg-green-50 border border-green-300 rounded-xl p-6 mt-4 shadow-sm">
+              <div className="flex items-center">
+                <svg
+                  className="w-6 h-6 text-green-600 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span className="text-green-800 font-bold text-lg">
+                  Đã tạo khách hàng liên quan thành công (ID:{" "}
+                  {relatedCustomerId})
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Upload Option (stays at the very end) */}
+        <div className="bg-gradient-to-r from-orange-100 via-yellow-100 to-amber-100 rounded-2xl shadow-xl border border-orange-200 p-6 lg:p-8 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="bg-orange-100 p-3 rounded-full mr-4">
+                <svg
+                  className="w-6 h-6 text-orange-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-orange-800">
+                  Tùy Chọn Nhanh
+                </h3>
+                <p className="text-orange-700 font-medium">
+                  Upload file Excel/CSV để tạo hồ sơ tự động
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUploadForm(true)}
+              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              Upload File
+            </button>
+          </div>
+          <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-3">
+            <strong>Mẹo:</strong> Sử dụng tính năng upload để tạo hồ sơ nhanh
+            chóng từ file dữ liệu có sẵn. Hệ thống sẽ tự động xử lý và tạo biên
+            nhận cùng thông tin máy móc.
+          </p>
         </div>
       </div>
     </div>

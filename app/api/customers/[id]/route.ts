@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
+    const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `http://localhost:8080/api/customers/${id}`,
+      `${process.env.BACKEND_URL }/api/customers/${id}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       }
@@ -38,17 +40,20 @@ export async function GET(
 }
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
-
+    const token = req.cookies.get("token")?.value;
+    
     const res = await fetch(
-      `http://localhost:8080/api/customers/${params.id}`,
+      `${process.env.BACKEND_URL }/api/customers/${id}`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(body),
       }

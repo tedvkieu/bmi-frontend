@@ -35,11 +35,6 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
     window.location.reload();
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "Không có";
-    return new Date(dateString).toLocaleDateString("vi-VN");
-  };
-
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
       PENDING: "Đang chờ xử lý",

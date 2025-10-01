@@ -1,30 +1,28 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import "../styles/InspectionForm.css";
-import { InspectionFormData, ReceiptFormData } from "../types/inspection";
+import { InspectionFormData } from "../types/inspection";
 import { Customer } from "../types/customer";
 import { useParams } from "next/navigation";
-import { inspectionApi } from "../services/inspectionApi";
-import { ReceiptFormSection } from "./ReceiptFormSection";
-import { CompletionSection } from "./CompletionSection";
+//import { inspectionApi } from "../services/inspectionApi";
 import { CustomerProfileSection } from "./CustomerProfileSection";
-import { MachineryFormSection } from "./MachineSectionForm";
+import LoadingSpinner from "./document/LoadingSpinner";
 
-interface MachineryFormData {
-  receiptId: number;
-  registrationNo: string;
-  itemName: string;
-  brand: string;
-  model: string;
-  serialNumber: string;
-  manufactureCountry: string;
-  manufacturerName: string;
-  manufactureYear: number;
-  quantity: number;
-  usage: string;
-  note: string;
-}
+// interface MachineryFormData {
+//   receiptId: number;
+//   registrationNo: string;
+//   itemName: string;
+//   brand: string;
+//   model: string;
+//   serialNumber: string;
+//   manufactureCountry: string;
+//   manufacturerName: string;
+//   manufactureYear: number;
+//   quantity: number;
+//   usage: string;
+//   note: string;
+// }
 
 const InspectionForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +30,14 @@ const InspectionForm: React.FC = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [receiptId, setReceiptId] = useState<number | null>(null);
+  const [relatedCustomerId, setRelatedCustomerId] = useState<number | null>(
+    null
+  );
+
+  // const [receiptId, setReceiptId] = useState<number | null>(null);
+  // const [machineryData, setMachineryData] = useState<MachineryFormData | null>(
+  //   null
+  // );
 
   const [customerProfileData, setCustomerProfileData] =
     useState<InspectionFormData>({
@@ -44,36 +49,26 @@ const InspectionForm: React.FC = () => {
       inspectionTypeId: "",
     });
 
-  const [receiptData, setReceiptData] = useState<ReceiptFormData>({
-    registrationNo: "",
-    customerSubmitId: Number(id) || 0,
-    customerRelatedId: 0,
-    inspectionTypeId: "",
-    declarationNo: "",
-    billOfLading: "",
-    shipName: "",
-    cout10: 0,
-    cout20: 0,
-    bulkShip: false,
-    declarationDoc: "",
-    declarationPlace: "",
-    inspectionDate: "",
-    certificateDate: "",
-    inspectionLocation: "",
-    certificateStatus: "PENDING",
-  });
+  // const [receiptData, setReceiptData] = useState<ReceiptFormData>({
+  //   registrationNo: "",
+  //   customerSubmitId: Number(id) || 0,
+  //   customerRelatedId: 0,
+  //   inspectionTypeId: "",
+  //   declarationNo: "",
+  //   billOfLading: "",
+  //   shipName: "",
+  //   cout10: 0,
+  //   cout20: 0,
+  //   bulkShip: false,
+  //   declarationDoc: "",
+  //   declarationPlace: "",
+  //   inspectionDate: "",
+  //   certificateDate: "",
+  //   inspectionLocation: "",
+  //   certificateStatus: "PENDING",
+  // });
 
-  const [machineryData, setMachineryData] = useState<MachineryFormData | null>(
-    null
-  );
-
-  useEffect(() => {
-    if (id) {
-      fetchCustomer();
-    }
-  }, [id]);
-
-  const fetchCustomer = async () => {
+  const fetchCustomer = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -95,18 +90,28 @@ const InspectionForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]); // 👈 dependency
+
+  useEffect(() => {
+    if (id) {
+      fetchCustomer();
+    }
+  }, [id, fetchCustomer]);
 
   const handleCustomerProfileSubmit = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Chỉ cần set inspectionTypeId vào receiptData và chuyển section
-      setReceiptData((prev) => ({
-        ...prev,
-        inspectionTypeId: customerProfileData.inspectionTypeId,
-      }));
+      // Set inspectionTypeId (default to '04' if empty) and move to section 2
+      // setReceiptData((prev) => ({
+      //   ...prev,
+      //   inspectionTypeId:
+      //     customerProfileData.inspectionTypeId &&
+      //     customerProfileData.inspectionTypeId.trim() !== ""
+      //       ? customerProfileData.inspectionTypeId
+      //       : "04",
+      // }));
 
       // Chuyển sang section 2 ngay lập tức
       setCurrentSection(2);
@@ -116,61 +121,68 @@ const InspectionForm: React.FC = () => {
       setLoading(false);
     }
   };
-  const handleReceiptSubmit = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await inspectionApi.submitReceipt(receiptData);
-
-      if (response.success) {
-        // Get receiptId from response.data
-        const receiptId = response.data?.receiptId;
-        if (receiptId) {
-          setReceiptId(receiptId);
-          setCurrentSection(3);
-        } else {
-          throw new Error("Không nhận được mã biên nhận");
-        }
-      } else {
-        throw new Error(response.message || "Có lỗi xảy ra");
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi biên nhận"
-      );
-    } finally {
-      setLoading(false);
-    }
+  const handleRelatedCustomerCreated = (customerId: number) => {
+    setRelatedCustomerId(customerId);
+    console.log("Related Customer ID:", relatedCustomerId);
+    // setReceiptData((prev) => ({ ...prev, customerRelatedId: customerId }));
   };
+  // const handleReceiptSubmit = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
 
-  const handleMachinerySubmit = (machinery: MachineryFormData) => {
-    // If the machinery object has manufactureYear, map it to manufactureYear
-    const mappedMachinery = {
-      ...machinery,
-      manufactureYear:
-        (machinery as any).manufactureYear ?? machinery.manufactureYear,
-    };
-    setMachineryData(mappedMachinery);
-  };
+  //     // đảm bảo nếu chưa có customerRelatedId thì fallback về customerSubmitId
+  //     const dataToSubmit = {
+  //       ...receiptData,
+  //       customerRelatedId:
+  //         receiptData.customerRelatedId && receiptData.customerRelatedId !== 0
+  //           ? receiptData.customerRelatedId
+  //           : receiptData.customerSubmitId,
+  //     };
 
-  // Handler for completing the machinery section and moving to completion
-  const handleMachineryComplete = () => {
-    setCurrentSection(4);
-  };
+  //     console.log("Data to submit:", dataToSubmit);
+  //     console.log("customerSubmitId:", dataToSubmit.customerSubmitId);
+  //     console.log("customerRelatedId:", dataToSubmit.customerRelatedId);
+
+  //     const response = await inspectionApi.submitReceipt(dataToSubmit);
+
+  //     if (response.success) {
+  //       const receiptId = response.data?.receiptId;
+  //       if (receiptId) {
+  //         //setReceiptId(receiptId);
+  //         setCurrentSection(3);
+  //       } else {
+  //         throw new Error("Không nhận được mã biên nhận");
+  //       }
+  //     } else {
+  //       throw new Error(response.message || "Có lỗi xảy ra");
+  //     }
+  //   } catch (err) {
+  //     setError(
+  //       err instanceof Error ? err.message : "Có lỗi xảy ra khi gửi biên nhận"
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleMachinerySubmit = (machinery: MachineryFormData) => {
+  //   // If the machinery object has manufactureYear, map it to manufactureYear
+  //   const mappedMachinery = {
+  //     ...machinery,
+  //     manufactureYear:
+  //       (machinery as any).manufactureYear ?? machinery.manufactureYear,
+  //   };
+  //   // setMachineryData(mappedMachinery);
+  // };
 
   if (loading && !customer) {
-    return (
-      <div className="inspection-form-loading">
-        <div className="spinner"></div>
-        <p>Đang tải...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <div className="inspection-form-container">
-      <div className="inspection-form-header">
+      {/* <div className="inspection-form-header">
         <h1>Tạo Hồ Sơ Kiểm Tra</h1>
         <div className="progress-indicator">
           <div
@@ -202,7 +214,7 @@ const InspectionForm: React.FC = () => {
             <span className="step-label">Hoàn thành</span>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {error && (
         <div className="error-message">
@@ -226,10 +238,11 @@ const InspectionForm: React.FC = () => {
             setFormData={setCustomerProfileData}
             onSubmit={handleCustomerProfileSubmit}
             loading={loading}
+            onRelatedCustomerCreated={handleRelatedCustomerCreated}
           />
         )}
 
-        {currentSection === 2 && customer && (
+        {/* {currentSection === 2 && customer && (
           <ReceiptFormSection
             customer={customer}
             formData={receiptData}
@@ -257,7 +270,7 @@ const InspectionForm: React.FC = () => {
             receiptData={receiptData}
             machineryData={machineryData}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

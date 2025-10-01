@@ -1,6 +1,6 @@
 // components/admin/CustomersContent.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Users,
   Search,
@@ -10,17 +10,20 @@ import {
   Eye,
   FileText,
   Calendar,
-  User,
   Mail,
   Phone,
-  MapPin,
   Filter,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
-  Building,
+  UserCheck, // New icon for unapproved customers
+  UserX, // New icon for rejecting customers
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "./document/LoadingSpinner";
+import { authApi } from "../../services/authApi";
+import { customerApi, UnactiveCustomer } from "../services/customerApi";
+import toast from "react-hot-toast";
 
 interface Customer {
   customerId: number;
@@ -74,29 +77,58 @@ const CustomersContent = () => {
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 10;
 
+  const [unapprovedCustomers, setUnapprovedCustomers] = useState<
+    UnactiveCustomer[]
+  >([]);
+  const [unactiveCount, setUnactiveCount] = useState(0);
+  const [isUnapprovedModalOpen, setIsUnapprovedModalOpen] =
+    useState<boolean>(false);
+  const [loadingUnapproved, setLoadingUnapproved] = useState<boolean>(false);
+  const [unapprovedError, setUnapprovedError] = useState<string>("");
+
   const router = useRouter();
 
-  const fetchCustomers = async () => {
+  const roleFromToken = authApi.getRoleFromToken() as string | null;
+  const isAdminOrManager = roleFromToken === "ADMIN" || roleFromToken === "MANAGER";
+
+  const fetchUnactiveCount = useCallback(async () => {
     try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        size: pageSize.toString(),
+      setLoadingUnapproved(true);
+      setUnapprovedError("");
+      const token = authApi.getToken();
+      if (!token) throw new Error("No authentication token");
+
+      const res = await fetch(`/api/customers/unactive/count`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
-      if (searchTerm) {
-        params.append("search", searchTerm);
-      }
-      if (customerTypeFilter !== "all") {
-        params.append("customerType", customerTypeFilter);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to fetch unactive count");
       }
 
-      const response = await fetch(`/api/customers?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
+      const count = await res.json();
+      setUnactiveCount(count);
+    } catch (error: any) {
+      console.error("Error fetching unactive count:", error);
+      setUnapprovedError(error.message);
+    } finally {
+      setLoadingUnapproved(false);
+    }
+  }, []);
 
-      const data: CustomerResponse = await response.json();
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data: CustomerResponse = await customerApi.getAllCustomers(
+        currentPage,
+        pageSize,
+        searchTerm,
+        customerTypeFilter
+      );
       setCustomers(data.content);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
@@ -105,20 +137,68 @@ const CustomersContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, customerTypeFilter, pageSize]);
 
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage, searchTerm, customerTypeFilter]);
+    fetchUnactiveCount();
+  }, [fetchCustomers, fetchUnactiveCount]); // Added fetchUnactiveCount to dependencies
+
+  const loadUnapprovedCustomers = useCallback(async () => {
+    setLoadingUnapproved(true);
+    setUnapprovedError("");
+    try {
+      const list = await customerApi.getUnactiveCustomers();
+      setUnapprovedCustomers(list);
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Không thể tải danh sách khách hàng chờ duyệt");
+    } finally {
+      setLoadingUnapproved(false);
+    }
+  }, []);
+
+  const openUnapprovedCustomersModal = () => {
+    loadUnapprovedCustomers();
+    setIsUnapprovedModalOpen(true);
+  };
+
+  const closeUnapprovedCustomersModal = () => {
+    setIsUnapprovedModalOpen(false);
+    setUnapprovedCustomers([]);
+    fetchCustomers();
+    fetchUnactiveCount(); // Refresh count when closing modal
+  };
+
+  const handleApproveCustomer = async (customerId: number) => {
+    setUnapprovedError("");
+    try {
+      await customerApi.approveCustomer(customerId);
+      await loadUnapprovedCustomers();
+      toast.success("Khách hàng đã được duyệt thành công!");
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Duyệt khách hàng thất bại");
+    }
+  };
+
+  const handleRejectCustomer = async (customerId: number) => {
+    setUnapprovedError("");
+    try {
+      await customerApi.rejectCustomer(customerId);
+      await loadUnapprovedCustomers();
+      toast.success("Khách hàng đã bị từ chối.");
+    } catch (e: any) {
+      setUnapprovedError(e?.message || "Từ chối khách hàng thất bại");
+    }
+  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(0); // Reset to first page when searching
+    setCurrentPage(0);
   };
 
   const handleCustomerTypeFilter = (value: string) => {
     setCustomerTypeFilter(value);
-    setCurrentPage(0); // Reset to first page when filtering
+    setCurrentPage(0);
   };
 
   const getCustomerTypeText = (type: string) => {
@@ -134,9 +214,9 @@ const CustomersContent = () => {
 
   const getCustomerTypeColor = (type: string) => {
     switch (type) {
-      case "USER":
+      case "IMPORTER":
         return "bg-blue-100 text-blue-800";
-      case "BUSINESS":
+      case "SERVICE_MANAGER":
         return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -144,6 +224,7 @@ const CustomersContent = () => {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("vi-VN", {
       day: "2-digit",
@@ -152,7 +233,6 @@ const CustomersContent = () => {
     });
   };
 
-  // Pagination component
   const Pagination = () => {
     const startItem = currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
@@ -195,7 +275,6 @@ const CustomersContent = () => {
                 <ChevronLeft size={20} />
               </button>
 
-              {/* Page numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -212,7 +291,7 @@ const CustomersContent = () => {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                    className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium ${
                       currentPage === pageNum
                         ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
                         : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
@@ -240,21 +319,17 @@ const CustomersContent = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   const handleClickPage = (id: number) => {
-    router.push(`/admin/tao-ho-so/${id}`); // Pages are 1-indexed in the URL
+    router.push(`/admin/tao-ho-so/${id}`);
   };
 
   return (
     <div className="space-y-6">
       {/* Search and Filter Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-gray-800">
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
             <div className="relative flex-1">
@@ -279,16 +354,30 @@ const CustomersContent = () => {
                 className="border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm flex-1 sm:w-auto min-w-0"
               >
                 <option value="all">Tất cả loại KH</option>
-                <option value="USER">Cá nhân</option>
-                <option value="BUSINESS">Doanh nghiệp</option>
+                <option value="IMPORTER">Nhà nhập khẩu</option>
+                <option value="SERVICE_MANAGER">Quản lý dịch vụ</option>
               </select>
             </div>
           </div>
 
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium">
-            <Plus size={16} />
-            <span>Thêm khách hàng mới</span>
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {isAdminOrManager && (
+              <button
+                onClick={openUnapprovedCustomersModal}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1"
+              >
+                {/* <UserCheck size={16} /> */}
+                <span>
+                  Tài khoản chờ duyệt {loadingUnapproved ? "..." : `(${unactiveCount})`}
+                </span>
+              </button>
+            )}
+
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center space-x-2 transition-colors text-sm font-medium flex-1">
+              <Plus size={16} />
+              <span>Thêm khách hàng mới</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -352,7 +441,10 @@ const CustomersContent = () => {
                 <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600">
                   <Eye size={16} />
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600">
+                <button
+                  onClick={() => handleClickPage(customer.customerId)}
+                  className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
+                >
                   <FileText size={16} />
                 </button>
                 <button className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600">
@@ -373,22 +465,22 @@ const CustomersContent = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                   Khách hàng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   Liên hệ
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Loại KH
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   Ghi chú
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Ngày tạo
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Thao tác
                 </th>
               </tr>
@@ -396,11 +488,11 @@ const CustomersContent = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {customers.map((customer) => (
                 <tr key={customer.customerId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <Users size={16} className="text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <Users size={16} className="text-gray-400 flex-shrink-0" />
+                      <div className="truncate max-w-[150px]">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                           {customer.name}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -409,17 +501,17 @@ const CustomersContent = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <Mail size={14} className="text-gray-400" />
-                        <span className="text-sm text-gray-900">
+                        <Mail size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-900 truncate max-w-[180px]">
                           {customer.email}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Phone size={14} className="text-gray-400" />
-                        <span className="text-sm text-gray-900">
+                        <Phone size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-900 truncate max-w-[180px]">
                           {customer.phone}
                         </span>
                       </div>
@@ -434,14 +526,14 @@ const CustomersContent = () => {
                       {getCustomerTypeText(customer.customerType)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900 max-w-xs truncate block">
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-900 max-w-[200px] truncate block">
                       {customer.note || "Không có ghi chú"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      <Calendar size={16} className="text-gray-400" />
+                      <Calendar size={16} className="text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-900">
                         {formatDate(customer.createdAt)}
                       </span>
@@ -496,6 +588,133 @@ const CustomersContent = () => {
           <p className="text-gray-500">
             Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
           </p>
+        </div>
+      )}
+
+      {/* Unapproved Customers Modal */}
+      {isUnapprovedModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" // Changed overlay color for better contrast
+            onClick={closeUnapprovedCustomersModal}
+          />
+          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-5 bg-blue-600 text-white rounded-t-lg flex items-center justify-between">
+              <h4 className="text-lg font-semibold">
+                Danh sách khách hàng chờ duyệt
+              </h4>
+              <button
+                onClick={closeUnapprovedCustomersModal}
+                className="text-white/80 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              {loadingUnapproved ? (
+                <div className="flex justify-center items-center h-48">
+                  <LoadingSpinner />
+                </div>
+              ) : unapprovedError ? (
+                <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                  {unapprovedError}
+                </div>
+              ) : unapprovedCustomers.length === 0 ? (
+                <div className="text-center py-12">
+                  <UserCheck size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Không có khách hàng nào chờ duyệt
+                  </h3>
+                  <p className="text-gray-500">
+                    Tất cả khách hàng đã được duyệt hoặc chưa có yêu cầu mới.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]">
+                          Tên công ty
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[180px]">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                          Điện thoại
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]">
+                          Loại KH
+                        </th>
+                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[100px]">
+                          Thao tác
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-100">
+                      {unapprovedCustomers.map((customer) => (
+                        <tr
+                          key={customer.customerId}
+                          className="hover:bg-blue-50 transition-colors duration-200"
+                        >
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            <span className="block truncate max-w-[150px]">
+                              {customer.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            <span className="block truncate max-w-[180px]">
+                              {customer.email}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            <span className="block truncate max-w-[120px]">
+                              {customer.phone}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {getCustomerTypeText(customer.customerType)}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={() =>
+                                  handleApproveCustomer(customer.customerId)
+                                }
+                                className="p-2.5 rounded-full text-green-600 hover:bg-green-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                                title="Duyệt"
+                              >
+                                <UserCheck size={18} />
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleRejectCustomer(customer.customerId)
+                                }
+                                className="p-2.5 rounded-full text-red-600 hover:bg-red-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                                title="Từ chối"
+                              >
+                                <UserX size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end">
+              <button
+                type={"button"}
+                onClick={closeUnapprovedCustomersModal}
+                className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

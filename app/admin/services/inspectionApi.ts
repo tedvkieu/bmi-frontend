@@ -12,7 +12,7 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
-const API_BASE_URL = "http://localhost:3000/api";
+const BACKEND_URL  = `${process.env.FRONTEND_URL}/api`;
 
 class InspectionApi {
   private async makeRequest<T>(
@@ -20,7 +20,7 @@ class InspectionApi {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/receipts`, {
+      const response = await fetch(`${BACKEND_URL}/dossiers`, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
@@ -63,7 +63,7 @@ class InspectionApi {
   }
 
   async submitReceipt(formData: ReceiptFormData): Promise<ApiResponse> {
-    return this.makeRequest("/receipts", {
+    return this.makeRequest("/dossiers", {
       method: "POST",
       body: JSON.stringify(formData),
     });
@@ -87,7 +87,7 @@ class InspectionApi {
     formData.append("type", type);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await fetch(`${BACKEND_URL}/upload`, {
         method: "POST",
         body: formData,
       });

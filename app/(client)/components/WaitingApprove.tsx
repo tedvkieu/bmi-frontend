@@ -8,8 +8,6 @@ import Image from 'next/image';
 import LoadingSpinner from '@/app/admin/component/document/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 
-const POLL_INTERVAL = 10000; // 10s
-
 const WaitingApprove: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();

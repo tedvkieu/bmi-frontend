@@ -264,11 +264,12 @@ const ReportsClient: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                {/* Bộ lọc */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm text-gray-800 font-medium mb-1">Công ty</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={selectedCustomerId}
                             onChange={(e) => setSelectedCustomerId(e.target.value)}
                         >
@@ -281,7 +282,7 @@ const ReportsClient: React.FC = () => {
                     <div>
                         <label className="block text-sm text-gray-800 font-medium mb-1">Thời gian</label>
                         <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={period}
                             onChange={(e) => setPeriod(e.target.value as Period | "")}
                         >
@@ -296,7 +297,7 @@ const ReportsClient: React.FC = () => {
                         <label className="block text-sm text-gray-800 font-medium mb-1">Từ ngày</label>
                         <input
                             type="date"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={fromDate}
                             onChange={(e) => setFromDate(e.target.value)}
                         />
@@ -305,7 +306,7 @@ const ReportsClient: React.FC = () => {
                         <label className="block text-sm text-gray-800 font-medium mb-1">Đến ngày</label>
                         <input
                             type="date"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={toDate}
                             onChange={(e) => setToDate(e.target.value)}
                         />
@@ -316,11 +317,13 @@ const ReportsClient: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Buttons */}
                 <div className="mt-4 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <button
                             className={classNames(
-                                "px-4 py-2 rounded-md text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                "px-4 py-2 rounded-md text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
                                 loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                             )}
                             onClick={handleSearch}
@@ -330,8 +333,8 @@ const ReportsClient: React.FC = () => {
                         </button>
                         <button
                             className={classNames(
-                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-                                loading || !hasData ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white hover:bg-gray-50 cursor-pointer"
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                loading || !hasData ? "bg-green-500 text-white cursor-not-allowed" : "bg-white hover:bg-gray-50 cursor-pointer"
                             )}
                             onClick={handleExport}
                             disabled={loading || !hasData}
@@ -347,7 +350,7 @@ const ReportsClient: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <button
                             className={classNames(
-                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                             )}
                             onClick={handleUploadClick}
                             type="button"
@@ -365,6 +368,7 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div>
 
+            {/* Analystic */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="text-gray-800 text-sm">Tổng số lần giám định</div>
@@ -384,6 +388,7 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div>
 
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="font-medium text-gray-900 mb-3">Số giám định theo thời gian</div>
@@ -450,7 +455,8 @@ const ReportsClient: React.FC = () => {
                     </div>
                 </div>
             </div>
-
+            
+            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-auto">
                 <table className="min-w-full text-sm text-gray-800">
                     <thead className="bg-gray-50">

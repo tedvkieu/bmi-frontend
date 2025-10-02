@@ -23,7 +23,7 @@ export async function PUT(
     let data: any = { success: true, message: "Đã duyệt thành công" };
     try {
       data = await res.json();
-    } catch (_) {}
+    } catch {}
 
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {

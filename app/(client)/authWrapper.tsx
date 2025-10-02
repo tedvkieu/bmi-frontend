@@ -11,18 +11,13 @@ interface AuthWrapperProps {
 
 export default function AuthWrapper({ children, allowedRoles }: AuthWrapperProps) {
   const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const r = authApi.getRoleFromToken();
     setRole(r);
-    setLoading(false);
   }, []);
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Đang tải...</div>;
-  }
 
   if (!role) {
     return <>{children}</>;

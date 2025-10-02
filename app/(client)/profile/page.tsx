@@ -212,7 +212,7 @@ export default function ProfilePage() {
             )}
             {selectedSection === "dossiers" && (
               <span className="text-blue-600">
-               <OverviewSection user={user} router={router} />
+                <OverviewSection user={user} router={router} />
 
               </span>
             )}

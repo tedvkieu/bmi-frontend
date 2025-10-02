@@ -17,17 +17,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const pathname = usePathname();
 
   const getCurrentPage = () => {
-    if (pathname === "/admin") return "dashboard";
-    if (pathname === "/") return "dashboard_overview";
-    if (pathname.startsWith("/analytic")) return "dashboard_analytic";
-    if (pathname.startsWith("/admin/ho-so")) return "documents";
-    if (pathname.startsWith("/admin/phan-cong")) return "assignment";
+    if (pathname === "/admin") return "dashboard_overview";
+    if (pathname.startsWith("/admin/analytic")) return "dashboard_analytic";
+    if (pathname.startsWith("/admin/hoso")) return "documents";
+    if (pathname.startsWith("/admin/phancong")) return "assignment";
     if (pathname.startsWith("/admin/evaluation")) return "evaluation";
-    if (pathname.startsWith("/admin/khach-hang")) return "clients";
-    if (pathname.startsWith("/admin/quan-ly-nhan-vien")) return "users";
-    if (pathname.startsWith("/admin/danh-muc")) return "categories";
-    if (pathname.startsWith("/bao-cao")) return "reports";
-    if (pathname.startsWith("/admin/cai-dat")) return "settings";
+    if (pathname.startsWith("/admin/khachhang")) return "clients";
+    if (pathname.startsWith("/admin/nhanvien")) return "users";
+    if (pathname.startsWith("/admin/danhmuc")) return "categories";
+    if (pathname.startsWith("/admin/baocao")) return "reports";
+    if (pathname.startsWith("/admin/caidat")) return "settings";
+    if (pathname.startsWith("/admin/yeu-cau-giam-dinh")) return "documents_requests"; // Thêm route này
     return "dashboard";
   };
 
@@ -56,16 +56,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const handlePageChange = (page: string) => {
     const routes = {
       dashboard: "/admin",
-      dashboard_overview: "/admin", // <-- thêm
-      dashboard_analytic: "/admin/analytic", // <-- thêm
-      documents: "/admin/ho-so",
-      assignment: "/admin/phan-cong",
+      dashboard_overview: "/admin",
+      dashboard_analytic: "/admin/analytic",
+      documents: "/admin/hoso",
+      assignment: "/admin/phancong",
       evaluation: "/admin/evaluation",
-      clients: "/admin/khach-hang",
-      users: "/admin/quan-ly-nhan-vien",
-      categories: "/admin/danh-muc",
-      reports: "/admin/bao-cao",
-      settings: "/admin/cai-dat",
+      clients: "/admin/khachhang",
+      users: "/admin/nhanvien",
+      categories: "/admin/danhmuc",
+      reports: "/admin/baocao",
+      settings: "/admin/caidat",
+      documents_requests: "/admin/yeu-cau-giam-dinh",
     };
 
     router.push(routes[page as keyof typeof routes] || "/admin");
@@ -97,7 +98,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Main Content with dynamic margin */}
         <div
           className={`min-h-screen transition-all duration-300 ${
-            isMobile ? "ml-0" : isSidebarOpen ? "ml-72" : "ml-20"
+            isMobile
+              ? isSidebarOpen
+                ? "ml-72" // Khi mở trên mobile, đẩy content sang phải
+                : "ml-0"
+              : isSidebarOpen
+              ? "ml-72"
+              : "ml-20"
           }`}
         >
           {/* Header */}
@@ -105,7 +112,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             currentPage={currentPage}
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
-            onSidebarToggle={handleSidebarToggle} // Truyền prop vào Header
+            onSidebarToggle={handleSidebarToggle}
           />
 
           {/* Page Content */}

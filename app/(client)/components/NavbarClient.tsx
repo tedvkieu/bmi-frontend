@@ -25,7 +25,6 @@ export interface Customer {
 }
 
 export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
-  //const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);

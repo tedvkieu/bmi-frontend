@@ -82,9 +82,6 @@ const LoginPage: React.FC = () => {
       const response = await authApi.login(loginData);
 
       authApi.saveAuthData(response);
-
-      const role = authApi.getRoleFromToken();
-
         router.push("/");
     } catch (error: any) {
       console.error("Login error:", error);

@@ -4,6 +4,20 @@ import { DossierInfo as DossierInfoType } from "../types/evaluation";
 interface DossierInfoProps {
   dossierInfo: DossierInfoType;
 }
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "OBTAINED":
+      return "Đạt";
+    case "NOT_OBTAINED":
+      return "Không đạt";
+    case "NOT_WITHIN_SCOPE":
+      return "Không thuộc phạm vi";
+    case "PENDING":
+      return "Đang xử lý";
+    default:
+      return "Không xác định";
+  }
+};
 
 export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
   const formatDate = (dateString: string) => {
@@ -26,7 +40,7 @@ export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
       <h2 className="text-xl text-gray-700 font-semibold mb-4">
         Thông tin hồ sơ
       </h2>
-      <div className="grid text-gray-600 grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div className="grid text-gray-600 grid-cols-1 md:grid-cols-2 gap-4 text-base">
         <div>
           <strong>Số đăng ký:</strong> {dossierInfo.registrationNo}
         </div>
@@ -56,11 +70,11 @@ export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
         <div>
           <strong>Trạng thái:</strong>
           <span
-            className={`ml-2 px-2 py-1 rounded text-xs ${getStatusColor(
+            className={`ml-2 px-2 py-1 rounded text-base ${getStatusColor(
               dossierInfo.certificateStatus
             )}`}
           >
-            {dossierInfo.certificateStatus}
+            {getStatusLabel(dossierInfo.certificateStatus)}
           </span>
         </div>
       </div>

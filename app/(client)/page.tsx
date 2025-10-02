@@ -55,10 +55,6 @@ export default function ContactPage() {
 
   const [showGuide, setShowGuide] = useState(false); // State để kiểm soát việc hiển thị tour
 
-  const startTour = () => {
-    setShowGuide(true);
-  };
-
   const handleTourEnd = () => {
     setShowGuide(false);
     // Optional: Lưu trạng thái đã xem tour vào localStorage để không hiện lại

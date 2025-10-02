@@ -42,7 +42,7 @@ interface EvaluationFormProps {
   onAssignB: (
     members: {
       userId: number;
-      roleCode: "TEAM_LEADER" | "MEMBER" | "TRAINEE";
+      roleCode: string;
     }[]
   ) => Promise<void>;
   onAssignTaskLetter: (

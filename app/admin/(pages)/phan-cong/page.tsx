@@ -110,7 +110,7 @@ export default function AssignmentPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Phân công giám định viên (Mục B)
+            Phân công giám định viên
           </h1>
 
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -132,7 +132,7 @@ export default function AssignmentPage() {
                 disabled={loading}
                 className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? "Đang tìm..." : "Tải hồ sơ"}
+                {loading ? "Đang tìm..." : "Tìm hồ sơ"}
               </button>
             </div>
             {error && (
@@ -148,12 +148,26 @@ export default function AssignmentPage() {
                 </div>
                 {dossierInfo.billOfLading && (
                   <div>
-                    <span className="font-medium">Vận đơn:</span> {dossierInfo.billOfLading}
+                    <span className="font-medium">Vận đơn:</span>{" "}
+                    {dossierInfo.billOfLading}
                   </div>
                 )}
               </div>
             )}
           </div>
+
+          {dossierInfo && (
+            <div className="mt-6 text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                {dossierInfo.registrationNo}
+              </h2>
+              <p className="text-base text-gray-700 leading-relaxed max-w-3xl mx-auto">
+                Lãnh đạo Công ty cổ phần dịch vụ và giám định Bảo Minh, Quyết
+                định phân công giám định viên có tên sau thực hiện các nội dung
+                yêu cầu theo kế hoạch giám định sau.
+              </p>
+            </div>
+          )}
 
           {dossierInfo && (
             <TeamMemberSection

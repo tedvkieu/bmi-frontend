@@ -41,6 +41,9 @@ export default function EvaluationPage() {
   >({ A: undefined, C: undefined, D: undefined });
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [autoSearched, setAutoSearched] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0); // 0-100
+  const [downloadStatus, setDownloadStatus] = useState("");
 
   // Fetch inspectors immediately when page loads
   const fetchInspectors = async () => {
@@ -123,6 +126,83 @@ export default function EvaluationPage() {
       setDossierInfo(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    if (!dossierInfo) return;
+    try {
+      setDownloading(true);
+      setDownloadProgress(0);
+      setDownloadStatus("Chuẩn bị tải...");
+
+      const url = `/api/evaluations/export/${
+        dossierInfo.receiptId
+      }/docx?templateName=${encodeURIComponent("sample-form2.docx")}`;
+      const res = await fetch(url);
+      if (!res.ok || !res.body) {
+        const txt = await res.text();
+        toast.error("Xuất DOCX thất bại");
+        console.error("Export failed:", txt);
+        return;
+      }
+
+      const contentLength = Number(res.headers.get("content-length") || 0);
+      const disposition = res.headers.get("content-disposition") || "";
+      let fileName = `evaluation_form_${dossierInfo.receiptId}.docx`;
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      if (match && match[1]) fileName = match[1];
+
+      const reader = res.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          received += value.length;
+          if (contentLength > 0) {
+            const percent = Math.min(
+              100,
+              Math.floor((received / contentLength) * 100)
+            );
+            setDownloadProgress(percent);
+            setDownloadStatus(`Đang tải ${percent}%`);
+          } else {
+            // Indeterminate style: bump progress until 90%
+            setDownloadProgress((p) => (p < 90 ? p + 5 : p));
+            setDownloadStatus("Đang tải...");
+          }
+        }
+      }
+
+      setDownloadStatus("Hoàn tất, chuẩn bị lưu...");
+      setDownloadProgress(100);
+
+      const blob = new Blob(chunks as any, {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      const blobUrl = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+      toast.success("Đã tải xuống hồ sơ đánh giá");
+    } catch (e) {
+      console.error(e);
+      toast.error("Có lỗi khi tải xuống");
+    } finally {
+      // small delay so users can see 100%
+      setTimeout(() => {
+        setDownloading(false);
+        setDownloadProgress(0);
+        setDownloadStatus("");
+      }, 600);
     }
   };
 
@@ -401,6 +481,23 @@ export default function EvaluationPage() {
   return (
     <AdminLayout>
       <div className="min-h-screen bg-gray-50 py-8">
+        {downloading && (
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <div className="bg-white/90 backdrop-blur border-b border-gray-200">
+              <div className="max-w-4xl mx-auto px-4 py-2 flex items-center gap-3">
+                <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+                  <div
+                    className="h-2 bg-blue-600 transition-all"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-gray-600 whitespace-nowrap">
+                  {downloadStatus || "Đang tải..."}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Biểu mẫu đánh giá quy trình giám định
@@ -414,7 +511,25 @@ export default function EvaluationPage() {
             error={error}
           />
 
-          {dossierInfo && <DossierInfo dossierInfo={dossierInfo} />}
+          {dossierInfo && (
+            <div className="mb-3">
+              <DossierInfo dossierInfo={dossierInfo} />
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleDownloadDocx}
+                  disabled={downloading}
+                  className={`px-4 py-2 rounded text-white ${
+                    downloading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+                >
+                  {downloading ? "Đang xuất..." : "Tải xuống hồ sơ đánh giá"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {dossierInfo && categories.length > 0 && criteria.length > 0 && (
             <EvaluationForm

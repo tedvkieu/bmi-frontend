@@ -42,6 +42,18 @@ export interface BackendError {
     message?: string;
 }
 
+export interface PaginatedUserResponse {
+    content: UserResponse[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number; 
+    numberOfElements: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+}
+
 function authHeaders() {
     const token = authApi.getToken();
     return {
@@ -73,6 +85,28 @@ export const userApi = {
         });
         return handleResponse<{ hasAdmin: boolean; canCreateAdmin: boolean; isOnlyAdmin: boolean }>(res);
     },
+    async getAllUsersPage(page: number, size: number): Promise<PaginatedUserResponse> {
+        const token = authApi.getToken(); // Assuming authApi.getToken exists
+        if (!token) throw new Error("No authentication token found.");
+
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+  
+        const response = await fetch(`/api/users/page?${params.toString()}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to fetch customers");
+        }
+        return response.json();
+    },
+
 
     async getAll(): Promise<UserResponse[]> {
         const res = await fetch(`/api/users`, {

@@ -4,15 +4,16 @@ import {
   Trash2,
   Eye,
   Download,
-  Calendar,
   UserPlus,
   ClipboardCheck,
+  RefreshCw,
 } from "lucide-react";
 import { InspectionReport } from "../../types/inspection";
 import StatusBadge from "./StatusBadge";
 import { authApi } from "@/app/services/authApi";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -20,6 +21,8 @@ interface DocumentsTableProps {
   onDownload: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onDeleteMany: (ids: string[]) => void;
+  onRefresh: (sortBy?: 'newest' | 'oldest') => void; 
 }
 
 const DocumentsTable: React.FC<DocumentsTableProps> = ({
@@ -28,16 +31,20 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   onDownload,
   onEdit,
   onDelete,
+  onDeleteMany,
+  onRefresh,
 }) => {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [customerSubmit, setCustomerSubmit] = useState<Record<string, string>>({});
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     setRole(authApi.getRoleFromToken());
   }, []);
 
-  // Load khách hàng từ API theo doc.client
   useEffect(() => {
     const fetchCustomersSubmit = async () => {
       const newCustomers: Record<string, string> = {};
@@ -45,7 +52,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
       for (const doc of documents) {
         if (doc.customerSubmitId && !customerSubmit[doc.customerSubmitId]) {
           try {
-            const res = await axios.get(`/api/customers/${doc.id}`);
+            const res = await axios.get(`/api/customers/${doc.customerSubmitId}`);
             newCustomers[doc.customerSubmitId] = res.data.name;
           } catch (err) {
             console.error("Lỗi tải khách hàng:", err);
@@ -59,31 +66,45 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
       }
     };
 
-    // const fetchCustomersRelated = async () => {
-    //   const newCustomers: Record<string, string> = {};
-
-    //   for (const doc of documents) {
-    //     if (doc.customerRelatedId && !customerRelated[doc.customerRelatedId]) {
-    //       try {
-    //         const res = await axios.get(`/api/customers/${doc.id}`);
-    //         newCustomers[doc.customerSubmitId] = res.data.name;
-    //       } catch (err) {
-    //         console.error("Lỗi tải khách hàng:", err);
-    //         newCustomers[doc.customerSubmitId] = "Không rõ khách hàng";
-    //       }
-    //     }
-    //   }
-
-    //   if (Object.keys(newCustomers).length > 0) {
-    //     setCustomerRelated((prev) => ({ ...prev, ...newCustomers }));
-    //   }
-    // };
-
     if (documents.length > 0) {
       fetchCustomersSubmit();
-      // fetchCustomersRelated();
     }
-  }, [documents]);
+  }, [documents, customerSubmit]);
+
+  const handleSelectDocument = (id: string) => {
+    setSelectedDocuments((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((docId) => docId !== id)
+        : [...prevSelected, id]
+    );
+  };
+
+  const handleSelectAllDocuments = () => {
+    if (selectedDocuments.length === documents.length) {
+      setSelectedDocuments([]);
+    } else {
+      setSelectedDocuments(documents.map((doc) => doc.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedDocuments.length > 0) {
+      onDeleteMany(selectedDocuments);
+      setSelectedDocuments([]);
+      setIsMultiSelectMode(false);
+    } else {
+      toast.error("Vui lòng chọn ít nhất một tài liệu để xóa.");
+    }
+  };
+
+  const toggleMultiSelectMode = () => {
+    setIsMultiSelectMode((prev) => !prev);
+    if (isMultiSelectMode) {
+      setSelectedDocuments([]);
+    }
+  };
+
+  const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
 
   return (
     <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
@@ -91,35 +112,101 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
+              <th scope="col" className="px-6 py-4 text-left">
+                {isMultiSelectMode && (
+                  <input
+                    type="checkbox"
+                    className="rounded text-blue-600 focus:ring-blue-500"
+                    checked={selectedDocuments.length === documents.length && documents.length > 0}
+                    onChange={handleSelectAllDocuments}
+                    title="Chọn tất cả"
+                  />
+                )}
+              </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+                className="px-6 py-4 text-left text-sm font-semibold text-black"
               >
                 Số đăng ký
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+                className="px-6 py-4 text-left text-sm font-semibold text-black"
               >
                 Khách hàng
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+                className="px-6 py-4 text-left text-sm font-semibold text-black"
               >
                 Trạng thái
               </th>
               <th
                 scope="col"
-                className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider"
+                className="px-6 py-4 text-right text-sm font-semibold text-black"
               >
-                Ngày tạo
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-4 text-right text-xs font-semibold text-blue-800 uppercase tracking-wider"
-              >
-                Thao tác
+                <div className="flex items-center justify-end space-x-2">
+                  {/* <-- KHU VỰC LỌC VÀ SẮP XẾP MỚI --> */}                  {/* <div className="flex items-center space-x-1 border border-gray-200 rounded-full p-1.5 bg-gray-50">
+                    <button
+                      onClick={() => handleSortChange('newest')}
+                      className={`p-2 rounded-full text-sm font-medium transition-colors duration-200 ${sortBy === 'newest'
+                          ? "bg-blue-500 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-200"
+                        }`}
+                      title="Sắp xếp mới nhất"
+                    >
+                      <ArrowDownWideNarrow size={16} className="inline-block mr-1" /> Mới nhất
+                    </button>
+                    <button
+                      onClick={() => handleSortChange('oldest')}
+                      className={`p-2 rounded-full text-sm font-medium transition-colors duration-200 ${sortBy === 'oldest'
+                          ? "bg-blue-500 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-200"
+                        }`}
+                      title="Sắp xếp cũ nhất"
+                    >
+                      <ArrowUpWideNarrow size={16} className="inline-block mr-1" /> Cũ nhất
+                    </button>
+                  </div>
+ */}
+
+                  {/* Nút làm mới dữ liệu */}
+                  <button
+                    onClick={() => onRefresh(sortBy)} // <-- TRUYỀN SORTBY HIỆN TẠI KHI LÀM MỚI
+                    className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
+                    title="Làm mới dữ liệu"
+                  >
+                    <RefreshCw
+                      size={20}
+                      className="transition-transform duration-500 group-hover:rotate-180"
+                    />
+                  </button>
+                  {/* Nút chọn nhiều / thoát chọn nhiều */}
+                  {isAdminOrManager && (
+                    <button
+                      onClick={toggleMultiSelectMode}
+                      className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${isMultiSelectMode
+                          ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                          : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
+                        }`}
+                      title={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"}
+                    >
+                      {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
+                    </button>
+                  )}
+
+                  {/* Nút xóa nhiều (chỉ hiển thị trong chế độ chọn nhiều và khi có mục được chọn) */}
+                  {isAdminOrManager && isMultiSelectMode && selectedDocuments.length > 0 && (
+                    <button
+                      onClick={handleDeleteSelected}
+                      className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                      title="Xóa các mục đã chọn"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  )}
+                  <span>Tùy chọn</span>
+                </div>
               </th>
             </tr>
           </thead>
@@ -138,8 +225,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
               </tr>
             ) : (
               documents.map((doc) => {
-                const isAdminOrManager =
-                  role === "ADMIN" || role === "MANAGER";
                 const isCompleted = doc.status === "obtained";
                 const canDelete = isAdminOrManager;
                 const canEdit = isAdminOrManager || !isCompleted;
@@ -147,8 +232,19 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 return (
                   <tr
                     key={doc.id}
-                    className="hover:bg-blue-50 transition-colors duration-200"
+                    className={`hover:bg-blue-50 transition-colors duration-200 ${selectedDocuments.includes(doc.id) && isMultiSelectMode ? "bg-blue-50" : ""
+                      }`}
                   >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isMultiSelectMode && (
+                        <input
+                          type="checkbox"
+                          className="rounded text-blue-600 focus:ring-blue-500"
+                          checked={selectedDocuments.includes(doc.id)}
+                          onChange={() => handleSelectDocument(doc.id)}
+                        />
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <p className="text-sm font-medium text-gray-900">
@@ -156,24 +252,18 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-800">
-                        {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
-                      </span>
-                    </td>
+                 <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+  <span className="text-sm text-gray-800">
+    {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
+  </span>
+</td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={doc.status} size="md" />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <Calendar size={18} className="text-gray-500" />
-                        <span className="text-sm text-gray-800">
-                          {doc.date}
-                        </span>
-                      </div>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
+                        {/* Các nút hành động khác */}
                         <button
                           onClick={() => onView(doc.id)}
                           className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
@@ -192,7 +282,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           onClick={() => {
                             const reg = doc.registrationNo || doc.name;
                             router.push(
-                              `/admin/phan-cong?registerNo=${encodeURIComponent(
+                              `/admin/phancong?registerNo=${encodeURIComponent(
                                 reg
                               )}`
                             );
@@ -221,11 +311,10 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             if (canEdit) onEdit(doc.id);
                           }}
                           disabled={!canEdit}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
-                            canEdit
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
                               ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
                               : "text-gray-300 cursor-not-allowed"
-                          }`}
+                            }`}
                           title={
                             canEdit
                               ? "Chỉnh sửa"
@@ -239,11 +328,10 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             if (canDelete) onDelete(doc.id);
                           }}
                           disabled={!canDelete}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
-                            canDelete
+                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
                               ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
                               : "text-gray-300 cursor-not-allowed"
-                          }`}
+                            }`}
                           title={canDelete ? "Xóa" : "Không có quyền xóa"}
                         >
                           <Trash2 size={20} />

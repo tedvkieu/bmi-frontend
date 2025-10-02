@@ -20,7 +20,11 @@ const UserMenu: React.FC = () => {
     };
 
     const showProfile = () => {
-        router.push("/profile");
+        if (user?.role === "ADMIN") {
+            router.push("/admin/profile"); // Redirect Admin to /admin/profile
+        } else {
+            router.push("/profile"); // Other roles go to /profile
+        }
         setIsOpen(false); // Đóng menu sau khi click
     };
 

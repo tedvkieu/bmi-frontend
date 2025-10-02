@@ -1,10 +1,10 @@
 // components/ConfirmationModal.tsx
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void; // cho phép async
   title: string;
   message: string;
 }
@@ -16,13 +16,24 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   title,
   message,
 }) => {
+  const [loading, setLoading] = useState(false);
+
   if (!isOpen) return null;
 
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      await onConfirm();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center "> {/* Nền overlay tối hơn một chút */}
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-100 opacity-100"> {/* Bo tròn hơn, đổ bóng mạnh hơn */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 transform transition-all duration-300 scale-100 opacity-100">
         
-        {/* Icon thùng rác */}
+        {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="bg-red-100 p-3 rounded-full">
             <svg
@@ -41,23 +52,25 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-900 text-center mb-3">{title}</h3> {/* Tiêu đề đậm và lớn hơn */}
-        <p className="text-sm text-gray-600 text-center mb-6">{message}</p> {/* Thông báo tinh tế hơn */}
+        <h3 className="text-xl font-bold text-gray-900 text-center mb-3">{title}</h3>
+        <p className="text-sm text-gray-600 text-center mb-6">{message}</p>
         
-        <hr className="border-gray-200 mb-6" /> {/* Đường phân cách mỏng */}
+        <hr className="border-gray-200 mb-6" />
 
-        <div className="flex justify-center space-x-4"> {/* Căn giữa các nút */}
+        <div className="flex justify-center space-x-4">
           <button
             onClick={onClose}
-            className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+            disabled={loading}
+            className="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Hủy
           </button>
           <button
-            onClick={onConfirm}
-            className="px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-full hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-500/50" // Thêm đổ bóng cho nút xác nhận
+            onClick={handleConfirm}
+            disabled={loading}
+            className="px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-full hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg shadow-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Xác nhận xóa
+            {loading ? "Đang xóa..." : "Xác nhận xóa"}
           </button>
         </div>
       </div>

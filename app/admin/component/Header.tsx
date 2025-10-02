@@ -2,10 +2,7 @@
 "use client";
 
 import React from "react";
-import {
-  AlignLeft,
-  X,
-} from "lucide-react";
+import { AlignLeft, X } from "lucide-react";
 
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
@@ -17,23 +14,31 @@ interface HeaderProps {
   onSidebarToggle: () => void; // Prop này sẽ được sử dụng cho nút toggle
 }
 
+// components/Header.tsx
 const Header: React.FC<HeaderProps> = ({
   currentPage,
   isSidebarOpen,
   isMobile,
   onSidebarToggle,
 }) => {
-
   const getPageTitle = (page: string) => {
     switch (page) {
-      case "dashboard":
+      case "dasboard":
         return "Dashboard";
+      case "dashboard_overview":
+        return "Dashboard Overview";
+      case "dashboard_analytic":
+        return "Dashboard Analytic";
       case "documents":
-        return "Quản lý Tài liệu Giám định";
+        return "Hồ sơ giám định";
+      case "documents_requests":
+        return "Yêu cầu giám định";
+      case "assignment":
+        return "Phân công hồ sơ";
       case "evaluation":
         return "Đánh giá hồ sơ";
       case "clients":
-        return "Quản lý Khách hàng";
+        return "Khách hàng";
       case "users":
         return "Quản lý nhân viên";
       case "approve-users":
@@ -59,8 +64,8 @@ const Header: React.FC<HeaderProps> = ({
           >
             {isSidebarOpen && isMobile ? <X size={22} /> : <AlignLeft size={22} />}
           </button>
-            
-          <h2 className="text-lg lg:text-xl font-semibold text-gray-800 truncate">
+
+          <h2 className="text-lg lg:text-2xl font-semibold text-gray-800 truncate">
             {getPageTitle(currentPage)}
           </h2>
         </div>
@@ -76,5 +81,4 @@ const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
-export default Header;
+export default Header; // This export is handled below in AdminLayout

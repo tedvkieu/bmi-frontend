@@ -154,18 +154,18 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4  bg-opacity-40 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col transform scale-95 animate-scale-in border border-gray-200">
-        <div className="flex justify-between items-center p-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-xl">
-          <h2 className="text-xl flex items-center gap-3">
+        <div className="flex justify-between items-center p-5 border-b border-gray-200 bg-gray-200  text-black rounded-t-xl">
+          <h2 className="text-base flex items-center gap-3">
             {/* <ClipboardList size={30} /> */}
-            Chi tiết giám định mã số
-            <span className="font-bold">{document.registrationNo}</span>
+            
+            <span className="font-bold"> HỒ SƠ {document.registrationNo}</span>
           </h2>
           <button
             onClick={onClose}
             className="text-white hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
             title="Đóng"
           >
-            <XCircle size={30} />
+            <XCircle size={30} color="black"/>
           </button>
         </div>
 

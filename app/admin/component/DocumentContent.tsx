@@ -1,4 +1,3 @@
-// components/admin/DocumentsContent.tsx
 "use client";
 import axios from "axios";
 import React, { useState, useEffect, useCallback } from "react";
@@ -7,13 +6,16 @@ import LoadingSpinner from "./document/LoadingSpinner";
 import ErrorMessage from "./document/ErrorMessage";
 import DocumentSearchBar from "./document/DocumentSearchBar";
 import DocumentMobileCard from "./document/DocumentMobileCard";
-import DocumentsTable from "./document/DocumentsTable";
+import DocumentsTable from "./document/DocumentsTable"; // Đảm bảo đã cập nhật DocumentsTable.tsx như câu trả lời trước
 import { useRouter } from "next/navigation";
 import DocumentViewModal from "./document/DocumentViewModal";
 import toast from "react-hot-toast";
-import ConfirmationModal from "./document/ConfirmationModal"; // Import the new ConfirmationModal
+import ConfirmationModal from "./document/ConfirmationModal";
+import { FileText, CheckCircle, Clock } from "lucide-react";
+import { IoDocumentOutline } from "react-icons/io5";
 
-const BACKEND_URL  = process.env.BACKEND_URL  || "http://localhost:8080";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+
 const DocumentsContent = () => {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,14 +35,22 @@ const DocumentsContent = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
 
-  const fetchDocuments = useCallback(async () => {
+  // <-- THÊM STATE sortBy
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest'); // Mặc định sắp xếp mới nhất
+
+  // Cập nhật hàm fetchDocuments để nhận tham số sắp xếp
+  const fetchDocuments = useCallback(async (currentSortBy: 'newest' | 'oldest' = 'newest') => {
     try {
       setLoading(true);
       setError(null);
       const controller = new AbortController();
       const signal = controller.signal;
 
-      const response = await fetch("/api/dossiers?page=0&size=5", { signal });
+      // <-- TRUYỀN THAM SỐ sortBy VÀO API CALL
+      const response = await fetch(
+        `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`, // Cập nhật URL với sortBy
+        { signal }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -51,7 +61,7 @@ const DocumentsContent = () => {
           receiptId: apiDoc.receiptId,
           registrationNo: apiDoc.registrationNo,
           customerSubmitId: apiDoc.customerSubmitId,
-          customerRelatedId: apiDoc.customerRelatedId, // Đây vẫn là ID khách hàng
+          customerRelatedId: apiDoc.customerRelatedId,
           inspectionTypeId: apiDoc.inspectionTypeId,
           declarationNo: apiDoc.declarationNo,
           billOfLading: apiDoc.billOfLading,
@@ -73,7 +83,7 @@ const DocumentsContent = () => {
             apiDoc.registrationNo ||
             apiDoc.billOfLading ||
             `Document ${apiDoc.receiptId}`,
-          client: `${apiDoc.customerRelatedId}`, 
+          client: `${apiDoc.customerRelatedId}`, // Tên khách hàng thực tế nên lấy từ ID
           inspector: "N/A",
           date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
             year: "numeric",
@@ -96,11 +106,11 @@ const DocumentsContent = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Không cần sortBy trong dependency array vì nó được truyền vào
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    fetchDocuments(sortBy); // Gọi fetchDocuments với sortBy hiện tại
+  }, [fetchDocuments, sortBy]); // <-- THÊM sortBy VÀO DEPENDENCY ARRAY
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
@@ -111,9 +121,25 @@ const DocumentsContent = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Handlers for document actions
-  // View, Download, Edit, Delete
-  // View
+  const getStatusCounts = () => {
+    let completed = 0;
+    let pending = 0;
+    let inProgress = 0;
+
+    documents.forEach((doc) => {
+      if (doc.status === "obtained") {
+        completed++;
+      } else if (doc.status === "pending") {
+        pending++;
+      } else if (doc.status === "not_obtained" || doc.status === "not_within_scope") {
+        inProgress++;
+      }
+    });
+    return { completed, pending, inProgress };
+  };
+
+  const statusCounts = getStatusCounts();
+
   const handleView = async (id: string) => {
     try {
       const response = await axios.get(`/api/dossiers/${id}`);
@@ -127,9 +153,8 @@ const DocumentsContent = () => {
     }
   };
 
-  // Edit
   const handleEdit = (id: string) => {
-    router.push(`/admin/ho-so/chinh-sua/${id}`);
+    router.push(`/admin/hoso/${id}`);
   };
 
   const handleDownload = async (id: string) => {
@@ -184,21 +209,18 @@ const DocumentsContent = () => {
     }
   };
 
-  // Function to open confirmation modal
   const confirmDelete = (id: string) => {
     setDocToDelete(id);
     setIsConfirmModalOpen(true);
   };
 
-  // Function to handle the actual deletion after confirmation
   const handleDelete = async () => {
-    if (!docToDelete) return; // Should not happen if modal is open
+    if (!docToDelete) return;
 
     try {
       const response = await axios.delete(`/api/dossiers/${docToDelete}`);
 
       if (response.status === 200 || response.status === 204) {
-        // Update the documents state to remove the deleted document
         setDocuments((prevDocuments) =>
           prevDocuments.filter((doc) => doc.id !== docToDelete)
         );
@@ -210,14 +232,40 @@ const DocumentsContent = () => {
       console.error("Error while deleting receipt:", error);
       toast.error("Không thể xoá biên lai, vui lòng thử lại.");
     } finally {
-      setIsConfirmModalOpen(false); // Close modal
-      setDocToDelete(null); // Reset doc to delete
+      setIsConfirmModalOpen(false);
+      setDocToDelete(null);
+      fetchDocuments(sortBy); // <-- Làm mới sau khi xóa với sortBy hiện tại
     }
   };
 
-  const handleCreateNewDocument = () => {
-    console.log("Create new document");
+  const handleDeleteMany = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    try {
+      // Assuming a batch delete API endpoint or individual deletes
+      const deletePromises = ids.map(id => axios.delete(`/api/dossiers/${id}`));
+      await Promise.all(deletePromises);
+
+      setDocuments((prevDocuments) =>
+        prevDocuments.filter((doc) => !ids.includes(doc.id))
+      );
+      toast.success(`Đã xóa thành công ${ids.length} biên lai.`);
+    } catch (error) {
+      console.error("Error while deleting multiple receipts:", error);
+      toast.error("Không thể xóa các biên lai đã chọn, vui lòng thử lại.");
+    } finally {
+      fetchDocuments(sortBy); // <-- Làm mới sau khi xóa nhiều với sortBy hiện tại
+    }
   };
+
+  // <-- CẬP NHẬT HÀM handleRefresh ĐỂ NHẬN THAM SỐ sortBy
+  const handleRefresh = (newSortBy?: 'newest' | 'oldest') => {
+    const currentSort = newSortBy || sortBy; // Ưu tiên newSortBy nếu có, nếu không thì dùng sortBy hiện tại
+    setSortBy(currentSort); // Cập nhật state sortBy của DocumentsContent
+    fetchDocuments(currentSort); // Tải lại dữ liệu với lựa chọn sắp xếp mới
+    toast.success("Dữ liệu đã được làm mới!");
+  };
+
 
   if (loading) {
     return <LoadingSpinner />;
@@ -228,44 +276,114 @@ const DocumentsContent = () => {
   }
 
   return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Search and Filter Bar */}
-      <DocumentSearchBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        onCreateNew={handleCreateNewDocument}
-      />
-
-      {/* Documents - Mobile Cards */}
-      <div className="block lg:hidden space-y-4">
-        {filteredDocuments.length === 0 ? (
-          <div className="text-center py-10 text-lg text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
-            Không tìm thấy tài liệu nào.
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Thẻ Tổng số tài liệu */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-blue-300 hover:scale-[1.01] cursor-default">
+          <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
+            <IoDocumentOutline size={24} />
           </div>
-        ) : (
-          filteredDocuments.map((doc) => (
-            <DocumentMobileCard
-              key={doc.id}
-              document={doc}
-              onView={handleView}
-              onDownload={handleDownload}
-              onEdit={handleEdit}
-              onDelete={confirmDelete} // Use confirmDelete here
-            />
-          ))
-        )}
+          <div>
+            <p className="text-sm font-medium text-gray-600">Tổng số tài liệu</p>
+            <p className="text-2xl font-semibold text-gray-900">
+              {documents.length}
+            </p>
+          </div>
+        </div>
+
+        {/* Thẻ Tài liệu hoàn thành */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-green-300 hover:scale-[1.01] cursor-default">
+          <div className="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
+            <CheckCircle size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
+            <p className="text-2xl font-semibold text-gray-900">
+              {statusCounts.completed}
+            </p>
+          </div>
+        </div>
+
+        {/* Thẻ Tài liệu đang xử lý */}
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-yellow-300 hover:scale-[1.01] cursor-default">
+          <div className="flex-shrink-0 bg-yellow-100 text-yellow-600 p-3 rounded-full">
+            <Clock size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
+            <p className="text-2xl font-semibold text-gray-900">
+              {statusCounts.inProgress}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Documents Table - Desktop */}
-      <DocumentsTable
-        documents={filteredDocuments}
-        onView={handleView}
-        onDownload={handleDownload}
-        onEdit={handleEdit}
-        onDelete={confirmDelete} // Use confirmDelete here
-      />
+      {/* Search and Filter Bar */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-black space-y-4">
+        <DocumentSearchBar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          onCreateNew={() => router.push("/admin/hoso/tao-ho-so")}
+        />
+
+        {/* Documents - Mobile Cards */}
+        <div className="block lg:hidden space-y-4">
+          {filteredDocuments.length === 0 ? (
+            <div className="text-center py-10 text-lg text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
+              <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Không tìm thấy tài liệu nào
+              </h3>
+              <p className="text-black">
+                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
+              </p>
+            </div>
+          ) : (
+            filteredDocuments.map((doc) => (
+              <DocumentMobileCard
+                key={doc.id}
+                document={doc}
+                onView={handleView}
+                onDownload={handleDownload}
+                onEdit={handleEdit}
+                onDelete={confirmDelete}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Documents Table - Desktop */}
+        <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <DocumentsTable
+            documents={filteredDocuments}
+            onView={handleView}
+            onDownload={handleDownload}
+            onEdit={handleEdit}
+            onDelete={confirmDelete}
+            onRefresh={handleRefresh} 
+            onDeleteMany={handleDeleteMany}
+          />
+        </div>
+
+        {/* No results for desktop table */}
+        {filteredDocuments.length === 0 && !loading && (
+          <div className="hidden lg:block text-center py-12">
+            <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Không tìm thấy tài liệu nào
+            </h3>
+            <p className="text-black">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
+            </p>
+          </div>
+        )}
+      </div>
 
       <DocumentViewModal
         isOpen={isModalOpen}
@@ -273,7 +391,6 @@ const DocumentsContent = () => {
         document={selectedDoc}
       />
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

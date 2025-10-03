@@ -83,14 +83,14 @@ const DocumentsContent = () => {
             apiDoc.registrationNo ||
             apiDoc.billOfLading ||
             `Document ${apiDoc.receiptId}`,
-          client: `${apiDoc.customerRelatedId}`, // Tên khách hàng thực tế nên lấy từ ID
+          client: `${apiDoc.customerRelatedName || apiDoc.customerRelatedId || ""}`,
           inspector: "N/A",
           date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
           }),
-          type: apiDoc.inspectionTypeId,
+          type: apiDoc.inspectionTypeName || apiDoc.inspectionTypeId,
           status: apiDoc.certificateStatus.toLowerCase() as
             | "completed"
             | "pending"

@@ -63,7 +63,6 @@ const LoginPage: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,8 +80,15 @@ const LoginPage: React.FC = () => {
 
       const response = await authApi.login(loginData);
 
+      // Lưu token vào cookie
       authApi.saveAuthData(response);
-        router.push("/");
+
+      // Nếu cần đổi mật khẩu, redirect sang trang đổi mật khẩu
+      if (response.mustChangePassword) {
+        router.push("/auth/change-password"); // đường dẫn trang đổi mật khẩu
+      } else {
+        router.push("/"); // nếu không, đi thẳng trang chính
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setErrors({
@@ -92,6 +98,7 @@ const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div>

@@ -77,12 +77,13 @@ const CustomersContent = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [customerTypeFilter, setCustomerTypeFilter] = useState("all");
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<"all" | "IMPORTER" | "SERVICE_MANAGER">("all");
+
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
-  const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false); // Renamed for clarity
+  const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false); 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null); // State to hold selected customer data
 
   const pageSize = 20;
@@ -263,17 +264,22 @@ const CustomersContent = () => {
     setCurrentPage(0);
   };
 
-  const handleCustomerTypeFilter = (value: string) => {
+  const handleCustomerTypeFilter = (value: any) => {
     setCustomerTypeFilter(value);
     setCurrentPage(0);
   };
+
+  const onRefresh = () => {
+    fetchCustomers();
+    toast.success("Dữ liệu đã được làm mới!");
+  }
 
   const getCustomerTypeText = (type: string) => {
     switch (type) {
       case "IMPORTER":
         return "Nhà nhập khẩu";
       case "SERVICE_MANAGER":
-        return "Quản lý dịch vụ";
+        return "Nhà quản lý dịch vụ";
       default:
         return "Không xác định";
     }
@@ -478,8 +484,8 @@ const CustomersContent = () => {
               className="pl-9 pr-8 py-2.5 w-full border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
             >
               <option value="all">Tất cả khách hàng</option>
-              <option value="IMPORTER">Khách hàng nhập khẩu</option>
-              <option value="SERVICE_MANAGER">Khách hàng quản lý dịch vụ</option>
+              <option value="IMPORTER">Nhà nhập khẩu</option>
+              <option value="SERVICE_MANAGER">Nhà quản lý dịch vụ</option>
             </select>
 
             {/* Icon dropdown bên phải */}
@@ -508,7 +514,7 @@ const CustomersContent = () => {
                       />
                     )}
                   </th>
-                    <th className="px-6 py-3 text-left text-sm  text-black  min-w-[150px]">
+                  <th className="px-6 py-3 text-left text-sm  text-black  min-w-[150px]">
                     STT
                   </th>
                   {/* <th className="px-6 py-3 text-left text-sm  text-black  min-w-[150px]">
@@ -526,7 +532,7 @@ const CustomersContent = () => {
                   <th className="px-6 py-3 text-right text-sm font-bold text-black tracking-wider min-w-[120px]">
                     <div className="flex items-center justify-end space-x-2">
                       <button
-                        // onClick={onRefresh}
+                        onClick={onRefresh}
                         className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
                         title="Làm mới dữ liệu"
                       >
@@ -546,15 +552,15 @@ const CustomersContent = () => {
                         {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
                       </button>
                       <span>Tùy chọn</span>
-                       {isMultiSelectMode && selectedCustomers.length > 0 && (
-                          <button
-                            onClick={() => setConfirmOpen(true)}
-                            className="p-2 px-3 rounded-full bg-red-500 text-white text-xs hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-                            title="Xóa các khách hàng đã chọn"
-                          >
-                            Xóa  ({selectedCustomers.length})
-                          </button>
-                        )}
+                      {isMultiSelectMode && selectedCustomers.length > 0 && (
+                        <button
+                          onClick={() => setConfirmOpen(true)}
+                          className="p-2 px-3 rounded-full bg-red-500 text-white text-xs hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                          title="Xóa các khách hàng đã chọn"
+                        >
+                          Xóa  ({selectedCustomers.length})
+                        </button>
+                      )}
                     </div>
 
                   </th>
@@ -641,7 +647,7 @@ const CustomersContent = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-                    
+
                       </div>
                     </td>
                   </tr>
@@ -886,7 +892,7 @@ const CustomersContent = () => {
             onClick={handleCloseViewModal}
           />
           <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg flex items-center justify-between">
+            <div className="px-6 py-5 bg-gray-600 text-white rounded-t-lg flex items-center justify-between">
               <h4 className="text-lg font-semibold">
                 Thông tin chi tiết khách hàng: {selectedCustomer.name}
               </h4>
@@ -918,7 +924,6 @@ const CustomersContent = () => {
                     {selectedCustomer.customerId}
                   </p>
                 </div>
-                {/* Date of Birth */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ngày sinh
@@ -927,7 +932,6 @@ const CustomersContent = () => {
                     {formatDate(selectedCustomer.dob)}
                   </p>
                 </div>
-                {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email
@@ -954,7 +958,6 @@ const CustomersContent = () => {
                     {selectedCustomer.address || "N/A"}
                   </p>
                 </div>
-                {/* Customer Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Loại khách hàng
@@ -982,7 +985,6 @@ const CustomersContent = () => {
                     </span>
                   </div>
                 )}
-                {/* Created At */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ngày tạo
@@ -1020,11 +1022,10 @@ const CustomersContent = () => {
               >
                 Đóng
               </button>
-              {/* You might want to add an "Edit" button here that navigates to the edit page */}
               <button
                 type="button"
                 onClick={() => router.push(`/admin/khachhang/${selectedCustomer.customerId}`)}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600"
               >
                 Chỉnh sửa
               </button>
@@ -1055,7 +1056,7 @@ const CustomersContent = () => {
             for (const id of selectedCustomers) {
               await handleDeleteCustomerById(id);
             }
-            setSelectedCustomers([]); 
+            setSelectedCustomers([]);
             toast.success(`Xóa thành công ${selectedCustomers.length} tài khoản khách hàng`)
             fetchCustomers();
           } else if (selectedId) {

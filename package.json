@@ -12,6 +12,7 @@
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "axios": "^1.12.1",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",

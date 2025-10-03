@@ -369,7 +369,7 @@ const ReportsClient: React.FC = () => {
             </div>
 
             {/* Analystic */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="text-gray-800 text-sm">Tổng số lần giám định</div>
                     <div className="text-2xl font-semibold text-gray-900">{totalInspections}</div>
@@ -386,10 +386,10 @@ const ReportsClient: React.FC = () => {
                     <div className="text-gray-800 text-sm">Tỉ lệ Không đạt</div>
                     <div className="text-2xl font-semibold text-gray-900">{totalInspections ? Math.round((failCount / totalInspections) * 100) : 0}%</div>
                 </div>
-            </div>
+            </div> */}
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="font-medium text-gray-900 mb-3">Số giám định theo thời gian</div>
                     <svg viewBox="0 0 420 200" className="w-full h-52">
@@ -398,15 +398,12 @@ const ReportsClient: React.FC = () => {
                             const s = series;
                             if (s.length === 0) return <text x="210" y="100" textAnchor="middle" fill="#9ca3af">Không có dữ liệu</text>;
                             const chart = { left: 40, right: 390, top: 20, bottom: 170 };
-                            // axes
                             return (
                                 <>
                                     <line x1={chart.left} y1={chart.top} x2={chart.left} y2={chart.bottom} stroke="#e5e7eb" />
                                     <line x1={chart.left} y1={chart.bottom} x2={chart.right} y2={chart.bottom} stroke="#e5e7eb" />
-                                    {/* Y ticks: 0 and max */}
                                     <text x={chart.left - 8} y={chart.bottom} textAnchor="end" alignmentBaseline="middle" fill="#6b7280" fontSize="10">0</text>
                                     <text x={chart.left - 8} y={chart.top} textAnchor="end" alignmentBaseline="middle" fill="#6b7280" fontSize="10">{maxSeries}</text>
-                                    {/* Bars and X labels */}
                                     {s.map((it, i) => {
                                         const x = chart.left + 10 + i * ((chart.right - chart.left - 20) / Math.max(1, s.length));
                                         const h = (it.count / maxSeries) * (chart.bottom - chart.top - 10);
@@ -414,7 +411,6 @@ const ReportsClient: React.FC = () => {
                                         return (
                                             <g key={it.date}>
                                                 <rect x={x} y={y} width={14} height={h} fill="#3b82f6" rx={2} />
-                                                {/* X label */}
                                                 <text x={x + 7} y={chart.bottom + 12} textAnchor="middle" fill="#6b7280" fontSize="10">
                                                     {it.date}
                                                 </text>
@@ -438,9 +434,7 @@ const ReportsClient: React.FC = () => {
                                 const restLen = circumference - passLen;
                                 return (
                                     <g transform="translate(60,60)">
-                                        {/* base red full circle */}
                                         <circle r="40" fill="none" stroke="#ef4444" strokeWidth="20" opacity="0.6" />
-                                        {/* green arc for pass, starts at top (-90deg) */}
                                         <g transform="rotate(-90)">
                                             <circle r="40" fill="none" stroke="#10b981" strokeWidth="20" strokeDasharray={`${passLen} ${restLen}`} strokeLinecap="butt" />
                                         </g>
@@ -454,7 +448,7 @@ const ReportsClient: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
             
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-auto">

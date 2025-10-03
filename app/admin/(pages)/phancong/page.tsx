@@ -1,5 +1,8 @@
 "use client";
 
+import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
+import AssignmentClient from "./(components)/AssignmentClient";
+
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AdminLayout from "../../component/AdminLayout";
@@ -107,6 +110,7 @@ function AssignmentPageInner() {
 
   return (
     <AdminLayout>
+      <Breadcrumb pageName="Phân công giám định viên (Mục B)"/>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -215,3 +219,4 @@ export default function AssignmentPage() {
     </Suspense>
   );
 }
+

@@ -1,7 +1,6 @@
 "use client";
 
 import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
-import AssignmentClient from "./(components)/AssignmentClient";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";

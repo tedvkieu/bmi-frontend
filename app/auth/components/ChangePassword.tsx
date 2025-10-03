@@ -66,10 +66,6 @@ const ChangePasswordPage: React.FC = () => {
 
       setSuccessMessage("Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
 
-      // Lấy email từ token
-      const user = authApi.getUser();
-      const email = user?.email ?? "";
-
       setTimeout(() => {
         authApi.clearAuthData();
         router.push(`/auth/login`);

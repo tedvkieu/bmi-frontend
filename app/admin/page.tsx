@@ -42,17 +42,9 @@ const fetchMiscData = async (): Promise<MiscData> => {
   }
 };
 
-// const calculateChange = (current: number, previous: number) => {
-//   if (previous === 0) return { percentage: 0, type: "neutral" };
-//   const percentage = ((current - previous) / previous) * 100;
-//   return {
-//     percentage: parseFloat(percentage.toFixed(1)),
-//     type: percentage >= 0 ? "up" : "down",
-//   };
-// };
 
 const DashboardPage = () => {
-  const [miscData, setMiscData] = useState<MiscData | null>(null);
+  const [, setMiscData] = useState<MiscData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,11 +64,6 @@ const DashboardPage = () => {
 
     fetchAndSetMiscData();
   }, []);
-
-  // const totalDocuments = miscData?.dossiers || 0;
-  // const totalUsers = miscData?.users || 0;
-  // const totalCustomers = miscData?.customers || 0;
-  // const completedDocuments = miscData?.evaluationResults || 0;
 
   if (loading) {
     return (

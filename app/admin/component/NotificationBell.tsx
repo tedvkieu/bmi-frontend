@@ -95,7 +95,7 @@ export default function NotificationBell() {
             </span>
           )}
         </button>
-        <span className="text-sm">
+        <span className="text-sm text-gray-600">
           Thông báo
         </span>
       </div>

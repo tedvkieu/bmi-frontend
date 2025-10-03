@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Trash2, RefreshCcw, ChevronDown, Filter, Search, ArrowUpAZ, ArrowDownAZ, FileText } from "lucide-react"; // Added new icons
+import { Trash2, RefreshCcw, ChevronDown, Filter, ArrowUpAZ, ArrowDownAZ, FileText } from "lucide-react"; // Added new icons
 import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import ConfirmationModal from "@/app/admin/component/document/ConfirmationModal";
@@ -206,7 +206,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                                     />
                                     <select
-                                        className="pl-9 pr-8 py-2.5 w-full border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                                        className="pl-9 pr-8 py-2.5 w-full border border-gray-300 rounded-lg text-sm text-gray-800  focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                                         value={filterType}
                                         onChange={(e) => {
                                             setFilterType(e.target.value as "all" | CustomerType | "IMPORTER" | "EXPORTER");

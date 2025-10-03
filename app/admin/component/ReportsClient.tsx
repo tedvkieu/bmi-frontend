@@ -258,8 +258,6 @@ const ReportsClient: React.FC = () => {
         return arr;
     }
 
-    const series = buildTimeSeries();
-    const maxSeries = Math.max(1, ...series.map((s) => s.count));
 
     return (
         <div className="space-y-6">

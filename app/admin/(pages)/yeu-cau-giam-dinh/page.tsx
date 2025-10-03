@@ -1,4 +1,3 @@
-// app/admin/document-request/page.tsx
 "use client"
 import React, { useEffect, useState, useCallback } from "react";
 import AdminLayout from "../../component/AdminLayout";
@@ -6,8 +5,7 @@ import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
 import DocumentRequestTable from "./(components)/DocumentRequestTable";
 import LoadingSpinner from "../../component/document/LoadingSpinner";
 
-// Define DocumentRequest interface locally or import from a shared types file
-// For this example, I'll redefine it based on the API response structure
+
 interface DocumentRequest {
   customerId: number;
   name: string;
@@ -15,7 +13,7 @@ interface DocumentRequest {
   email: string;
   phone: string;
   taxCode: string;
-  customerType: "INDIVIDUAL" | "ORGANIZATION" | "IMPORTER" | "EXPORTER"; // Match API response
+  customerType: "IMPORTER" | "SERVICE_MANAGER"; 
   createdAt: string;
   note?: string;
   dob?: string | null;

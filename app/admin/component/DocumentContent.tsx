@@ -48,7 +48,7 @@ const DocumentsContent = () => {
 
       // <-- TRUYỀN THAM SỐ sortBy VÀO API CALL
       const response = await fetch(
-        `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`, // Cập nhật URL với sortBy
+        `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`, 
         { signal }
       );
       if (!response.ok) {

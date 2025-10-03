@@ -146,33 +146,8 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 className="px-6 py-4 text-right text-sm font-semibold text-black"
               >
                 <div className="flex items-center justify-end space-x-2">
-                  {/* <-- KHU VỰC LỌC VÀ SẮP XẾP MỚI --> */}                  {/* <div className="flex items-center space-x-1 border border-gray-200 rounded-full p-1.5 bg-gray-50">
-                    <button
-                      onClick={() => handleSortChange('newest')}
-                      className={`p-2 rounded-full text-sm font-medium transition-colors duration-200 ${sortBy === 'newest'
-                          ? "bg-blue-500 text-white shadow-md"
-                          : "text-gray-600 hover:bg-gray-200"
-                        }`}
-                      title="Sắp xếp mới nhất"
-                    >
-                      <ArrowDownWideNarrow size={16} className="inline-block mr-1" /> Mới nhất
-                    </button>
-                    <button
-                      onClick={() => handleSortChange('oldest')}
-                      className={`p-2 rounded-full text-sm font-medium transition-colors duration-200 ${sortBy === 'oldest'
-                          ? "bg-blue-500 text-white shadow-md"
-                          : "text-gray-600 hover:bg-gray-200"
-                        }`}
-                      title="Sắp xếp cũ nhất"
-                    >
-                      <ArrowUpWideNarrow size={16} className="inline-block mr-1" /> Cũ nhất
-                    </button>
-                  </div>
- */}
-
-                  {/* Nút làm mới dữ liệu */}
                   <button
-                    onClick={() => onRefresh(sortBy)} // <-- TRUYỀN SORTBY HIỆN TẠI KHI LÀM MỚI
+                    onClick={() => onRefresh(sortBy)}
                     className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
                     title="Làm mới dữ liệu"
                   >

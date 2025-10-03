@@ -68,14 +68,20 @@ const Navbar: React.FC<NavbarProps> = ({
         {
           key: "dashboard_overview",
           icon: LayoutDashboard,
-          label: "Dashboard Overview",
+          label: "Tổng quan",
           href: "/admin",
         },
         {
           key: "dashboard_analytic",
           icon: LineChart,
-          label: "Analytic",
+          label: "Phân tích hệ thống",
           href: "/admin/analytic",
+        },
+        {
+          key: "reports",
+          icon: BarChart3,
+          label: "Báo cáo dữ liệu giám định",
+          href: "/admin/baocao",
         },
       ],
     },
@@ -129,14 +135,9 @@ const Navbar: React.FC<NavbarProps> = ({
     },
     {
       key: "report_section",
-      title: "Báo cáo & Cài đặt",
+      title: "Cài đặt",
       items: [
-        {
-          key: "reports",
-          icon: BarChart3,
-          label: "Báo cáo",
-          href: "/admin/baocao",
-        },
+  
         {
           key: "settings",
           icon: Settings,

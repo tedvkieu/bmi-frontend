@@ -1,13 +1,12 @@
-// app/admin/document-request/(components)/DocumentRequestTable.tsx
 import React, { useState, useMemo } from "react";
-import { Trash2, RefreshCcw, ChevronDown, Filter, Search, ArrowUpAZ, ArrowDownAZ, CalendarDays, FileText } from "lucide-react"; // Added new icons
+import { Trash2, RefreshCcw, ChevronDown, Filter, Search, ArrowUpAZ, ArrowDownAZ, FileText } from "lucide-react"; // Added new icons
 import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import ConfirmationModal from "@/app/admin/component/document/ConfirmationModal";
 import { customerApi } from "@/app/admin/services/customerApi";
 import toast from "react-hot-toast";
 
-type CustomerType = "INDIVIDUAL" | "ORGANIZATION";
+type CustomerType = "IMPORTER" | "SERVICE_MANAGER";
 
 interface DocumentRequest {
     customerId: number;
@@ -16,7 +15,7 @@ interface DocumentRequest {
     email: string;
     phone: string;
     taxCode: string;
-    customerType: CustomerType | "IMPORTER" | "EXPORTER";
+    customerType: CustomerType | "IMPORTER" | "SERVICE_MANAGER";
     createdAt: string;
     note?: string;
     dob?: string | null;
@@ -29,10 +28,8 @@ interface DocumentRequestTableProps {
 }
 
 const customerTypeDisplayNames: Record<string, string> = {
-    INDIVIDUAL: "Cá nhân",
-    ORGANIZATION: "Tổ chức",
     IMPORTER: "Nhà nhập khẩu",
-    EXPORTER: "Nhà xuất khẩu",
+    SERVICE_MANAGER: "Nhà quản lý dịch vụ",
 };
 
 type SortKey = keyof DocumentRequest | "none";
@@ -186,7 +183,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                     <>
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                                <div className="relative flex-1 min-w-[200px]">
+                                {/* <div className="relative flex-1 min-w-[200px]">
                                     <Search
                                         size={18}
                                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -201,7 +198,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                                             setCurrentPage(1);
                                         }}
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="relative inline-block w-full sm:w-56">
                                     <Filter
@@ -217,55 +214,8 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                                         }}
                                     >
                                         <option value="all">Tất cả loại khách hàng</option>
-                                        <option value="INDIVIDUAL">Cá nhân</option>
-                                        <option value="ORGANIZATION">Tổ chức</option>
                                         <option value="IMPORTER">Nhà nhập khẩu</option>
-                                        <option value="EXPORTER">Nhà xuất khẩu</option>
-                                    </select>
-                                    <ChevronDown
-                                        size={16}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                                    />
-                                </div>
-
-                                {/* Sort By Dropdown */}
-                                <div className="relative inline-block w-full sm:w-56">
-                                    <CalendarDays
-                                        size={16}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                                    />
-                                    <select
-                                        className="pl-9 pr-8 py-2.5 w-full border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                                        value={sortKey === "createdAt" && sortOrder === "desc" ? "newest" :
-                                            sortKey === "createdAt" && sortOrder === "asc" ? "oldest" :
-                                                sortKey === "name" && sortOrder === "asc" ? "name-asc" :
-                                                    sortKey === "name" && sortOrder === "desc" ? "name-desc" :
-                                                        "none"}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            if (value === "newest") {
-                                                setSortKey("createdAt");
-                                                setSortOrder("desc");
-                                            } else if (value === "oldest") {
-                                                setSortKey("createdAt");
-                                                setSortOrder("asc");
-                                            } else if (value === "name-asc") {
-                                                setSortKey("name");
-                                                setSortOrder("asc");
-                                            } else if (value === "name-desc") {
-                                                setSortKey("name");
-                                                setSortOrder("desc");
-                                            } else {
-                                                setSortKey("none");
-                                            }
-                                            setCurrentPage(1);
-                                        }}
-                                    >
-                                        <option value="newest">Mới nhất</option>
-                                        <option value="oldest">Cũ nhất</option>
-                                        <option value="name-asc">Tên (A-Z)</option>
-                                        <option value="name-desc">Tên (Z-A)</option>
-                                        {/* Add more sorting options here if needed */}
+                                        <option value="SERVICE_MANAGER">Nhà quản lý dịch vụ</option>
                                     </select>
                                     <ChevronDown
                                         size={16}
@@ -291,7 +241,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                                                 onClick={() => handleSort("name")}
                                             >
                                                 <div className="flex items-center">
-                                                    Tên khách hàng {getSortIcon("name")}
+                                                    KHÁCH HÀNG {getSortIcon("name")}
                                                 </div>
                                             </th>
                                             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">Email</th>
@@ -324,10 +274,16 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                                                     <td className="px-6 py-4 text-sm text-gray-700">{request.email}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-700">{request.phone}</td>
                                                     <td className="px-6 py-4 text-sm">
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <span
+                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${request.customerType === "IMPORTER"
+                                                                    ? "bg-green-100 text-green-800"
+                                                                    : "bg-blue-100 text-blue-800"
+                                                                }`}
+                                                        >
                                                             {customerTypeDisplayNames[request.customerType]}
                                                         </span>
                                                     </td>
+
                                                     <td className="px-6 py-4 text-sm text-gray-700">
                                                         {new Date(request.createdAt).toLocaleDateString()}
                                                     </td>

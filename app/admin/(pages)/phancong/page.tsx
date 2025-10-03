@@ -1,8 +1,5 @@
 "use client";
 
-import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
-import AssignmentClient from "./(components)/AssignmentClient";
-
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AdminLayout from "../../component/AdminLayout";
@@ -13,6 +10,7 @@ import type {
   InspectorUser,
 } from "../evaluation/types/evaluation";
 import toast from "react-hot-toast";
+import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
 
 function AssignmentPageInner() {
   const searchParams = useSearchParams();
@@ -110,7 +108,7 @@ function AssignmentPageInner() {
 
   return (
     <AdminLayout>
-      <Breadcrumb pageName="Phân công giám định viên (Mục B)"/>
+      <Breadcrumb pageName="Phân công giám định viên" />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
@@ -214,9 +212,14 @@ function AssignmentPageInner() {
 
 export default function AssignmentPage() {
   return (
-    <Suspense fallback={<AdminLayout><div className="p-6">Đang tải...</div></AdminLayout>}>
+    <Suspense
+      fallback={
+        <AdminLayout>
+          <div className="p-6">Đang tải...</div>
+        </AdminLayout>
+      }
+    >
       <AssignmentPageInner />
     </Suspense>
   );
 }
-

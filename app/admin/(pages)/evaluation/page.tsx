@@ -3,8 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AdminLayout from "../../component/AdminLayout";
-import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
-import EvaluationClient from "./components/EvaluationClient";
 import SearchSection from "./components/SearchSection";
 import DossierInfo from "./components/DossierInfo";
 import EvaluationForm from "./components/EvaluationForm";
@@ -19,7 +17,7 @@ import {
   InspectorUser,
 } from "./types/evaluation";
 import toast from "react-hot-toast";
-
+import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
 
 function EvaluationPageInner() {
   const searchParams = useSearchParams();
@@ -483,6 +481,7 @@ function EvaluationPageInner() {
 
   return (
     <AdminLayout>
+      <Breadcrumb pageName="Đánh giá hồ sơ giám định" />
       <div className="min-h-screen bg-gray-50 py-8">
         {downloading && (
           <div className="fixed top-0 left-0 right-0 z-50">
@@ -650,12 +649,14 @@ function EvaluationPageInner() {
 
 export default function EvaluationPage() {
   return (
-    <>
-      <AdminLayout>
-        <Breadcrumb pageName="Biểu mẫu đánh giá quy trình giám định"/>
-        <EvaluationClient />
-      </AdminLayout>
-    </>
-  )
-
+    <Suspense
+      fallback={
+        <AdminLayout>
+          <div className="p-6">Đang tải...</div>
+        </AdminLayout>
+      }
+    >
+      <EvaluationPageInner />
+    </Suspense>
+  );
 }

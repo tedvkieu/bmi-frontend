@@ -346,19 +346,19 @@ const EditDocumentContent: React.FC = () => {
             {/* Đã sửa thành readonly */}
             {renderDetailItem(
               "Khách hàng yêu cầu giám định",
-              document.customerSubmitId,
+              document.customerSubmitName || document.customerSubmitId,
               "Customer Submit",
               User
             )}
             {renderDetailItem(
               "Khách hàng nhập khẩu",
-              document.customerRelatedId,
+              document.customerRelatedName || document.customerRelatedId,
               "Customer Related",
               User
             )}
             {renderDetailItem(
               "Loại hình giám định",
-              document.inspectionTypeId,
+              document.inspectionTypeName || document.inspectionTypeId,
               "Inspection Type",
               FileText
             )}
@@ -387,12 +387,12 @@ const EditDocumentContent: React.FC = () => {
               "Container 40 Feets",
               Container
             )}
-            {renderDetailItem(
+            {/* {renderDetailItem(
               "Trạng thái rời cảng",
               document.bulkShip,
               "Bulk Ship",
               Ship
-            )}
+            )} */}
             {renderDetailItem(
               "Tài liệu khai báo",
               document.declarationDoc,
@@ -436,6 +436,12 @@ const EditDocumentContent: React.FC = () => {
               Clock,
               false
             )}{" "}
+            {renderDetailItem(
+              "Người tạo hồ sơ",
+              document.createdByUserName || document.createdByUserId,
+              "Created By",
+              User
+            )}
             {/* Read-only */}
           </div>
           {/* Footer buttons - Simplified */}

@@ -9,6 +9,7 @@ interface GuideOverProps {
 }
 
 const GUIDE_STEPS: Step[] = [
+    // ... your existing steps
     {
         target: ".navbar-menu-contact-info",
         content: (
@@ -161,13 +162,15 @@ const GUIDE_STEPS: Step[] = [
 const GuideOver: React.FC<GuideOverProps> = ({ run, onTourEnd }) => {
     const [joyrideRun, setJoyrideRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
+    const [isClient, setIsClient] = useState(false); // New state
 
-
+    useEffect(() => {
+        setIsClient(true); // Set to true once the component mounts on the client
+    }, []);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
         if (run) {
-            // Đảm bảo tất cả các phần tử đã được render trước khi bắt đầu Joyride
             timer = setTimeout(() => {
                 setJoyrideRun(true);
                 setStepIndex(0); // reset ngay từ đầu
@@ -197,6 +200,11 @@ const GuideOver: React.FC<GuideOverProps> = ({ run, onTourEnd }) => {
             onTourEnd();
         }
     };
+
+    // Only render Joyride if we are on the client
+    if (!isClient) {
+        return null;
+    }
 
     return (
         <Joyride

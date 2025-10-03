@@ -48,7 +48,6 @@ export default function CategorySection({
   onAssignB,
   onAssignTaskLetter,
   selectedAssigneesByTask,
-  teamReadyForACD,
 }: CategorySectionProps) {
   // Map category order to letter A/B/C/D
   const categoryLetter = String.fromCharCode(

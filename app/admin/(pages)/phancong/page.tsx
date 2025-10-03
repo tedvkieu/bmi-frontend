@@ -173,7 +173,9 @@ function AssignmentPageInner() {
 
           {dossierInfo && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Nhân viên đã phân công</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Nhân viên đã phân công
+              </h3>
               {teamMembers && teamMembers.length > 0 ? (
                 <ul className="list-disc pl-5 text-gray-800">
                   {teamMembers.map((m) => (
@@ -181,7 +183,9 @@ function AssignmentPageInner() {
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-gray-600">Chưa phân công nhân viên</div>
+                <div className="text-sm text-gray-600">
+                  Chưa phân công nhân viên
+                </div>
               )}
             </div>
           )}

@@ -73,8 +73,8 @@ const ChangePasswordPage: React.FC = () => {
       );
 
       // Lấy email từ token
-      const user = authApi.getUser();
-      //const email = user?.email ?? "";
+      //const user = authApi.getUser();
+      // const email = user?.email ?? "";
 
       setTimeout(() => {
         authApi.clearAuthData();

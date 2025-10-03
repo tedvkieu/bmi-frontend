@@ -315,7 +315,7 @@ const AnalyticPage = () => {
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  className="p-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  className="p-2 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
                 >
                   <option value={0}>Cả năm</option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
@@ -327,7 +327,7 @@ const AnalyticPage = () => {
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="p-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  className="p-2 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
                 >
                   {Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map((year) => (
                     <option key={year} value={year}>

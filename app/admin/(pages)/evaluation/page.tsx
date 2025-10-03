@@ -453,20 +453,8 @@ function EvaluationPageInner() {
     }
   };
 
-  // Compute readiness for assigning A/C/D: must have at least one B assignment and exactly 1 TEAM_LEADER
-  const teamReadyForACD = (() => {
-    if (!teamMembers || teamMembers.length === 0) return false;
-    const hasB = teamMembers.some((m) =>
-      (m.assignTask || "")
-        .split(",")
-        .map((s) => s.trim().toUpperCase())
-        .includes("B")
-    );
-    const leaderCount = teamMembers.filter(
-      (m) => m.roleCode === "TEAM_LEADER"
-    ).length;
-    return hasB && leaderCount === 1;
-  })();
+  // Cho phép chọn A/C/D mà không cần phân công mục B hay trưởng nhóm
+  const teamReadyForACD = true;
 
   // Progress metrics for UI
   const totalCriteria = criteria.length;

@@ -8,7 +8,11 @@ import DocumentSearchBar from "./document/DocumentSearchBar";
 import DocumentMobileCard from "./document/DocumentMobileCard";
 import DocumentsTable from "./document/DocumentsTable"; // Đảm bảo đã cập nhật DocumentsTable.tsx như câu trả lời trước
 import { useRouter } from "next/navigation";
-import DocumentViewModal from "./document/DocumentViewModal";
+import dynamic from "next/dynamic";
+const DocumentViewModal = dynamic(
+  () => import("./document/DocumentViewModal"),
+  { ssr: false }
+);
 import toast from "react-hot-toast";
 import ConfirmationModal from "./document/ConfirmationModal";
 import { FileText, CheckCircle, Clock } from "lucide-react";
@@ -336,7 +340,7 @@ const DocumentsContent = () => {
         <div className="block lg:hidden space-y-4">
           {filteredDocuments.length === 0 ? (
             <div className="text-center py-10 text-lg text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
-              <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+              <IoDocumentOutline size={48} className="mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Không tìm thấy tài liệu nào
               </h3>
@@ -374,7 +378,7 @@ const DocumentsContent = () => {
         {/* No results for desktop table */}
         {filteredDocuments.length === 0 && !loading && (
           <div className="hidden lg:block text-center py-12">
-            <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+            <IoDocumentOutline size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Không tìm thấy tài liệu nào
             </h3>
@@ -385,11 +389,13 @@ const DocumentsContent = () => {
         )}
       </div>
 
-      <DocumentViewModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        document={selectedDoc}
-      />
+      {isModalOpen && selectedDoc && (
+        <DocumentViewModal
+          isOpen={true}
+          onClose={() => setIsModalOpen(false)}
+          document={selectedDoc}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={isConfirmModalOpen}

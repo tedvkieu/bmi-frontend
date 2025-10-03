@@ -25,12 +25,12 @@ interface MiscData {
 
 const fetchMiscData = async (): Promise<MiscData> => {
   try {
-    const response = await fetch('/api/misc');
+    const response = await fetch("/api/misc");
 
     if (!response.ok) {
       // Xử lý lỗi HTTP (ví dụ: 404, 500)
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Không thể tải dữ liệu dashboard.');
+      throw new Error(errorData.message || "Không thể tải dữ liệu dashboard.");
     }
 
     const data: MiscData = await response.json();
@@ -38,18 +38,18 @@ const fetchMiscData = async (): Promise<MiscData> => {
   } catch (error) {
     console.error("Lỗi khi fetch dữ liệu dashboard:", error);
     // Bạn có thể muốn xử lý các loại lỗi khác nhau ở đây (ví dụ: Network Error)
-    throw new Error('Không thể kết nối đến máy chủ hoặc dữ liệu không hợp lệ.');
+    throw new Error("Không thể kết nối đến máy chủ hoặc dữ liệu không hợp lệ.");
   }
 };
 
-const calculateChange = (current: number, previous: number) => {
-  if (previous === 0) return { percentage: 0, type: "neutral" };
-  const percentage = ((current - previous) / previous) * 100;
-  return {
-    percentage: parseFloat(percentage.toFixed(1)),
-    type: percentage >= 0 ? "up" : "down",
-  };
-};
+// const calculateChange = (current: number, previous: number) => {
+//   if (previous === 0) return { percentage: 0, type: "neutral" };
+//   const percentage = ((current - previous) / previous) * 100;
+//   return {
+//     percentage: parseFloat(percentage.toFixed(1)),
+//     type: percentage >= 0 ? "up" : "down",
+//   };
+// };
 
 const DashboardPage = () => {
   const [miscData, setMiscData] = useState<MiscData | null>(null);
@@ -73,10 +73,10 @@ const DashboardPage = () => {
     fetchAndSetMiscData();
   }, []);
 
-  const totalDocuments = miscData?.dossiers || 0;
-  const totalUsers = miscData?.users || 0;
-  const totalCustomers = miscData?.customers || 0;
-  const completedDocuments = miscData?.evaluationResults || 0;
+  // const totalDocuments = miscData?.dossiers || 0;
+  // const totalUsers = miscData?.users || 0;
+  // const totalCustomers = miscData?.customers || 0;
+  // const completedDocuments = miscData?.evaluationResults || 0;
 
   if (loading) {
     return (
@@ -101,9 +101,11 @@ const DashboardPage = () => {
     <AdminLayout>
       <div className="p-3 sm:p-4 lg:p-3 bg-gray-50 min-h-screen">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold text-gray-800 flex items-center">
-          </h1>
-          <button onClick={() => router.push("/admin/analytic")} className="flex items-center text-blue-600 hover:text-blue-700 hover:underline text-sm transition duration-200">
+          <h1 className="text-2xl font-semibold text-gray-800 flex items-center"></h1>
+          <button
+            onClick={() => router.push("/admin/analytic")}
+            className="flex items-center text-blue-600 hover:text-blue-700 hover:underline text-sm transition duration-200"
+          >
             Xem báo cáo chi tiết <ArrowRight size={16} className="ml-1" />
           </button>
         </div>
@@ -146,8 +148,8 @@ const DashboardPage = () => {
                 text={
                   <>
                     Tài liệu{" "}
-                    <span className="text-blue-600 font-medium">BMI002</span> đang
-                    chờ phê duyệt
+                    <span className="text-blue-600 font-medium">BMI002</span>{" "}
+                    đang chờ phê duyệt
                   </>
                 }
                 time="6 giờ trước"
@@ -157,8 +159,8 @@ const DashboardPage = () => {
                 iconBg="bg-purple-50 text-purple-600"
                 text={
                   <>
-                    <span className="font-medium">Lê Văn C</span> đã đăng ký
-                    tài khoản nhân viên mới
+                    <span className="font-medium">Lê Văn C</span> đã đăng ký tài
+                    khoản nhân viên mới
                   </>
                 }
                 time="1 ngày trước"

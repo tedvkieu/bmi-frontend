@@ -35,6 +35,16 @@ export interface UserResponse {
     updatedAt: string;
 }
 
+export interface UserDossierStatsResponse {
+    userId: number;
+    total: number;
+    obtained: number;
+    notObtained: number;
+    pending: number;
+    notWithinScope: number;
+    byStatus?: Record<string, number>;
+}
+
 export interface BackendError {
     timestamp?: string;
     status?: number;
@@ -48,6 +58,26 @@ export interface PaginatedUserResponse {
     totalElements: number;
     size: number;
     number: number; 
+    numberOfElements: number;
+    first: boolean;
+    last: boolean;
+    empty: boolean;
+}
+
+export interface ReceiptResponseLite {
+    receiptId: number;
+    registrationNo: string;
+    certificateStatus: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PaginatedReceiptResponse {
+    content: ReceiptResponseLite[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
     numberOfElements: number;
     first: boolean;
     last: boolean;
@@ -186,6 +216,23 @@ export const userApi = {
             const data = (await res.json().catch(() => ({}))) as BackendError;
             throw new Error(data?.message || data?.error || "Xóa thất bại");
         }
+    },
+
+    async getDossierStats(userId: number): Promise<UserDossierStatsResponse> {
+        const res = await fetch(`/api/users/${userId}/dossier-stats`, {
+            headers: authHeaders(),
+            cache: "no-store",
+        });
+        return handleResponse<UserDossierStatsResponse>(res);
+    },
+
+    async getDossiersByUser(userId: number, page = 0, size = 10): Promise<PaginatedReceiptResponse> {
+        const params = new URLSearchParams({ page: String(page), size: String(size) });
+        const res = await fetch(`/api/users/${userId}/dossiers?${params.toString()}`, {
+            headers: authHeaders(),
+            cache: "no-store",
+        });
+        return handleResponse<PaginatedReceiptResponse>(res);
     },
 };
 

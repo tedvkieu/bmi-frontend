@@ -142,7 +142,10 @@ export interface ReceiptData {
   registrationNo: string;
   customerSubmitId: number;
   customerRelatedId: number;
+  customerSubmitName?: string | null;
+  customerRelatedName?: string | null;
   inspectionTypeId: string;
+  inspectionTypeName?: string | null;
   declarationNo: string | null;
   billOfLading: string;
   shipName: string | null;
@@ -155,6 +158,8 @@ export interface ReceiptData {
   certificateDate: string | null;
   inspectionLocation: string | null;
   certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED";
+  createdByUserId?: number | null;
+  createdByUserName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -165,7 +170,10 @@ export interface InspectionReportApi {
   registrationNo: string;
   customerSubmitId: number;
   customerRelatedId: number;
+  customerSubmitName?: string | null;
+  customerRelatedName?: string | null;
   inspectionTypeId: string;
+  inspectionTypeName?: string | null;
   declarationNo: string | null;
   billOfLading: string;
   shipName: string | null;
@@ -178,6 +186,8 @@ export interface InspectionReportApi {
   certificateDate: string | null;
   inspectionLocation: string | null;
   certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust based on actual values
+  createdByUserId?: number | null;
+  createdByUserName?: string | null;
   createdAt: string;
   updatedAt: string;
 }

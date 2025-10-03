@@ -185,19 +185,19 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             )}
             {renderDetailItem(
               "Khách hàng yêu cầu giám định",
-              document.customerSubmitId,
+              document.customerSubmitName || document.customerSubmitId,
               "Customer Submit",
               User
             )}
             {renderDetailItem(
               "Khách hàng nhập khẩu",
-              document.customerRelatedId,
+              document.customerRelatedName || document.customerRelatedId,
               "Customer Related",
               User
             )}
             {renderDetailItem(
               "Loại hình giám định",
-              document.inspectionTypeId,
+              document.inspectionTypeName || document.inspectionTypeId,
               "Inspection Type",
               FileText
             )}
@@ -283,6 +283,12 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
               document.createdAt,
               "Created At",
               Clock
+            )}
+            {renderDetailItem(
+              "Người tạo hồ sơ",
+              document.createdByUserName || document.createdByUserId,
+              "Created By",
+              User
             )}
           </div>
         </div>

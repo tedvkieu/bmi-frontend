@@ -39,7 +39,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   const [customerSubmit, setCustomerSubmit] = useState<Record<string, string>>({});
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [sortBy, ] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     setRole(authApi.getRoleFromToken());

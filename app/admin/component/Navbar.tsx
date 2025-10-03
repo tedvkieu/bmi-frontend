@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from 'next/navigation';
@@ -174,7 +174,7 @@ const Navbar: React.FC<NavbarProps> = ({
     items: filterNavItemsByRole(section.items),
   })).filter(section => section.items.length > 0);
 
-  const isItemActive = (item: NavItem): boolean => {
+  const isItemActive = useCallback((item: NavItem): boolean => {
     if (item.href === pathname) {
       return true;
     }
@@ -192,7 +192,7 @@ const Navbar: React.FC<NavbarProps> = ({
     }
 
     return item.key === currentPage;
-  };
+  }, [pathname, currentPage]);
 
   useEffect(() => {
     let newOpenDropdown: string | null = null;

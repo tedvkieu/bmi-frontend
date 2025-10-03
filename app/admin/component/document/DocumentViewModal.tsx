@@ -1,19 +1,9 @@
+"use client";
 // components/admin/document/DocumentViewModal.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { InspectionReportApi } from "../../types/inspection";
-import {
-  XCircle,
-  FileText,
-  User,
-  Truck,
-  Ship,
-  Calendar,
-  MapPin,
-  Clock,
-  Tag,
-  Hash,
-  Container,
-} from "lucide-react"; // Import các icon mới
+import { IoCloseCircle } from "react-icons/io5";
+// Keeping Icon params in helpers but not rendering actual icons to avoid SSR issues
 
 interface DocumentViewModalProps {
   isOpen: boolean;
@@ -26,6 +16,35 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   onClose,
   document,
 }) => {
+  // Hooks must be called unconditionally at the top
+  const [assignedNames, setAssignedNames] = useState<string[] | null>(null);
+  const [assignedLoading, setAssignedLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!document?.receiptId) return;
+    let ignore = false;
+    (async () => {
+      try {
+        setAssignedLoading(true);
+        const res = await fetch(`/api/evaluations/teams/by-dossier/${document.receiptId}`);
+        if (!res.ok) throw new Error("Failed to load team members");
+        const data = await res.json();
+        if (!ignore) {
+          const names: string[] = Array.isArray(data) ? data.map((m: any) => m.fullName).filter(Boolean) : [];
+          setAssignedNames(names);
+        }
+      } catch {
+        if (!ignore) setAssignedNames([]);
+      } finally {
+        if (!ignore) setAssignedLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [document?.receiptId]);
+
+  // Safe to return early after hooks are declared
   if (!isOpen || !document) {
     return null;
   }
@@ -34,7 +53,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     label: string,
     value: string | number | boolean | undefined | null,
     tooltip: string,
-    Icon: React.ElementType // Nhận vào component icon
+    Icon?: React.ElementType // optional icon, not rendered to avoid SSR issues
   ) => {
     console.log("Icon: ", Icon);
     let displayValue: string;
@@ -66,7 +85,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     label: string,
     dateString: string | undefined | null,
     tooltip: string,
-    Icon: React.ElementType
+    Icon?: React.ElementType
   ) => {
     console.log("Icon: ", Icon);
     const date = dateString ? new Date(dateString) : null;
@@ -92,7 +111,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     label: string,
     dateString: string | undefined | null,
     tooltip: string,
-    Icon: React.ElementType
+    Icon?: React.ElementType
   ) => {
     console.log("iocn: ", Icon);
     const date = dateString ? new Date(dateString) : null;
@@ -165,7 +184,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             className="text-white hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
             title="Đóng"
           >
-            <XCircle size={30} color="black"/>
+            <IoCloseCircle size={30} color="black"/>
           </button>
         </div>
 
@@ -174,57 +193,48 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             {renderDetailItem(
               "Mã hồ sơ",
               document.receiptId,
-              "Receipt ID",
-              Tag
+              "Receipt ID"
             )}
             {renderDetailItem(
               "Số đăng ký",
               document.registrationNo,
-              "Số đăng ký của tài liệu hoặc phương tiện",
-              Hash
+              "Số đăng ký của tài liệu hoặc phương tiện"
             )}
             {renderDetailItem(
               "Khách hàng yêu cầu giám định",
               document.customerSubmitName || document.customerSubmitId,
-              "Customer Submit",
-              User
+              "Customer Submit"
             )}
             {renderDetailItem(
               "Khách hàng nhập khẩu",
               document.customerRelatedName || document.customerRelatedId,
-              "Customer Related",
-              User
+              "Customer Related"
             )}
             {renderDetailItem(
               "Loại hình giám định",
               document.inspectionTypeName || document.inspectionTypeId,
-              "Inspection Type",
-              FileText
+              "Inspection Type"
             )}
             {renderDetailItem(
               "Số tờ khai",
               document.declarationNo,
-              "Declaration No",
-              FileText
+              "Declaration No"
             )}
             {renderDetailItem(
               "Số vận đơn",
               document.billOfLading,
-              "Bill Of Lading",
-              Truck
+              "Bill Of Lading"
             )}
-            {renderDetailItem("Tên tàu", document.shipName, "Ship Name", Ship)}
+            {renderDetailItem("Tên tàu", document.shipName, "Ship Name")}
             {renderDetailItem(
               "Số lượng Container 20 Feets",
               document.cout10,
-              "Container 20 Feets",
-              Container
+              "Container 20 Feets"
             )}
             {renderDetailItem(
               "Số lượng Container 40 Feets",
               document.cout20,
-              "Container 40 Feets",
-              Container
+              "Container 40 Feets"
             )}
             {/* {renderDetailItem(
               "Trạng thái rời cảng",
@@ -235,32 +245,27 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             {renderDetailItem(
               "Tài liệu khai báo",
               document.declarationDoc,
-              "Declaration Doc",
-              FileText
+              "Declaration Doc"
             )}
             {renderDetailItem(
               "Nơi khai báo",
               document.declarationPlace,
-              "Declaration Place",
-              MapPin
+              "Declaration Place"
             )}
             {renderDateItem(
               "Ngày kiểm tra",
               document.inspectionDate,
-              "Inspection Date",
-              Calendar
+              "Inspection Date"
             )}
             {renderDateItem(
               "Ngày cấp chứng chỉ",
               document.certificateDate,
-              "Certificate Date",
-              Calendar
+              "Certificate Date"
             )}
             {renderDetailItem(
               "Địa điểm kiểm tra",
               document.inspectionLocation,
-              "Inspection Location",
-              MapPin
+              "Inspection Location"
             )}
             <div className="col-span-full md:col-span-1">
               <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0 group">
@@ -281,15 +286,31 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             {renderDateTimeItem(
               "Ngày tạo hồ sơ",
               document.createdAt,
-              "Created At",
-              Clock
+              "Created At"
             )}
             {renderDetailItem(
               "Người tạo hồ sơ",
               document.createdByUserName || document.createdByUserId,
-              "Created By",
-              User
+              "Created By"
             )}
+            <div className="col-span-full">
+              <div className="py-3 border-b border-gray-200">
+                <span className="font-medium text-gray-700">Nhân viên được phân công</span>
+              </div>
+              <div className="mt-2 text-gray-800">
+                {assignedLoading ? (
+                  <span className="text-sm text-gray-500">Đang tải...</span>
+                ) : assignedNames && assignedNames.length > 0 ? (
+                  <ul className="list-disc pl-5">
+                    {assignedNames.map((name, idx) => (
+                      <li key={idx} className="py-0.5">{name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-sm text-gray-600">Chưa phân công nhân viên</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

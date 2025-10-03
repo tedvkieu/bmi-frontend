@@ -21,19 +21,23 @@ const ChangePasswordPage: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const toggleShowPassword = () => setShowPassword(prev => !prev);
+  const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.currentPassword) newErrors.currentPassword = "Mật khẩu hiện tại là bắt buộc";
-    if (!formData.newPassword) newErrors.newPassword = "Mật khẩu mới là bắt buộc";
-    else if (formData.newPassword.length < 6) newErrors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
-    if (formData.confirmPassword !== formData.newPassword) newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    if (!formData.currentPassword)
+      newErrors.currentPassword = "Mật khẩu hiện tại là bắt buộc";
+    if (!formData.newPassword)
+      newErrors.newPassword = "Mật khẩu mới là bắt buộc";
+    else if (formData.newPassword.length < 6)
+      newErrors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
+    if (formData.confirmPassword !== formData.newPassword)
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -64,11 +68,13 @@ const ChangePasswordPage: React.FC = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Đổi mật khẩu thất bại");
 
-      setSuccessMessage("Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.");
+      setSuccessMessage(
+        "Đổi mật khẩu thành công! Vui lòng đăng nhập lại bằng mật khẩu mới."
+      );
 
       // Lấy email từ token
       const user = authApi.getUser();
-      const email = user?.email ?? "";
+      //const email = user?.email ?? "";
 
       setTimeout(() => {
         authApi.clearAuthData();
@@ -83,7 +89,10 @@ const ChangePasswordPage: React.FC = () => {
 
   return (
     <div>
-      <AuthCard title="Yêu cầu đổi mật khẩu" subtitle="Vui lòng nhập mật khẩu mới">
+      <AuthCard
+        title="Yêu cầu đổi mật khẩu"
+        subtitle="Vui lòng nhập mật khẩu mới"
+      >
         <form onSubmit={handleSubmit} className="space-y-6 text-sm">
           {errors.general && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">

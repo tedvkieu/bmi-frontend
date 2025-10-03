@@ -15,7 +15,7 @@ const DocumentViewModal = dynamic(
 );
 import toast from "react-hot-toast";
 import ConfirmationModal from "./document/ConfirmationModal";
-import { FileText, CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock } from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
@@ -40,77 +40,82 @@ const DocumentsContent = () => {
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
 
   // <-- THÊM STATE sortBy
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest'); // Mặc định sắp xếp mới nhất
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest"); // Mặc định sắp xếp mới nhất
 
   // Cập nhật hàm fetchDocuments để nhận tham số sắp xếp
-  const fetchDocuments = useCallback(async (currentSortBy: 'newest' | 'oldest' = 'newest') => {
-    try {
-      setLoading(true);
-      setError(null);
-      const controller = new AbortController();
-      const signal = controller.signal;
+  const fetchDocuments = useCallback(
+    async (currentSortBy: "newest" | "oldest" = "newest") => {
+      try {
+        setLoading(true);
+        setError(null);
+        const controller = new AbortController();
+        const signal = controller.signal;
 
-      // <-- TRUYỀN THAM SỐ sortBy VÀO API CALL
-      const response = await fetch(
-        `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`, 
-        { signal }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // <-- TRUYỀN THAM SỐ sortBy VÀO API CALL
+        const response = await fetch(
+          `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`,
+          { signal }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        const mappedDocuments: InspectionReport[] = data.content.map(
+          (apiDoc: InspectionReportApi) => ({
+            receiptId: apiDoc.receiptId,
+            registrationNo: apiDoc.registrationNo,
+            customerSubmitId: apiDoc.customerSubmitId,
+            customerRelatedId: apiDoc.customerRelatedId,
+            inspectionTypeId: apiDoc.inspectionTypeId,
+            declarationNo: apiDoc.declarationNo,
+            billOfLading: apiDoc.billOfLading,
+            shipName: apiDoc.shipName,
+            cout10: apiDoc.cout10,
+            cout20: apiDoc.cout20,
+            bulkShip: apiDoc.bulkShip,
+            declarationDoc: apiDoc.declarationDoc,
+            declarationPlace: apiDoc.declarationPlace,
+            inspectionDate: apiDoc.inspectionDate,
+            certificateDate: apiDoc.certificateDate,
+            inspectionLocation: apiDoc.inspectionLocation,
+            certificateStatus: apiDoc.certificateStatus,
+            createdAt: apiDoc.createdAt,
+            updatedAt: apiDoc.updatedAt,
+
+            id: String(apiDoc.receiptId),
+            name:
+              apiDoc.registrationNo ||
+              apiDoc.billOfLading ||
+              `Document ${apiDoc.receiptId}`,
+            client: `${
+              apiDoc.customerRelatedName || apiDoc.customerRelatedId || ""
+            }`,
+            inspector: "N/A",
+            date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            type: apiDoc.inspectionTypeName || apiDoc.inspectionTypeId,
+            status: apiDoc.certificateStatus.toLowerCase() as
+              | "completed"
+              | "pending"
+              | "in_progress",
+          })
+        );
+        setDocuments(mappedDocuments);
+      } catch (e: any) {
+        if (e.name !== "AbortError") {
+          setError(e.message);
+          console.error("Failed to fetch documents:", e);
+        }
+      } finally {
+        setLoading(false);
       }
-      const data = await response.json();
-
-      const mappedDocuments: InspectionReport[] = data.content.map(
-        (apiDoc: InspectionReportApi) => ({
-          receiptId: apiDoc.receiptId,
-          registrationNo: apiDoc.registrationNo,
-          customerSubmitId: apiDoc.customerSubmitId,
-          customerRelatedId: apiDoc.customerRelatedId,
-          inspectionTypeId: apiDoc.inspectionTypeId,
-          declarationNo: apiDoc.declarationNo,
-          billOfLading: apiDoc.billOfLading,
-          shipName: apiDoc.shipName,
-          cout10: apiDoc.cout10,
-          cout20: apiDoc.cout20,
-          bulkShip: apiDoc.bulkShip,
-          declarationDoc: apiDoc.declarationDoc,
-          declarationPlace: apiDoc.declarationPlace,
-          inspectionDate: apiDoc.inspectionDate,
-          certificateDate: apiDoc.certificateDate,
-          inspectionLocation: apiDoc.inspectionLocation,
-          certificateStatus: apiDoc.certificateStatus,
-          createdAt: apiDoc.createdAt,
-          updatedAt: apiDoc.updatedAt,
-
-          id: String(apiDoc.receiptId),
-          name:
-            apiDoc.registrationNo ||
-            apiDoc.billOfLading ||
-            `Document ${apiDoc.receiptId}`,
-          client: `${apiDoc.customerRelatedName || apiDoc.customerRelatedId || ""}`,
-          inspector: "N/A",
-          date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          }),
-          type: apiDoc.inspectionTypeName || apiDoc.inspectionTypeId,
-          status: apiDoc.certificateStatus.toLowerCase() as
-            | "completed"
-            | "pending"
-            | "in_progress",
-        })
-      );
-      setDocuments(mappedDocuments);
-    } catch (e: any) {
-      if (e.name !== "AbortError") {
-        setError(e.message);
-        console.error("Failed to fetch documents:", e);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Không cần sortBy trong dependency array vì nó được truyền vào
+    },
+    []
+  ); // Không cần sortBy trong dependency array vì nó được truyền vào
 
   useEffect(() => {
     fetchDocuments(sortBy); // Gọi fetchDocuments với sortBy hiện tại
@@ -135,7 +140,10 @@ const DocumentsContent = () => {
         completed++;
       } else if (doc.status === "pending") {
         pending++;
-      } else if (doc.status === "not_obtained" || doc.status === "not_within_scope") {
+      } else if (
+        doc.status === "not_obtained" ||
+        doc.status === "not_within_scope"
+      ) {
         inProgress++;
       }
     });
@@ -247,7 +255,9 @@ const DocumentsContent = () => {
 
     try {
       // Assuming a batch delete API endpoint or individual deletes
-      const deletePromises = ids.map(id => axios.delete(`/api/dossiers/${id}`));
+      const deletePromises = ids.map((id) =>
+        axios.delete(`/api/dossiers/${id}`)
+      );
       await Promise.all(deletePromises);
 
       setDocuments((prevDocuments) =>
@@ -263,13 +273,12 @@ const DocumentsContent = () => {
   };
 
   // <-- CẬP NHẬT HÀM handleRefresh ĐỂ NHẬN THAM SỐ sortBy
-  const handleRefresh = (newSortBy?: 'newest' | 'oldest') => {
+  const handleRefresh = (newSortBy?: "newest" | "oldest") => {
     const currentSort = newSortBy || sortBy; // Ưu tiên newSortBy nếu có, nếu không thì dùng sortBy hiện tại
     setSortBy(currentSort); // Cập nhật state sortBy của DocumentsContent
     fetchDocuments(currentSort); // Tải lại dữ liệu với lựa chọn sắp xếp mới
     toast.success("Dữ liệu đã được làm mới!");
   };
-
 
   if (loading) {
     return <LoadingSpinner />;
@@ -284,13 +293,17 @@ const DocumentsContent = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Thẻ Tổng số tài liệu */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-blue-300 hover:scale-[1.01] cursor-default">
+        <div
+          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-blue-300 hover:scale-[1.01] cursor-default"
+        >
           <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
             <IoDocumentOutline size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Tổng số tài liệu</p>
+            <p className="text-sm font-medium text-gray-600">
+              Tổng số tài liệu
+            </p>
             <p className="text-2xl font-semibold text-gray-900">
               {documents.length}
             </p>
@@ -298,8 +311,10 @@ const DocumentsContent = () => {
         </div>
 
         {/* Thẻ Tài liệu hoàn thành */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-green-300 hover:scale-[1.01] cursor-default">
+        <div
+          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-green-300 hover:scale-[1.01] cursor-default"
+        >
           <div className="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
             <CheckCircle size={24} />
           </div>
@@ -312,8 +327,10 @@ const DocumentsContent = () => {
         </div>
 
         {/* Thẻ Tài liệu đang xử lý */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-yellow-300 hover:scale-[1.01] cursor-default">
+        <div
+          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
+                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-yellow-300 hover:scale-[1.01] cursor-default"
+        >
           <div className="flex-shrink-0 bg-yellow-100 text-yellow-600 p-3 rounded-full">
             <Clock size={24} />
           </div>
@@ -340,7 +357,10 @@ const DocumentsContent = () => {
         <div className="block lg:hidden space-y-4">
           {filteredDocuments.length === 0 ? (
             <div className="text-center py-10 text-lg text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
-              <IoDocumentOutline size={48} className="mx-auto text-gray-400 mb-4" />
+              <IoDocumentOutline
+                size={48}
+                className="mx-auto text-gray-400 mb-4"
+              />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Không tìm thấy tài liệu nào
               </h3>
@@ -370,7 +390,7 @@ const DocumentsContent = () => {
             onDownload={handleDownload}
             onEdit={handleEdit}
             onDelete={confirmDelete}
-            onRefresh={handleRefresh} 
+            onRefresh={handleRefresh}
             onDeleteMany={handleDeleteMany}
           />
         </div>
@@ -378,7 +398,10 @@ const DocumentsContent = () => {
         {/* No results for desktop table */}
         {filteredDocuments.length === 0 && !loading && (
           <div className="hidden lg:block text-center py-12">
-            <IoDocumentOutline size={48} className="mx-auto text-gray-400 mb-4" />
+            <IoDocumentOutline
+              size={48}
+              className="mx-auto text-gray-400 mb-4"
+            />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Không tìm thấy tài liệu nào
             </h3>

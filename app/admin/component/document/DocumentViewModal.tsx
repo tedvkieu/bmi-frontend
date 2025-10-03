@@ -16,10 +16,7 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   onClose,
   document,
 }) => {
-  if (!isOpen || !document) {
-    return null;
-  }
-
+  // Hooks must be called unconditionally at the top
   const [assignedNames, setAssignedNames] = useState<string[] | null>(null);
   const [assignedLoading, setAssignedLoading] = useState<boolean>(false);
 
@@ -46,6 +43,11 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
       ignore = true;
     };
   }, [document?.receiptId]);
+
+  // Safe to return early after hooks are declared
+  if (!isOpen || !document) {
+    return null;
+  }
 
   const renderDetailItem = (
     label: string,

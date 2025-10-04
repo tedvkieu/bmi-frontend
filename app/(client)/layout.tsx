@@ -21,7 +21,7 @@ export default function ClientLayout({
       allowedRoles={[
         "SERVICE_MANAGER",
         "ADMIN",
-        "IMPORTER",
+        "MANAGER",
         "DOCUMENT_STAFF",
         "ISO_STAFF",
       ]}

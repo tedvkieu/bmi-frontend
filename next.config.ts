@@ -6,11 +6,6 @@ const nextConfig: NextConfig = {
 
   // Optimize for production
   compress: true,
-
-  // Disable telemetry in production
-  telemetry: {
-    disabled: true,
-  },
 };
 
 export default nextConfig;

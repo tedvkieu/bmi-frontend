@@ -23,7 +23,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 # Build the application
@@ -45,7 +44,6 @@ RUN adduser --system --uid 1001 nextjs
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy built application
 COPY --from=builder /app/public ./public

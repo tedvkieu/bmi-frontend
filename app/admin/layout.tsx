@@ -19,7 +19,7 @@ export default function DashboardLayout({
     <AuthWrapper
       allowedRoles={[
         "ADMIN",
-        "IMPORTER",
+        "MANAGER",
         "DOCUMENT_STAFF",
         "ISO_STAFF",
       ]}

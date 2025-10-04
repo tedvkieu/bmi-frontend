@@ -120,40 +120,28 @@ const UsersClient: React.FC = () => {
     } catch {}
   }, [isAdmin]);
 
-  const loadData = useCallback(
-    async (page: number = currentPage, size: number = itemsPerPage) => {
-      setLoading(true);
-      setError("");
-      try {
-        const response: PaginatedUserResponse = await userApi.getAllUsersPage(
-          page - 1,
-          size
-        );
-        setUsers(response.content);
-        setTotalPages(response.totalPages);
-        setTotalElements(response.totalElements);
-        setCurrentPage(response.number + 1);
-      } catch {
-        setError("Không thể tải danh sách người dùng");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [currentPage, itemsPerPage]
-  );
+    const loadData = useCallback(async (page: number = currentPage, size: number = itemsPerPage) => {
+        setLoading(true);
+        setError("");
+        try {
+            const response: PaginatedUserResponse = await userApi.getAllUsersPage(page - 1, size);
+            setUsers(response.content);
+            setTotalPages(response.totalPages);
+            setTotalElements(response.totalElements);
+            setCurrentPage(response.number + 1);
+        } catch (_e) {
+            // setError("Không thể tải danh sách người dùng");
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, itemsPerPage]);
 
-  useEffect(() => {
-    loadData(currentPage, itemsPerPage);
-    loadAdminStatus();
-  }, [
-    roleFromToken,
-    currentPage,
-    itemsPerPage,
-    searchTerm,
-    filterRole,
-    loadAdminStatus,
-    loadData,
-  ]);
+
+
+    useEffect(() => {
+        loadData(currentPage, itemsPerPage);
+        loadAdminStatus();
+    }, [roleFromToken, currentPage, itemsPerPage, searchTerm, filterRole, loadAdminStatus, loadData]);
 
   const resetForm = () => {
     setForm(initialForm);

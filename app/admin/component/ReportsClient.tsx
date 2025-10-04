@@ -1,418 +1,543 @@
 "use client";
 
 import React from "react";
+import { Search } from "lucide-react";
 import { reportApi } from "../services/reportApi";
 
 type Period = "DAY" | "WEEK" | "MONTH" | "YEAR";
 
 type Customer = {
-  id: string;
-  name: string;
+    id: string;
+    name: string;
 };
 
 type InspectionReportRow = {
-  id: string;
-  companyName: string;
-  companyAddress: string;
-  machineName: string;
-  machineIndustry: string;
-  quantity: number;
-  inspectionTime: string;
-  inspectionLocation: string;
-  result: "Đạt" | "Không đạt" | "DAT" | "KHONG_DAT" | string;
-  certificateNumber: string;
-  note?: string;
+    id: string;
+    companyName: string;
+    companyAddress: string;
+    machineName: string;
+    machineIndustry: string;
+    quantity: number;
+    inspectionTime: string;
+    inspectionLocation: string;
+    result: "Đạt" | "Không đạt" | "DAT" | "KHONG_DAT" | string;
+    certificateNumber: string;
+    note?: string;
 };
 
 type ReportTotals = {
-  totalQuantity?: number;
-  totalInspectionDates?: number;
-  totalCertificates?: number;
-  totalRecords?: number;
-  totalPass?: number;
-  totalFail?: number;
-  totalCompanies?: number;
+    totalQuantity?: number;
+    totalInspectionDates?: number;
+    totalCertificates?: number;
+    totalRecords?: number;
+    totalPass?: number;
+    totalFail?: number;
+    totalCompanies?: number;
 };
 
 function classNames(...classes: Array<string | undefined | false>) {
-  return classes.filter(Boolean).join(" ");
+    return classes.filter(Boolean).join(" ");
 }
 
 const ReportsClient: React.FC = () => {
-  const [customers, setCustomers] = React.useState<Customer[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] =
-    React.useState<string>("");
-  const [period, setPeriod] = React.useState<Period | "">("");
-  const [fromDate, setFromDate] = React.useState<string>("");
-  const [toDate, setToDate] = React.useState<string>("");
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const [data, setData] = React.useState<InspectionReportRow[]>([]);
-  const [error, setError] = React.useState<string | null>(null);
-  const [info, setInfo] = React.useState<string | null>(null);
-  const [hasData, setHasData] = React.useState<boolean>(false);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  type ToastType = "success" | "error" | "info";
-  type Toast = { id: number; message: string; type: ToastType };
-  const [toasts, setToasts] = React.useState<Toast[]>([]);
-  const showToast = (message: string, type: ToastType = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
-  };
-  const [totals, setTotals] = React.useState<ReportTotals | null>(null);
+    const [customers, setCustomers] = React.useState<Customer[]>([]);
+    const [selectedCustomerId, setSelectedCustomerId] = React.useState<string>("");
+    const [period, setPeriod] = React.useState<Period | "">("");
+    const [fromDate, setFromDate] = React.useState<string>("");
+    const [toDate, setToDate] = React.useState<string>("");
+    const [loading, setLoading] = React.useState<boolean>(false);
+    const [data, setData] = React.useState<InspectionReportRow[]>([]);
+    const [error, setError] = React.useState<string | null>(null);
+    const [info, setInfo] = React.useState<string | null>(null);
+    const [hasData, setHasData] = React.useState<boolean>(false);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+    type ToastType = "success" | "error" | "info";
+    type Toast = { id: number; message: string; type: ToastType };
+    const [toasts, setToasts] = React.useState<Toast[]>([]);
+    const showToast = React.useCallback((message: string, type: ToastType = "info") => {
+        const id = Date.now() + Math.random();
+        setToasts((prev) => [...prev, { id, message, type }]);
+        setTimeout(() => {
+            setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, 3000);
+    }, []);
+    const [totals, setTotals] = React.useState<ReportTotals | null>(null);
+    const [currentPage, setCurrentPage] = React.useState<number>(1);
+    const [totalPages, setTotalPages] = React.useState<number>(1);
+    const [totalRecords, setTotalRecords] = React.useState<number>(0);
+    const [searchQuery, setSearchQuery] = React.useState<string>("");
+    const pageSize = 10;
 
-  React.useEffect(() => {
-    fetch("/api/customers", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load companies");
-        const text = await res.text();
-        let json: any = {};
-        try {
-          json = text ? JSON.parse(text) : {};
-        } catch {
-          json = {};
+    React.useEffect(() => {
+        fetch("/api/reports/inspection/companies", { cache: "no-store" })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Failed to load companies");
+                const text = await res.text();
+                let json: any = {};
+                try {
+                    json = text ? JSON.parse(text) : {};
+                } catch {
+                    json = {};
+                }
+                const raw = toArray(json.data || json.details || json);
+                const items: Customer[] = raw.map((c: any) => ({
+                    id: String(c.id ?? c.companyId ?? c.code ?? c.value ?? c._id ?? c.uuid ?? ""),
+                    name: String(c.name ?? c.companyName ?? c.customerName ?? c.label ?? "Khách hàng"),
+                }));
+                setCustomers(items.filter((i) => i.id));
+            })
+            .catch(() => {
+                // ignore
+            });
+    }, []);
+
+    // Reset pagination when filters change
+    React.useEffect(() => {
+        resetPagination();
+    }, [selectedCustomerId, period, fromDate, toDate, searchQuery]);
+
+    // (moved below, after handleSearch is defined)
+
+    function normalizeResult(value: string): "Đạt" | "Không đạt" | "Khác" {
+        const v = (value || "").trim().toUpperCase();
+        if (["ĐẠT", "DAT", "PASS", "PASSED", "TRUE"].includes(v)) return "Đạt";
+        if (["KHÔNG ĐẠT", "KHONG DAT", "KHONG_DAT", "FAIL", "FAILED", "FALSE"].includes(v)) return "Không đạt";
+        return "Khác";
+    }
+
+    function formatDateToYYYYMMDD(dateString: string): string {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "";
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }
+
+    function buildPayload() {
+        const payload: Record<string, any> = {};
+
+        // Priority 1: Search query (if exists, ignore other filters)
+        if (searchQuery.trim()) {
+            payload.searchText = searchQuery.trim();
+            // Add pagination parameters
+            payload.page = currentPage - 1;
+            payload.size = pageSize;
+            return payload;
         }
-        const raw = toArray(json);
-        const items: Customer[] = raw.map((c: any) => ({
-          id: String(
-            c.customerId ?? c.id ?? c.code ?? c.value ?? c._id ?? c.uuid ?? ""
-          ),
-          name: String(
-            c.companyName ?? c.name ?? c.customerName ?? c.label ?? "Khách hàng"
-          ),
-        }));
-        setCustomers(items.filter((i) => i.id));
-      })
-      .catch(() => {
-        // ignore
-      });
-  }, []);
 
-  function normalizeResult(value: string): "Đạt" | "Không đạt" | "Khác" {
-    const v = (value || "").trim().toUpperCase();
-    if (["ĐẠT", "DAT", "PASS", "PASSED", "TRUE"].includes(v)) return "Đạt";
-    if (
-      [
-        "KHÔNG ĐẠT",
-        "KHONG DAT",
-        "KHONG_DAT",
-        "FAIL",
-        "FAILED",
-        "FALSE",
-      ].includes(v)
-    )
-      return "Không đạt";
-    return "Khác";
-  }
+        // Priority 2: Other filters (only when no search query)
+        if (fromDate) payload.fromDate = formatDateToYYYYMMDD(fromDate);
+        if (toDate) payload.toDate = formatDateToYYYYMMDD(toDate);
+        if (period) payload.period = period;
+        if (selectedCustomerId) {
+            const idNum = Number(selectedCustomerId);
+            payload.companyId = isNaN(idNum) ? selectedCustomerId : idNum;
+        }
 
-  function buildPayload() {
-    const payload: Record<string, any> = {};
-    if (fromDate) payload.fromDate = fromDate;
-    if (toDate) payload.toDate = toDate;
-    if (period) payload.period = period;
-    if (selectedCustomerId) {
-      const idNum = Number(selectedCustomerId);
-      payload.companyId = isNaN(idNum) ? selectedCustomerId : idNum;
+        // Add pagination parameters (backend uses zero-based indexing and 'size' parameter)
+        payload.page = currentPage - 1; // Convert 1-based to 0-based
+        payload.size = pageSize;
+
+        // Default behavior: if no filters selected, use current MONTH period
+        if (Object.keys(payload).length === 0) {
+            payload.period = "MONTH";
+        }
+
+
+        return payload;
     }
-    // Default behavior: if no filters selected, use current MONTH period
-    if (Object.keys(payload).length === 0) {
-      payload.period = "MONTH";
-    }
-    return payload;
-  }
 
-  function toArray(value: any): any[] {
-    if (Array.isArray(value)) return value;
-    if (value && typeof value === "object") {
-      // Common envelope keys from various backends
-      const candidates = [
-        value.data,
-        value.items,
-        value.records,
-        value.rows,
-        value.content,
-        value.list,
-        value.details,
-      ];
-      for (const c of candidates) {
-        if (Array.isArray(c)) return c;
-      }
+    function toArray(value: any): any[] {
+        if (Array.isArray(value)) return value;
+        if (value && typeof value === "object") {
+            // Common envelope keys from various backends
+            const candidates = [
+                value.data,
+                value.items,
+                value.records,
+                value.rows,
+                value.content,
+                value.list,
+                value.details,
+            ];
+            for (const c of candidates) {
+                if (Array.isArray(c)) return c;
+            }
+        }
+        return [];
     }
-    return [];
-  }
 
-  async function handleSearch() {
-    setLoading(true);
-    setError(null);
-    setInfo(null);
-    setData([]);
-    try {
-      const res = await fetch("/api/reports/inspection/search", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildPayload()),
-      });
-      if (!res.ok) throw new Error("Không tải được dữ liệu báo cáo");
-      // Robust JSON parsing (handle text or blob payloads)
-      const text = await res.text();
-      let json: any = {};
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch {
-        json = {};
-      }
-      const source = toArray(json);
-      if (json && typeof json === "object" && json.totals) {
-        setTotals(json.totals as ReportTotals);
-      } else {
+    function handlePageChange(page: number) {
+        setCurrentPage(page);
+    }
+
+    function resetPagination() {
+        setCurrentPage(1);
+        setTotalPages(1);
+        setTotalRecords(0);
+    }
+
+    function clearAllFilters() {
+        setSelectedCustomerId("");
+        setPeriod("");
+        setFromDate("");
+        setToDate("");
+        setSearchQuery(""); // Clear search query
+        resetPagination();
+        setData([]);
+        setHasData(false);
         setTotals(null);
-      }
-      const list: InspectionReportRow[] = source.map((r: any, idx: number) => ({
-        id: String(r.id ?? r._id ?? idx),
-        companyName: String(r.companyName ?? r.customerName ?? r.company ?? ""),
-        companyAddress: String(r.companyAddress ?? r.address ?? ""),
-        machineName: String(
-          r.machineName ?? r.equipmentName ?? r.mmtbName ?? r.equipment ?? ""
-        ),
-        machineIndustry: String(
-          r.machineIndustry ?? r.industry ?? r.field ?? r.equipmentField ?? ""
-        ),
-        quantity: Number(r.quantity ?? r.qty ?? 0) || 0,
-        inspectionTime: String(
-          r.inspectionTime ?? r.date ?? r.inspectedAt ?? r.inspectionDate ?? ""
-        ),
-        inspectionLocation: String(r.inspectionLocation ?? r.location ?? ""),
-        result: String(r.result ?? r.status ?? r.inspectionResult ?? ""),
-        certificateNumber: String(
-          r.certificateNumber ?? r.certificateNo ?? r.certificateCode ?? ""
-        ),
-        note: r.note ?? r.remark ?? r.ghiChu ?? "",
-      }));
-      setData(list);
-      setHasData(list.length > 0);
-      if (list.length === 0) {
-        setInfo("Không có dữ liệu phù hợp với bộ lọc.");
-        showToast("Không có dữ liệu phù hợp với bộ lọc", "info");
-      } else {
-        showToast(`Đã tải ${list.length} bản ghi`, "success");
-      }
-    } catch (e: any) {
-      setError(e?.message || "Lỗi không xác định");
-      showToast(e?.message || "Lỗi không xác định", "error");
-    } finally {
-      setLoading(false);
+        setError(null);
+        setInfo(null);
+        showToast("Đã xóa tất cả bộ lọc", "info");
     }
-  }
 
-  async function handleExport() {
-    if (!hasData || data.length === 0) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/reports/inspection/export", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(buildPayload()),
-      });
-      if (!res.ok) throw new Error("Xuất Excel thất bại");
-      const blob = await res.blob();
+    const handleSearch = React.useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        setInfo(null);
+        setData([]);
+        try {
+            // Build endpoint and payload inline to avoid unstable function deps
+            const isSearchOnly = Boolean(searchQuery.trim());
+            const endpoint = isSearchOnly
+                ? "/api/reports/inspection/search-text"
+                : "/api/reports/inspection/search";
+            const payload: Record<string, any> = {};
+            if (isSearchOnly) {
+                payload.searchText = searchQuery.trim();
+                payload.page = currentPage - 1;
+                payload.size = pageSize;
+            } else {
+                if (fromDate) payload.fromDate = formatDateToYYYYMMDD(fromDate);
+                if (toDate) payload.toDate = formatDateToYYYYMMDD(toDate);
+                if (period) payload.period = period;
+                if (selectedCustomerId) {
+                    const idNum = Number(selectedCustomerId);
+                    payload.companyId = isNaN(idNum) ? selectedCustomerId : idNum;
+                }
+                payload.page = currentPage - 1;
+                payload.size = pageSize;
+                if (Object.keys(payload).length === 0) {
+                    payload.period = "MONTH";
+                }
+            }
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      a.download = `bao-cao-giam-dinh-${ts}.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e.message || "Lỗi không xác định");
-    } finally {
-      setLoading(false);
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                if (res.status === 404) {
+                    // Handle 404 as "no data" instead of error
+                    setData([]);
+                    setHasData(false);
+                    setTotals(null);
+                    setInfo("Không có dữ liệu phù hợp với tìm kiếm.");
+                    showToast("Không có dữ liệu phù hợp với tìm kiếm", "info");
+                    return;
+                }
+                throw new Error("Không tải được dữ liệu báo cáo");
+            }
+            // Robust JSON parsing (handle text or blob payloads)
+            const text = await res.text();
+            let json: any = {};
+            try {
+                json = text ? JSON.parse(text) : {};
+            } catch {
+                json = {};
+            }
+            // Get data from the correct location in API response
+            const source = toArray(json.details || json.data || json);
+            if (json && typeof json === "object" && json.totals) {
+                setTotals(json.totals as ReportTotals);
+            } else {
+                setTotals(null);
+            }
+
+            // Handle pagination info
+            if (json && typeof json === "object") {
+                if (json.pagination) {
+                    setCurrentPage((json.pagination.currentPage ?? 0) + 1);
+                    setTotalPages(json.pagination.totalPages ?? 1);
+                    setTotalRecords(json.pagination.totalElements ?? 0);
+                } else {
+                    // Fallback to old structure
+                    setCurrentPage(json.currentPage ?? json.page ?? 1);
+                    setTotalPages(json.totalPages ?? json.totalPage ?? 1);
+                    setTotalRecords(json.totalRecords ?? json.total ?? 0);
+                }
+            }
+
+            const list: InspectionReportRow[] = source.map((r: any, idx: number) => ({
+                id: String(r.id ?? r._id ?? idx),
+                companyName: String(r.companyName ?? r.customerName ?? r.company ?? ""),
+                companyAddress: String(r.companyAddress ?? r.address ?? ""),
+                machineName: String(r.machineName ?? r.equipmentName ?? r.mmtbName ?? r.equipment ?? ""),
+                machineIndustry: String(r.machineIndustry ?? r.industry ?? r.field ?? r.equipmentField ?? ""),
+                quantity: Number(r.quantity ?? r.qty ?? 0) || 0,
+                inspectionTime: String(r.inspectionTime ?? r.date ?? r.inspectedAt ?? r.inspectionDate ?? ""),
+                inspectionLocation: String(r.inspectionLocation ?? r.location ?? ""),
+                result: String(r.result ?? r.status ?? r.inspectionResult ?? ""),
+                certificateNumber: String(r.certificateNumber ?? r.certificateNo ?? r.certificateCode ?? ""),
+                note: r.note ?? r.remark ?? r.ghiChu ?? "",
+            }));
+            setData(list);
+            setHasData(list.length > 0);
+            if (list.length === 0) {
+                if (currentPage > 1) {
+                    setInfo(`Trang ${currentPage} không có dữ liệu. Tổng có ${totalPages} trang.`);
+                    showToast(`Trang ${currentPage} không có dữ liệu`, "info");
+                } else {
+                    setInfo("Không có dữ liệu phù hợp với bộ lọc.");
+                    showToast("Không có dữ liệu phù hợp với bộ lọc", "info");
+                }
+            } else {
+                showToast(`Đã tải ${list.length} bản ghi (trang ${currentPage}/${totalPages})`, "success");
+            }
+        } catch (e: any) {
+            setError(e?.message || "Lỗi không xác định");
+            showToast(e?.message || "Lỗi không xác định", "error");
+        } finally {
+            setLoading(false);
+        }
+    }, [searchQuery, currentPage, pageSize, fromDate, toDate, period, selectedCustomerId, showToast, totalPages]);
+
+    // Trigger search when currentPage changes (but not on initial load)
+    React.useEffect(() => {
+        if (currentPage > 1 || hasData) {
+            handleSearch();
+        }
+    }, [currentPage, hasData, handleSearch]);
+
+    function buildExportPayload() {
+        // For search mode: export only matched rows → do not include pagination
+        if (searchQuery.trim()) {
+            return { searchText: searchQuery.trim() };
+        }
+        // Otherwise reuse payload (filters + pagination)
+        return buildPayload();
     }
-  }
 
-  function handleUploadClick() {
-    fileInputRef.current?.click();
-  }
-
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setLoading(true);
-      setError(null);
-      setInfo(null);
-      await reportApi.importExcel(file);
-      setInfo("Tải lên thành công.");
-      showToast("Tải lên thành công", "success");
-      // Sau upload có thể tự động refresh kết quả
-      await handleSearch();
-    } catch (err: any) {
-      setError(err?.message || "Tải lên thất bại");
-      showToast(err?.message || "Tải lên thất bại", "error");
-    } finally {
-      setLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    function getExportEndpoint() {
+        return searchQuery.trim()
+            ? "/api/reports/inspection/export-search-text"
+            : "/api/reports/inspection/export";
     }
-  }
 
-  const totalQuantity = React.useMemo(
-    () =>
-      totals?.totalQuantity ??
-      data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0),
-    [data, totals]
-  );
-  const totalInspections = totals?.totalRecords ?? data.length;
-  const passCount =
-    totals?.totalPass ??
-    data.filter((r) => normalizeResult(r.result) === "Đạt").length;
-  const failCount =
-    totals?.totalFail ??
-    data.filter((r) => normalizeResult(r.result) === "Không đạt").length;
+    async function handleExport() {
+        if (!hasData || data.length === 0) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(getExportEndpoint(), {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(buildExportPayload()),
+            });
+            if (!res.ok) throw new Error("Xuất Excel thất bại");
+            const blob = await res.blob();
 
-  // function buildTimeSeries() {
-  //     const map = new Map<string, number>();
-  //     for (const r of data) {
-  //         const d = r.inspectionTime ? new Date(r.inspectionTime) : null;
-  //         if (!d || isNaN(d.getTime())) continue;
-  //         const key = d.toISOString().slice(0, 10);
-  //         map.set(key, (map.get(key) || 0) + 1);
-  //     }
-  //     const arr = Array.from(map.entries())
-  //         .sort((a, b) => (a[0] < b[0] ? -1 : 1))
-  //         .map(([date, count]) => ({ date, count }));
-  //     return arr;
-  // }
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+            a.download = `bao-cao-giam-dinh-${ts}.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (e: any) {
+            setError(e.message || "Lỗi không xác định");
+        } finally {
+            setLoading(false);
+        }
+    }
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        {/* Bộ lọc */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm text-gray-800 font-medium mb-1">
-              Công ty
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-            >
-              <option value="">Tất cả</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-800 font-medium mb-1">
-              Thời gian
-            </label>
-            <select
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as Period | "")}
-            >
-              <option value="">Tuỳ chọn</option>
-              <option value="DAY">Ngày</option>
-              <option value="WEEK">Tuần</option>
-              <option value="MONTH">Tháng</option>
-              <option value="YEAR">Năm</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-gray-800 font-medium mb-1">
-              Từ ngày
-            </label>
-            <input
-              type="date"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-800 font-medium mb-1">
-              Đến ngày
-            </label>
-            <input
-              type="date"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
-          </div>
-          {info && (
-            <div className="px-3 py-2 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-sm">
-              {info}
-            </div>
-          )}
-        </div>
+    function handleUploadClick() {
+        fileInputRef.current?.click();
+    }
 
-        {/* Buttons */}
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              className={classNames(
-                "px-4 py-2 rounded-md text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-              )}
-              onClick={handleSearch}
-              disabled={loading}
-            >
-              {loading ? "Đang tải..." : "Xem báo cáo"}
-            </button>
-            <button
-              className={classNames(
-                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
-                loading || !hasData
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "bg-white hover:bg-gray-50 cursor-pointer"
-              )}
-              onClick={handleExport}
-              disabled={loading || !hasData}
-            >
-              Xuất Excel
-            </button>
-            {error && (
-              <div className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              className={classNames(
-                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              )}
-              onClick={handleUploadClick}
-              type="button"
-            >
-              Tải lên báo cáo
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              className="hidden"
-              onChange={handleFileSelected}
-            />
-          </div>
-        </div>
-      </div>
+    async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            setLoading(true);
+            setError(null);
+            setInfo(null);
+            await reportApi.importExcel(file);
+            setInfo("Tải lên thành công.");
+            showToast("Tải lên thành công", "success");
+            // Sau upload có thể tự động refresh kết quả
+            await handleSearch();
+        } catch (err: any) {
+            setError(err?.message || "Tải lên thất bại");
+            showToast(err?.message || "Tải lên thất bại", "error");
+        } finally {
+            setLoading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }
 
-      {/* Analystic */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <div className="text-gray-800 text-sm">Tổng số lần giám định</div>
-                    <div className="text-2xl font-semibold text-gray-900">{totalInspections}</div>
+
+    const totalQuantity = React.useMemo(
+        () => (totals?.totalQuantity ?? data.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)),
+        [data, totals]
+    );
+    const passCount = totals?.totalPass ?? data.filter((r) => normalizeResult(r.result) === "Đạt").length;
+    const failCount = totals?.totalFail ?? data.filter((r) => normalizeResult(r.result) === "Không đạt").length;
+
+    // Charts are currently disabled in UI; omit time series computation to avoid unused variables
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                {/* Bộ lọc */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label className="block text-sm text-gray-800 font-medium mb-1">Công ty</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={selectedCustomerId}
+                            onChange={(e) => setSelectedCustomerId(e.target.value)}
+                        >
+                            <option value="">Tất cả</option>
+                            {customers.map((c) => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-800 font-medium mb-1">Thời gian</label>
+                        <select
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={period}
+                            onChange={(e) => setPeriod(e.target.value as Period | "")}
+                        >
+                            <option value="">Tuỳ chọn</option>
+                            <option value="DAY">Ngày</option>
+                            <option value="WEEK">Tuần</option>
+                            <option value="MONTH">Tháng</option>
+                            <option value="YEAR">Năm</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-800 font-medium mb-1">Từ ngày</label>
+                        <input
+                            type="date"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-800 font-medium mb-1">Đến ngày</label>
+                        <input
+                            type="date"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-gray-800 font-medium mb-1">Tìm kiếm</label>
+                        <div className="flex gap-1">
+                            <input
+                                type="text"
+                                placeholder="Số giám định, tên công ty..."
+                                className="flex-1 min-w-0 border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleSearch();
+                                    }
+                                }}
+                            />
+                            <button
+                                className={classNames(
+                                    "px-2 py-2 rounded-md text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center",
+                                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                )}
+                                onClick={handleSearch}
+                                disabled={loading}
+                                title="Tìm kiếm"
+                            >
+                                <Search size={16} />
+                            </button>
+                        </div>
+                    </div>
+                    {info && (
+                        <div className="px-3 py-2 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-sm">
+                            {info}
+                        </div>
+                    )}
                 </div>
+
+                {/* Buttons */}
+                <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                            )}
+                            onClick={handleSearch}
+                            disabled={loading}
+                        >
+                            {loading ? "Đang tải..." : "Xem báo cáo"}
+                        </button>
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                                loading || !hasData ? "bg-green-500 text-white cursor-not-allowed" : "bg-white hover:bg-gray-50 cursor-pointer"
+                            )}
+                            onClick={handleExport}
+                            disabled={loading || !hasData}
+                        >
+                            Xuất Excel
+                        </button>
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            )}
+                            onClick={clearAllFilters}
+                            disabled={loading}
+                        >
+                            Xóa bộ lọc
+                        </button>
+                        {error && (
+                            <div className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
+                                {error}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            className={classNames(
+                                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            )}
+                            onClick={handleUploadClick}
+                            type="button"
+                        >
+                            Tải lên báo cáo
+                        </button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls"
+                            className="hidden"
+                            onChange={handleFileSelected}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Analystic */}
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="text-gray-800 text-sm">Tổng số lượng</div>
                     <div className="text-2xl font-semibold text-gray-900">{totalQuantity}</div>
@@ -427,8 +552,8 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div> */}
 
-      {/* Charts */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Charts */}
+            {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="font-medium text-gray-900 mb-3">Số giám định theo thời gian</div>
                     <svg viewBox="0 0 420 200" className="w-full h-52">
@@ -489,99 +614,149 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div> */}
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-auto">
-        <table className="min-w-full text-sm text-gray-800">
-          <thead className="bg-gray-50">
-            <tr>
-              {[
-                "STT",
-                "Tên doanh nghiệp đăng ký giám định MMTB đã qua sử dụng",
-                "Địa chỉ doanh nghiệp",
-                "Tên MMTB đăng ký giám định",
-                "Lĩnh vực sản xuất của MMTB",
-                "Số lượng",
-                "Thời gian giám định",
-                "Địa điểm giám định",
-                "Kết quả giám định (Đạt/Không đạt)",
-                "Số hiệu Chứng thư giám định",
-                "Ghi chú",
-              ].map((h) => (
-                <th
-                  key={h}
-                  className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap"
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="bg-yellow-100/60 font-medium text-gray-900">
-              <td className="px-6 py-3">Tổng</td>
-              <td className="px-6 py-3" colSpan={4}></td>
-              <td className="px-6 py-3">{totalQuantity}</td>
-              <td className="px-6 py-3">{totalInspections}</td>
-              <td className="px-6 py-3"></td>
-              <td className="px-6 py-3">
-                Đạt: {passCount} / Không đạt: {failCount}
-              </td>
-              <td className="px-6 py-3">
-                {data.filter((r) => r.certificateNumber).length}
-              </td>
-              <td className="px-6 py-3"></td>
-            </tr>
-            {data.map((r, idx) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-6 py-3">{idx + 1}</td>
-                <td className="px-6 py-3">{r.companyName}</td>
-                <td className="px-6 py-3">{r.companyAddress}</td>
-                <td className="px-6 py-3">{r.machineName}</td>
-                <td className="px-6 py-3">{r.machineIndustry}</td>
-                <td className="px-6 py-3">{r.quantity}</td>
-                <td className="px-6 py-3">
-                  {r.inspectionTime
-                    ? new Date(r.inspectionTime).toLocaleDateString()
-                    : ""}
-                </td>
-                <td className="px-6 py-3">{r.inspectionLocation}</td>
-                <td className="px-6 py-3">{normalizeResult(r.result)}</td>
-                <td className="px-6 py-3">{r.certificateNumber}</td>
-                <td className="px-6 py-3">{r.note || ""}</td>
-              </tr>
-            ))}
-            {data.length === 0 && (
-              <tr>
-                <td
-                  className="px-6 py-8 text-center text-gray-500"
-                  colSpan={11}
-                >
-                  Không có dữ liệu
-                </td>
-              </tr>
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-auto">
+                <table className="min-w-full text-sm text-gray-800">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            {[
+                                "STT",
+                                "Tên doanh nghiệp đăng ký giám định MMTB đã qua sử dụng",
+                                "Địa chỉ doanh nghiệp",
+                                "Tên MMTB đăng ký giám định",
+                                "Lĩnh vực sản xuất của MMTB",
+                                "Số lượng",
+                                "Thời gian giám định",
+                                "Địa điểm giám định",
+                                "Kết quả giám định (Đạt/Không đạt)",
+                                "Số hiệu Chứng thư giám định",
+                                "Ghi chú",
+                            ].map((h) => (
+                                <th key={h} className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap">{h}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="bg-yellow-100/60 font-medium text-gray-900">
+                            <td className="px-6 py-3">Tổng</td>
+                            <td className="px-6 py-3" colSpan={4}></td>
+                            <td className="px-6 py-3">{totalQuantity}</td>
+                            <td className="px-6 py-3"></td>
+                            <td className="px-6 py-3"></td>
+                            <td className="px-6 py-3">Đạt: {passCount} / Không đạt: {failCount}</td>
+                            <td className="px-6 py-3">{totals?.totalCertificates ?? data.filter((r) => r.certificateNumber).length}</td>
+                            <td className="px-6 py-3"></td>
+                        </tr>
+                        {data.map((r, idx) => (
+                            <tr key={r.id} className="border-t">
+                                <td className="px-6 py-3">{idx + 1}</td>
+                                <td className="px-6 py-3">{r.companyName}</td>
+                                <td className="px-6 py-3">{r.companyAddress}</td>
+                                <td className="px-6 py-3">{r.machineName}</td>
+                                <td className="px-6 py-3">{r.machineIndustry}</td>
+                                <td className="px-6 py-3">{r.quantity}</td>
+                                <td className="px-6 py-3">{r.inspectionTime ? new Date(r.inspectionTime).toLocaleDateString() : ""}</td>
+                                <td className="px-6 py-3">{r.inspectionLocation}</td>
+                                <td className="px-6 py-3">{normalizeResult(r.result)}</td>
+                                <td className="px-6 py-3">{r.certificateNumber}</td>
+                                <td className="px-6 py-3">{r.note || ""}</td>
+                            </tr>
+                        ))}
+                        {data.length === 0 && (
+                            <tr>
+                                <td className="px-6 py-8 text-center text-gray-500" colSpan={11}>Không có dữ liệu</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            {hasData && totalPages > 1 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                            Hiển thị {((currentPage - 1) * pageSize) + 1} đến {Math.min(currentPage * pageSize, totalRecords)} trong tổng số {totalRecords} bản ghi
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                className={classNames(
+                                    "px-3 py-2 rounded-md text-sm border",
+                                    currentPage === 1
+                                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
+                                )}
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </button>
+
+                            {/* Page numbers */}
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        className={classNames(
+                                            "px-3 py-2 rounded-md text-sm border",
+                                            currentPage === pageNum
+                                                ? "bg-blue-600 text-white border-blue-600"
+                                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
+                                        )}
+                                        onClick={() => handlePageChange(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                className={classNames(
+                                    "px-3 py-2 rounded-md text-sm border",
+                                    currentPage === totalPages
+                                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 cursor-pointer"
+                                )}
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
-          </tbody>
-        </table>
-      </div>
-      {/* Toasts */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={
-              t.type === "success"
-                ? "px-4 py-2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shadow"
-                : t.type === "error"
-                ? "px-4 py-2 rounded-md bg-red-50 text-red-800 border border-red-200 shadow"
-                : "px-4 py-2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shadow"
-            }
-          >
-            {t.message}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+
+            {/* Toasts */}
+            <div className="fixed top-4 right-4 z-50 space-y-2">
+                {toasts.map((t) => (
+                    <div
+                        key={t.id}
+                        className={
+                            t.type === "success"
+                                ? "px-4 py-2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shadow"
+                                : t.type === "error"
+                                    ? "px-4 py-2 rounded-md bg-red-50 text-red-800 border border-red-200 shadow"
+                                    : "px-4 py-2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shadow"
+                        }
+                    >
+                        {t.message}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 export default ReportsClient;

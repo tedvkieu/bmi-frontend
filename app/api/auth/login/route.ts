@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         // Get backend URL with fallback
-        const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+        const backendUrl = process.env.BACKEND_URL;
         const loginUrl = `${backendUrl}/api/auth/login`;
 
         // console.log('🔍 Auth Debug Info:');

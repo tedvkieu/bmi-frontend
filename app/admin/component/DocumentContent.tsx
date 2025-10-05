@@ -18,7 +18,7 @@ import ConfirmationModal from "./document/ConfirmationModal";
 import { CheckCircle, Clock } from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+const BACKEND_URL = process.env.BACKEND_URL;
 
 const DocumentsContent = () => {
   const router = useRouter();

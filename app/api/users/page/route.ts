@@ -3,41 +3,36 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page") || "0";
-    const size = searchParams.get("size") || "10";
 
-    const params = new URLSearchParams({
-      page,
-      size,
+    // Tạo URL cho backend
+    const url = new URL(`${process.env.BACKEND_URL}/api/users/page`);
+
+    // Forward tất cả query params từ frontend
+    searchParams.forEach((value, key) => {
+      url.searchParams.append(key, value);
     });
 
-    console.log("BACKEND_URL  =", process.env.BACKEND_URL);
     const token = request.cookies.get("token")?.value;
 
-    const response = await fetch(
-      `${process.env.BACKEND_URL}/api/users/page?${params.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        cache: "no-store", // Disable caching for real-time data
-      }
-    );
-
-    console.log("Response from Spring Boot API:", response);
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      cache: "no-store",
+    });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch customers: ${response.statusText}`);
+      throw new Error(`Failed to fetch users: ${response.statusText}`);
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching customers:", error);
+    console.error("Error fetching users:", error);
     return NextResponse.json(
-      { error: "Failed to fetch customers" },
+      { error: "Failed to fetch users" },
       { status: 500 }
     );
   }

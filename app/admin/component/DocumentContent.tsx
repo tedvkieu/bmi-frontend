@@ -1,415 +1,581 @@
 "use client";
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
-import React, { useState, useEffect, useCallback } from "react";
-import { InspectionReport, InspectionReportApi } from "../types/inspection";
+import dynamic from "next/dynamic";
+import toast from "react-hot-toast";
+import {
+  CertificateStatusBackend,
+  InspectionReport,
+  InspectionReportApi,
+} from "../types/inspection";
+import DocumentsTable from "./document/DocumentsTable";
+import DocumentMobileCard from "./document/DocumentMobileCard";
 import LoadingSpinner from "./document/LoadingSpinner";
 import ErrorMessage from "./document/ErrorMessage";
-import DocumentSearchBar from "./document/DocumentSearchBar";
-import DocumentMobileCard from "./document/DocumentMobileCard";
-import DocumentsTable from "./document/DocumentsTable"; // Đảm bảo đã cập nhật DocumentsTable.tsx như câu trả lời trước
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import ConfirmationModal from "./document/ConfirmationModal";
+import { CheckCircle, Clock, ChevronLeft, ChevronRight, MinusCircle } from "lucide-react";
+import { IoDocumentOutline } from "react-icons/io5";
+import DocumentSearchBar from "./DocumentSearchBar";
+
 const DocumentViewModal = dynamic(
   () => import("./document/DocumentViewModal"),
   { ssr: false }
 );
-import toast from "react-hot-toast";
-import ConfirmationModal from "./document/ConfirmationModal";
-import { CheckCircle, Clock } from "lucide-react";
-import { IoDocumentOutline } from "react-icons/io5";
 
 const BACKEND_URL = process.env.BACKEND_URL;
 
-const DocumentsContent = () => {
+// Define a type for your overall status counts
+interface OverallStatusCounts {
+  total: number;
+  completed: number;
+  pending: number;
+  notObtained: number;
+  notWithinScope: number;
+}
+
+// Skeleton component for cards
+const StatCardSkeleton: React.FC = () => (
+  <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4 animate-pulse">
+    <div className="flex-shrink-0 bg-gray-200 p-3 rounded-full h-10 w-10"></div>
+    <div>
+      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+      <div className="h-6 bg-gray-200 rounded w-16"></div>
+    </div>
+  </div>
+);
+
+const DocumentsContent: React.FC = () => {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    InspectionReport["status"] | "all"
-  >("all");
+
+  const now = new Date();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const currentYear = String(now.getFullYear());
+
+  // State for filters and pagination
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [localSearchTerm, setLocalSearchTerm] = useState<string>(""); // For immediate input feedback
+  const [statusFilter, setStatusFilter] = useState<InspectionReport["status"] | "all">("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
+  const [yearFilter, setYearFilter] = useState<string>(currentYear);
+
+  // Data states
   const [documents, setDocuments] = useState<InspectionReport[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingDocuments, setLoadingDocuments] = useState<boolean>(true);
+  const [errorDocuments, setErrorDocuments] = useState<string | null>(null);
 
-  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(
-    null
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // State for confirmation modal
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
 
-  // <-- THÊM STATE sortBy
-  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest"); // Mặc định sắp xếp mới nhất
+  // Pagination states for the current table view
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [pageSize] = useState<number>(10);
+  const [totalElements, setTotalElements] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
-  // Cập nhật hàm fetchDocuments để nhận tham số sắp xếp
+  // Overall counts states
+  const [overallCounts, setOverallCounts] = useState<OverallStatusCounts>({
+    total: 0,
+    completed: 0,
+    pending: 0,
+    notObtained: 0,
+    notWithinScope: 0,
+  });
+  const [loadingOverallCounts, setLoadingOverallCounts] = useState<boolean>(true);
+
+
+  // Helper to build URLSearchParams
+  const buildSearchParams = useCallback((
+    page: number,
+    size: number,
+    sort: "newest" | "oldest",
+    search: string,
+    month: string,
+    year: string,
+    status?: InspectionReport["status"] | "all" // Changed type here
+  ): URLSearchParams => {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+      sortBy: sort,
+    });
+
+    if (search.trim() !== "") params.append("search", search);
+    if (month !== "") params.append("month", month);
+    if (year !== "") params.append("year", year);
+
+    if (status && status !== "all") {
+      let backendStatus: CertificateStatusBackend | null = null;
+      if (status === "obtained") backendStatus = "OBTAINED";
+      else if (status === "pending") backendStatus = "PENDING";
+      else if (status === "not_obtained") backendStatus = "NOT_OBTAINED";
+      else if (status === "not_within_scope") backendStatus = "NOT_WITHIN_SCOPE";
+
+      if (backendStatus) params.append("status", backendStatus.toString());
+    }
+    return params;
+  }, []);
+
+  const fetchOverallCounts = useCallback(async () => {
+    setLoadingOverallCounts(true);
+    try {
+      const totalParams = buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "all");
+      const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
+      const totalData = await totalRes.json();
+
+      // Fetch counts for each status
+      const [
+        completedRes,
+        pendingRes,
+        notObtainedRes,
+        notWithinScopeRes,
+      ] = await Promise.all([
+        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "obtained").toString()}`),
+        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "pending").toString()}`),
+        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_obtained").toString()}`),
+        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_within_scope").toString()}`),
+      ]);
+
+      const [
+        completedData,
+        pendingData,
+        notObtainedData,
+        notWithinScopeData,
+      ] = await Promise.all([
+        completedRes.json(),
+        pendingRes.json(),
+        notObtainedRes.json(),
+        notWithinScopeRes.json(),
+      ]);
+
+      setOverallCounts({
+        total: totalData.totalElements || 0,
+        completed: completedData.totalElements || 0,
+        pending: pendingData.totalElements || 0,
+        notObtained: notObtainedData.totalElements || 0,
+        notWithinScope: notWithinScopeData.totalElements || 0,
+      });
+
+    } catch (err: any) {
+      console.error("Failed to fetch overall document counts:", err);
+      // Optionally set an error state for overall counts if needed
+    } finally {
+      setLoadingOverallCounts(false);
+    }
+  }, [monthFilter, yearFilter, buildSearchParams]); // LOẠI BỎ searchTerm khỏi dependencies
+
+  // Fetch documents for the table (memoized)
   const fetchDocuments = useCallback(
-    async (currentSortBy: "newest" | "oldest" = "newest") => {
+    async () => {
+      setLoadingDocuments(true);
+      setErrorDocuments(null);
       try {
-        setLoading(true);
-        setError(null);
-        const controller = new AbortController();
-        const signal = controller.signal;
+        const params = buildSearchParams(currentPage, pageSize, sortBy, searchTerm, monthFilter, yearFilter, statusFilter);
+        const res = await fetch(`/api/dossiers?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-        // <-- TRUYỀN THAM SỐ sortBy VÀO API CALL
-        const response = await fetch(
-          `/api/dossiers?page=0&size=50&sortBy=${currentSortBy}`,
-          { signal }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await res.json();
 
         const mappedDocuments: InspectionReport[] = data.content.map(
-          (apiDoc: InspectionReportApi) => ({
-            receiptId: apiDoc.receiptId,
-            registrationNo: apiDoc.registrationNo,
-            customerSubmitId: apiDoc.customerSubmitId,
-            customerRelatedId: apiDoc.customerRelatedId,
-            inspectionTypeId: apiDoc.inspectionTypeId,
-            declarationNo: apiDoc.declarationNo,
-            billOfLading: apiDoc.billOfLading,
-            shipName: apiDoc.shipName,
-            cout10: apiDoc.cout10,
-            cout20: apiDoc.cout20,
-            bulkShip: apiDoc.bulkShip,
-            declarationDoc: apiDoc.declarationDoc,
-            declarationPlace: apiDoc.declarationPlace,
-            inspectionDate: apiDoc.inspectionDate,
-            certificateDate: apiDoc.certificateDate,
-            inspectionLocation: apiDoc.inspectionLocation,
-            certificateStatus: apiDoc.certificateStatus,
-            createdAt: apiDoc.createdAt,
-            updatedAt: apiDoc.updatedAt,
-
-            id: String(apiDoc.receiptId),
-            name:
-              apiDoc.registrationNo ||
-              apiDoc.billOfLading ||
-              `Document ${apiDoc.receiptId}`,
-            client: `${
-              apiDoc.customerRelatedName || apiDoc.customerRelatedId || ""
-            }`,
-            inspector: "N/A",
-            date: new Date(apiDoc.createdAt).toLocaleDateString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            }),
-            type: apiDoc.inspectionTypeName || apiDoc.inspectionTypeId,
-            status: apiDoc.certificateStatus.toLowerCase() as
-              | "completed"
+          (doc: InspectionReportApi) => ({
+            id: String(doc.receiptId),
+            name: doc.registrationNo || doc.billOfLading || `Document ${doc.receiptId}`,
+            client: doc.customerRelatedName || doc.customerRelatedId?.toString() || "",
+            inspector: "N/A", // API might not provide this directly, keep as N/A or map if available
+            date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
+            type: doc.inspectionTypeName || doc.inspectionTypeId,
+            status: doc.certificateStatus.toLowerCase() as
+              | "obtained"
               | "pending"
-              | "in_progress",
+              | "not_obtained"
+              | "not_within_scope",
+            ...doc, // Spread the rest of the API fields
           })
         );
+
         setDocuments(mappedDocuments);
-      } catch (e: any) {
-        if (e.name !== "AbortError") {
-          setError(e.message);
-          console.error("Failed to fetch documents:", e);
-        }
+        setTotalElements(data.totalElements);
+        setTotalPages(data.totalPages);
+      } catch (err: any) {
+        setErrorDocuments(err.message);
+        console.error("Failed to fetch documents:", err);
       } finally {
-        setLoading(false);
+        setLoadingDocuments(false);
       }
     },
-    []
-  ); // Không cần sortBy trong dependency array vì nó được truyền vào
+    [currentPage, pageSize, sortBy, searchTerm, statusFilter, monthFilter, yearFilter, buildSearchParams]
+  );
+
+  // Effects to fetch data when filters or pagination change
+  useEffect(() => {
+    fetchOverallCounts();
+  }, [fetchOverallCounts]);
 
   useEffect(() => {
-    fetchDocuments(sortBy); // Gọi fetchDocuments với sortBy hiện tại
-  }, [fetchDocuments, sortBy]); // <-- THÊM sortBy VÀO DEPENDENCY ARRAY
+    fetchDocuments();
+  }, [fetchDocuments]);
 
-  const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch =
-      doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || doc.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Debounced search term update
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearchTerm(localSearchTerm);
+      setCurrentPage(0); // Reset page on new search
+    }, 500); // 500ms debounce
 
-  const getStatusCounts = () => {
-    let completed = 0;
-    let pending = 0;
-    let inProgress = 0;
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [localSearchTerm]);
 
-    documents.forEach((doc) => {
-      if (doc.status === "obtained") {
-        completed++;
-      } else if (doc.status === "pending") {
-        pending++;
-      } else if (
-        doc.status === "not_obtained" ||
-        doc.status === "not_within_scope"
-      ) {
-        inProgress++;
-      }
-    });
-    return { completed, pending, inProgress };
-  };
+  // Handlers for filter changes
+  const handleStatusFilterChange = useCallback((filter: InspectionReport["status"] | "all") => {
+    setStatusFilter(filter);
+    setCurrentPage(0);
+  }, []);
 
-  const statusCounts = getStatusCounts();
+  const handleSortChange = useCallback((sort: "newest" | "oldest") => {
+    setSortBy(sort);
+    setCurrentPage(0);
+  }, []);
 
-  const handleView = async (id: string) => {
+  const handleMonthFilterChange = useCallback((month: string) => {
+    setMonthFilter(month);
+    setCurrentPage(0);
+  }, []);
+
+  const handleYearFilterChange = useCallback((year: string) => {
+    setYearFilter(year);
+    setCurrentPage(0);
+  }, []);
+
+  const handleView = useCallback(async (id: string) => {
     try {
-      const response = await axios.get(`/api/dossiers/${id}`);
-      if (response.data) {
-        setSelectedDoc(response.data);
+      const res = await axios.get<InspectionReportApi>(`/api/dossiers/${id}`);
+      if (res.data) {
+        setSelectedDoc(res.data);
         setIsModalOpen(true);
       }
-    } catch (error) {
-      console.error("Error while fetching receipt:", error);
-      toast.error("Không thể lấy dữ liệu biên lai, vui lòng thử lại.");
+    } catch (err) {
+      console.error("View error:", err);
+      toast.error("Không thể lấy dữ liệu biên lai");
     }
-  };
+  }, []);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = useCallback((id: string) => {
     router.push(`/admin/hoso/${id}`);
-  };
+  }, [router]);
 
-  const handleDownload = async (id: string) => {
-    console.log("Download document:", id);
+  const handleDownload = useCallback(async (id: string) => {
     try {
-      // 1. Gọi API generate inspection report
+      toast.loading("Đang tạo và tải file...", { id: "downloadToast" });
       const res = await fetch(
         `/api/documents/generate-inspection-report/${id}`
       );
 
-      console.log("Generate report response:", res);
-
       if (!res.ok) {
-        throw new Error("Không thể generate report");
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Không thể generate report");
       }
 
       const data = await res.json();
-      console.log("API response:", data);
-
-      // 2. Lấy tên file
       const fileName = data.files;
 
-      console.log("File name:", fileName);
       if (!fileName) {
         throw new Error("Không có tên file trả về");
       }
 
-      // 3. Gọi API export để lấy file (blob)
       const fileRes = await fetch(`${BACKEND_URL}/api/exports/${fileName}`);
-
       if (!fileRes.ok) {
-        throw new Error("Không thể tải file");
+        const errorData = await fileRes.json();
+        throw new Error(errorData.message || "Không thể tải file");
       }
 
       const blob = await fileRes.blob();
-
-      // 4. Tạo link download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName; // gợi ý tên file tải xuống
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
-
-      // cleanup
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("File đã được tải xuống!");
-    } catch (error) {
+      toast.success("File đã được tải xuống!", { id: "downloadToast" });
+    } catch (error: any) {
       console.error(error);
-      toast.error("Có lỗi xảy ra khi tạo hoặc tải file");
+      toast.error(error.message || "Có lỗi xảy ra khi tạo hoặc tải file", { id: "downloadToast" });
     }
-  };
+  }, []);
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = useCallback((id: string) => {
     setDocToDelete(id);
     setIsConfirmModalOpen(true);
-  };
+  }, []);
 
-  const handleDelete = async () => {
+  const handleRefresh = useCallback(() => {
+    fetchDocuments();
+    fetchOverallCounts();
+    toast.success("Dữ liệu đã được làm mới!");
+  }, [fetchDocuments, fetchOverallCounts]);
+
+  const handleDelete = useCallback(async () => {
     if (!docToDelete) return;
-
     try {
-      const response = await axios.delete(`/api/dossiers/${docToDelete}`);
-
-      if (response.status === 200 || response.status === 204) {
-        setDocuments((prevDocuments) =>
-          prevDocuments.filter((doc) => doc.id !== docToDelete)
-        );
-        toast.success("Biên lai đã được xoá thành công!");
-      } else {
-        toast.error("Không thể xoá biên lai, vui lòng thử lại.");
-      }
-    } catch (error) {
-      console.error("Error while deleting receipt:", error);
-      toast.error("Không thể xoá biên lai, vui lòng thử lại.");
+      await axios.delete(`/api/dossiers/${docToDelete}`);
+      toast.success("Đã xóa biên lai");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Xóa thất bại");
     } finally {
       setIsConfirmModalOpen(false);
       setDocToDelete(null);
-      fetchDocuments(sortBy); // <-- Làm mới sau khi xóa với sortBy hiện tại
+      handleRefresh(); // Refresh all data after deletion
     }
-  };
+  }, [docToDelete, handleRefresh]);
 
-  const handleDeleteMany = async (ids: string[]) => {
+  const handleDeleteMany = useCallback(async (ids: string[]) => {
     if (ids.length === 0) return;
 
     try {
-      // Assuming a batch delete API endpoint or individual deletes
-      const deletePromises = ids.map((id) =>
-        axios.delete(`/api/dossiers/${id}`)
-      );
+      toast.loading(`Đang xóa ${ids.length} biên lai...`, { id: "deleteManyToast" });
+      const deletePromises = ids.map((id) => axios.delete(`/api/dossiers/${id}`));
       await Promise.all(deletePromises);
-
-      setDocuments((prevDocuments) =>
-        prevDocuments.filter((doc) => !ids.includes(doc.id))
-      );
-      toast.success(`Đã xóa thành công ${ids.length} biên lai.`);
+      toast.success(`Đã xóa thành công ${ids.length} biên lai.`, { id: "deleteManyToast" });
     } catch (error) {
       console.error("Error while deleting multiple receipts:", error);
-      toast.error("Không thể xóa các biên lai đã chọn, vui lòng thử lại.");
+      toast.error("Không thể xóa các biên lai đã chọn, vui lòng thử lại.", { id: "deleteManyToast" });
     } finally {
-      fetchDocuments(sortBy); // <-- Làm mới sau khi xóa nhiều với sortBy hiện tại
+      handleRefresh(); // Refresh all data after deletion
     }
-  };
+  }, [handleRefresh]);
 
-  // <-- CẬP NHẬT HÀM handleRefresh ĐỂ NHẬN THAM SỐ sortBy
-  const handleRefresh = (newSortBy?: "newest" | "oldest") => {
-    const currentSort = newSortBy || sortBy; // Ưu tiên newSortBy nếu có, nếu không thì dùng sortBy hiện tại
-    setSortBy(currentSort); // Cập nhật state sortBy của DocumentsContent
-    fetchDocuments(currentSort); // Tải lại dữ liệu với lựa chọn sắp xếp mới
-    toast.success("Dữ liệu đã được làm mới!");
-  };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  // Memoized Pagination component
+  const Pagination = useMemo(() => {
+    const startItem = currentPage * pageSize + 1;
+    const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 
-  if (error) {
-    return <ErrorMessage message={error} />;
-  }
+    const renderPageButtons = () => {
+      const buttons = [];
+      const maxButtons = 5;
+      let startPage = Math.max(0, currentPage - Math.floor(maxButtons / 2));
+      const endPage = Math.min(totalPages, startPage + maxButtons);
 
-  return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Thẻ Tổng số tài liệu */}
-        <div
-          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-blue-300 hover:scale-[1.01] cursor-default"
-        >
-          <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
-            <IoDocumentOutline size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-600">
-              Tổng số tài liệu
-            </p>
-            <p className="text-2xl font-semibold text-gray-900">
-              {documents.length}
-            </p>
-          </div>
+      // Adjust startPage if we don't have enough pages at the end
+      if (endPage - startPage < maxButtons) {
+        startPage = Math.max(0, totalPages - maxButtons);
+      }
+
+      for (let i = startPage; i < endPage; i++) {
+        buttons.push(
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i)}
+            className={`px-3 py-1 border text-sm font-medium ${i === currentPage
+              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+              : "bg-white border-gray-300 text-black hover:bg-gray-50"
+              }`}
+          >
+            {i + 1}
+          </button>
+        );
+      }
+      return buttons;
+    };
+
+    if (totalElements === 0) return null; // Don't render pagination if no elements
+
+    return (
+      <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div className="flex-1 flex justify-between sm:hidden">
+          <button
+            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+            disabled={currentPage === 0}
+            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-black bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Trước
+          </button>
+          <button
+            onClick={() =>
+              setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
+            }
+            disabled={currentPage >= totalPages - 1}
+            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-black bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Sau
+          </button>
         </div>
 
-        {/* Thẻ Tài liệu hoàn thành */}
-        <div
-          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-green-300 hover:scale-[1.01] cursor-default"
-        >
-          <div className="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
-            <CheckCircle size={24} />
-          </div>
+        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
-            <p className="text-2xl font-semibold text-gray-900">
-              {statusCounts.completed}
+            <p className="text-sm text-black">
+              Hiển thị <span className="font-medium">{startItem}</span> đến{" "}
+              <span className="font-medium">{endItem}</span> trong tổng số{" "}
+              <span className="font-medium">{totalElements}</span> tài liệu
             </p>
           </div>
-        </div>
 
-        {/* Thẻ Tài liệu đang xử lý */}
-        <div
-          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center space-x-4
-                  transition-all duration-300 ease-in-out hover:shadow-md hover:border-yellow-300 hover:scale-[1.01] cursor-default"
-        >
-          <div className="flex-shrink-0 bg-yellow-100 text-yellow-600 p-3 rounded-full">
-            <Clock size={24} />
-          </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
-            <p className="text-2xl font-semibold text-gray-900">
-              {statusCounts.inProgress}
-            </p>
+            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button
+                onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                disabled={currentPage === 0}
+                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              {renderPageButtons()}
+
+              <button
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
+                }
+                disabled={currentPage >= totalPages - 1}
+                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-black hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </nav>
           </div>
         </div>
       </div>
+    );
+  }, [currentPage, pageSize, totalElements, totalPages]);
 
-      {/* Search and Filter Bar */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-black space-y-4">
+  // If there's a global error, display it prominently
+  if (errorDocuments) return <ErrorMessage message={errorDocuments} />;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        {loadingOverallCounts ? (
+          // Show skeleton for overall counts while loading
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
+              <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
+                <IoDocumentOutline size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Tổng số tài liệu</p>
+                <p className="text-2xl font-semibold text-gray-900">{overallCounts.total}</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
+              <div className="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
+                <CheckCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
+                <p className="text-2xl font-semibold text-gray-900">{overallCounts.completed}</p>
+              </div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
+              <div className="flex-shrink-0 bg-yellow-100 text-yellow-600 p-3 rounded-full">
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
+                <p className="text-2xl font-semibold text-gray-900">{overallCounts.pending}</p>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
+              <div className="flex-shrink-0 bg-gray-100 text-gray-600 p-3 rounded-full">
+                <Clock size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Không hoàn thành</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {overallCounts.notObtained}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
+              <div className="flex-shrink-0 bg-red-100 text-red-600 p-3 rounded-full">
+                <MinusCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Ngoài phạm vi</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {overallCounts.notWithinScope}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm text-black space-y-4">
         <DocumentSearchBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          searchTerm={searchTerm} // Pass the debounced searchTerm for display if needed elsewhere
+          localSearchTerm={localSearchTerm} // Use localSearchTerm for the input field
+          setLocalSearchTerm={setLocalSearchTerm} // Update local state directly
+          onSearch={() => setSearchTerm(localSearchTerm)} // This will be debounced by useEffect
           statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          onCreateNew={() => router.push("/admin/hoso/tao-ho-so")}
+          setStatusFilter={handleStatusFilterChange}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+          monthFilter={monthFilter}
+          setMonthFilter={handleMonthFilterChange}
+          yearFilter={yearFilter}
+          setYearFilter={handleYearFilterChange}
+          onRefresh={handleRefresh}
         />
 
-        {/* Documents - Mobile Cards */}
         <div className="block lg:hidden space-y-4">
-          {filteredDocuments.length === 0 ? (
-            <div className="text-center py-10 text-lg text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
-              <IoDocumentOutline
-                size={48}
-                className="mx-auto text-gray-400 mb-4"
-              />
+          {loadingDocuments ? (
+            <LoadingSpinner />
+          ) : documents.length === 0 ? (
+            <div className="text-center py-10 text-lg text-gray-500 rounded-xl border border-gray-200">
+              <IoDocumentOutline size={48} className="mx-auto mb-4 text-gray-400" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Không tìm thấy tài liệu nào
               </h3>
-              <p className="text-black">
-                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
-              </p>
+              <p className="text-black">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
             </div>
           ) : (
-            filteredDocuments.map((doc) => (
+            documents.map(doc => (
               <DocumentMobileCard
                 key={doc.id}
                 document={doc}
                 onView={handleView}
+                onDelete={confirmDelete}
                 onDownload={handleDownload}
                 onEdit={handleEdit}
-                onDelete={confirmDelete}
               />
             ))
           )}
         </div>
 
-        {/* Documents Table - Desktop */}
-        <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <DocumentsTable
-            documents={filteredDocuments}
-            onView={handleView}
-            onDownload={handleDownload}
-            onEdit={handleEdit}
-            onDelete={confirmDelete}
-            onRefresh={handleRefresh}
-            onDeleteMany={handleDeleteMany}
-          />
-        </div>
-
-        {/* No results for desktop table */}
-        {filteredDocuments.length === 0 && !loading && (
-          <div className="hidden lg:block text-center py-12">
-            <IoDocumentOutline
-              size={48}
-              className="mx-auto text-gray-400 mb-4"
+        <div className="hidden lg:block">
+          {loadingDocuments ? (
+            <LoadingSpinner />
+          ) : (
+            <DocumentsTable
+              documents={documents}
+              onView={handleView}
+              onDelete={confirmDelete}
+              onDownload={handleDownload}
+              onEdit={handleEdit}
+              onRefresh={handleRefresh}
+              onDeleteMany={handleDeleteMany}
             />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Không tìm thấy tài liệu nào
-            </h3>
-            <p className="text-black">
-              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {isModalOpen && selectedDoc && (
@@ -427,6 +593,8 @@ const DocumentsContent = () => {
         title="Xác nhận xóa biên lai"
         message="Bạn có chắc chắn muốn xóa biên lai này? Hành động này không thể hoàn tác."
       />
+
+      {Pagination}
     </div>
   );
 };

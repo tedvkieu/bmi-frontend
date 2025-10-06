@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, Fragment, useEffect } from "react";
 import { Dialog, Transition } from '@headlessui/react';
-import { FiUploadCloud } from "react-icons/fi";
 import { FaSyncAlt } from "react-icons/fa";
 
 export enum CustomerType {
@@ -239,10 +238,6 @@ export default function AddCustomerForm() {
         }
     };
 
-    const handleImportExcelClick = () => {
-        fileInputRef.current?.click();
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
@@ -252,13 +247,13 @@ export default function AddCustomerForm() {
         }
     };
 
-    const inputClass = "w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-500";
-    const labelClass = "mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300";
+    const inputClass = "w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-500 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500";
+    const labelClass = "mb-1 block text-sm font-medium text-gray-700";
     const errorClass = "text-red-500 text-xs mt-1";
     const requiredSpan = <span className="text-red-500">*</span>;
 
     return (
-        <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 p-6 sm:p-8 relative">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-lg  p-6 sm:p-8 relative">
             <input
                 type="file"
                 ref={fileInputRef}
@@ -267,20 +262,7 @@ export default function AddCustomerForm() {
                 style={{ display: 'none' }}
             />
 
-            <button
-                className="absolute top-4 right-4 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200
-             text-green-600 transition-all duration-300 ease-in-out hover:bg-green-600 hover:text-white hover:shadow-md hover:scale-105"
-                onClick={handleImportExcelClick}
-                aria-label="Import Excel"
-            >
-                <div className="flex-shrink-0 p-1 rounded-full">
-                    <FiUploadCloud size={18} />
-                </div>
-                <span className="text-sm font-medium">Import Excel</span>
-            </button>
-
-
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Tạo Khách hàng mới</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Tạo khách hàng mới</h2>
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {errors.general && (
@@ -308,7 +290,7 @@ export default function AddCustomerForm() {
 
                 <div>
                     <label htmlFor="customerType" className={labelClass}>
-                        Loại khách hàng {requiredSpan}
+                         Khách hàng {requiredSpan}
                     </label>
                     <div className="relative">
                         <select
@@ -317,19 +299,14 @@ export default function AddCustomerForm() {
                             value={formData.customerType}
                             onChange={handleChange}
                             required
-                            className={`${inputClass} appearance-none pr-10 ${errors.customerType ? 'border-red-500' : ''}`}
+                            className={`${inputClass} pr-10 ${errors.customerType ? 'border-red-500' : ''}`}
                         >
                             {Object.values(CustomerType).map((type) => (
-                                <option key={type} value={type}>
+                                <option key={type} value={type} className="text-gray-800">
                                     {CustomerTypeDisplay[type]}
                                 </option>
                             ))}
                         </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                        </div>
                     </div>
                     {errors.customerType && <p className={errorClass}>{errors.customerType}</p>}
                 </div>
@@ -378,9 +355,9 @@ export default function AddCustomerForm() {
                             type="checkbox"
                             checked={useRandomPassword}
                             onChange={handleUseRandomPasswordChange}
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="useRandomPassword" className="ml-2 italic  flex items-center text-sm text-gray-900 dark:text-gray-300">
+                        <label htmlFor="useRandomPassword" className="ml-2 italic  flex items-center text-sm text-gray-900">
                             Random password
                         </label>
                     </div>
@@ -396,14 +373,14 @@ export default function AddCustomerForm() {
                                     id="randomPasswordDisplay"
                                     value={randomPasswordDisplay}
                                     readOnly 
-                                    className={`${inputClass} pr-16 font-mono text-gray-700 dark:text-gray-200`}
+                                    className={`${inputClass} pr-16 font-mono text-gray-700`}
                                     placeholder="Mật khẩu ngẫu nhiên sẽ hiển thị ở đây"
                                 />
                                 <div className="absolute inset-y-0 right-0 flex items-center pr-2">
                                     <button
                                         type="button"
                                         onClick={handleGenerateNewRandomPassword}
-                                        className="ml-1 p-1 rounded-full text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
+                                        className="ml-1 p-1 rounded-full text-blue-600 transition-colors"
                                         aria-label="Tạo mật khẩu ngẫu nhiên mới"
                                     >
                                         <FaSyncAlt />
@@ -436,7 +413,7 @@ export default function AddCustomerForm() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600 dark:text-gray-400"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600"
                                 >
                                     {showPassword ? "Ẩn" : "Hiện"}
                                 </button>
@@ -462,7 +439,7 @@ export default function AddCustomerForm() {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600 dark:text-gray-400"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600"
                                 >
                                     {showConfirmPassword ? "Ẩn" : "Hiện"}
                                 </button>
@@ -544,7 +521,7 @@ export default function AddCustomerForm() {
                     <button
                         type="button"
                         onClick={handleClear}
-                        className="w-auto py-2 px-6 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-150 ease-in-out dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-auto py-2 px-6 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isLoading}
                     >
                         Xóa trắng
@@ -578,19 +555,19 @@ export default function AddCustomerForm() {
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-50 p-6 text-left align-middle shadow-xl transition-all dark:bg-gray-800">
+                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-gray-50 p-6 text-left align-middle shadow-xl transition-all">
                                     <Dialog.Title
                                         as="h3"
-                                        className="text-lg font-medium leading-6 text-gray-900 dark:text-white text-center mb-4"
+                                        className="text-lg font-medium leading-6 text-gray-900 text-center mb-4"
                                     >
                                         Thông tin khách hàng đã tạo thành công
                                     </Dialog.Title>
-                                    <div className="mt-2 text-gray-700 dark:text-gray-300">
+                                    <div className="mt-2 text-gray-700">
                                         {createdCustomerData && (
                                             <div className="space-y-2 text-sm font-normal">
                                                 <p>Tên khách hàng: {createdCustomerData.name}</p>
                                                 <p>Email: {createdCustomerData.email}</p>
-                                                <p className="font-semibold text-blue-600 dark:text-blue-400">
+                                                <p className="font-semibold text-blue-600">
                                                     Mật khẩu: {passwordToDisplayInModal}
                                                 </p>
                                                 {useRandomPassword && (
@@ -605,14 +582,14 @@ export default function AddCustomerForm() {
                                     <div className="mt-4 flex justify-end gap-3">
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-blue-700 dark:text-blue-100 dark:hover:bg-blue-600"
+                                            className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                             onClick={handleCopyInfo}
                                         >
                                             Sao chép thông tin
                                         </button>
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:bg-red-700 dark:text-red-100 dark:hover:bg-red-600"
+                                            className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                                             onClick={() => setShowConfirmationModal(false)}
                                         >
                                             Đóng

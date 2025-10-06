@@ -1,69 +1,68 @@
 import React from 'react';
-import { CheckCircle, Clock, AlertCircle } from "lucide-react";
-import { InspectionReport } from "../../types/inspection"; // Adjust path as needed
+import { CheckCircle, Clock, AlertCircle, MinusCircle } from "lucide-react"; // Giữ nguyên AlertCircle cho "Chưa hoàn thành"
+import { InspectionReport } from "../../types/inspection";
 
 interface StatusBadgeProps {
   status: InspectionReport['status'];
   size?: 'sm' | 'md';
 }
 
-const getStatusColor = (status: InspectionReport['status']) => {
+const getStatusStyle = (status: InspectionReport['status']) => {
   switch (status) {
     case "obtained":
-      return "bg-green-100 text-green-800 ring-green-600/20";
+      return "bg-green-100 text-green-700";
     case "pending":
-      return "bg-yellow-100 text-yellow-800 ring-yellow-600/20";
+      return "bg-yellow-100 text-yellow-700";
     case "not_obtained":
-      return "bg-red-100 text-red-800 ring-red-600/20";
+      return "bg-red-100 text-red-700"; // Thay đổi màu cho "Chưa hoàn thành" để dễ phân biệt
     case "not_within_scope":
-      return "bg-gray-100 text-gray-800 ring-gray-600/20";
+      return "bg-gray-100 text-gray-600";
     default:
-      return "bg-gray-100 text-gray-800 ring-gray-600/20";
+      return "bg-gray-100 text-gray-600";
   }
 };
-const getStatusText = (status: InspectionReport['status']) => {
+
+const getStatusLabel = (status: InspectionReport['status']) => {
   switch (status) {
     case "obtained":
-      return "Đạt";
+      return "Hoàn thành"; // Đầy đủ hơn "Đạt"
     case "pending":
-      return "Đang xử lý";
+      return "Đang xử lý"; // Đầy đủ hơn "Chờ"
     case "not_obtained":
-      return "Không đạt";
+      return "Chưa hoàn thành"; // Rõ ràng hơn "Không"
     case "not_within_scope":
-      return "Không thuộc phạm vi";
+      return "Ngoài phạm vi"; // Rõ ràng hơn "Ngoài"
     default:
-      return "Không xác định";
+      return "Không xác định"; // Tránh "N/A"
   }
 };
 
 const getStatusIcon = (status: InspectionReport['status'], iconSize: number) => {
   switch (status) {
-    case "pending":
-      return <Clock size={iconSize} />;
-    case "not_within_scope":
-      return <AlertCircle size={iconSize} />;
-    case "not_obtained":
-      return <AlertCircle size={iconSize} />;
     case "obtained":
       return <CheckCircle size={iconSize} />;
-    default:
+    case "pending":
       return <Clock size={iconSize} />;
+    case "not_obtained":
+      return <AlertCircle size={iconSize} />; // Giữ nguyên icon cảnh báo, rất phù hợp
+    case "not_within_scope":
+      return <MinusCircle size={iconSize} />;
+    default:
+      return <Clock size={iconSize} />; // Mặc định cho trường hợp không xác định
   }
 };
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' }) => {
-  const iconSize = size === 'sm' ? 14 : 16;
-  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'sm' }) => {
+  const iconSize = size === 'sm' ? 12 : 14;
+  const textSize = size === 'sm' ? 'text-[11px]' : 'text-xs';
   const padding = size === 'sm' ? 'px-2 py-0.5' : 'px-3 py-1';
 
   return (
     <span
-      className={`inline-flex items-center space-x-1 ${padding} rounded-full ${textSize} font-semibold ring-1 ring-inset ${getStatusColor(
-        status
-      )}`}
+      className={`inline-flex items-center space-x-1 ${padding} rounded-full font-semibold  ${textSize} ${getStatusStyle(status)}`}
     >
       {getStatusIcon(status, iconSize)}
-      <span>{getStatusText(status)}</span>
+      <span>{getStatusLabel(status)}</span>
     </span>
   );
 };

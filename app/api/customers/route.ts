@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
 
     const response = await fetch(
-      `${process.env.BACKEND_URL}/api/customers?${params.toString()}`,
+      `${process.env.BACKEND_URL}/api/customers/page?${params.toString()}`,
       {
         method: "GET",
         headers: {

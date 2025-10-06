@@ -84,16 +84,15 @@ export async function DELETE(
     });
 
     if (res.status === 204) {
-      return NextResponse.json(
-        { message: `Customer ${id} deleted successfully` },
-        { status: 204 }
-      );
+      // 204 không có body
+      return new NextResponse(null, { status: 204 });
     }
 
     let errorData: any = {};
     try {
       errorData = await res.json();
     } catch {
+      // ignore nếu backend không trả JSON
     }
 
     return NextResponse.json(errorData, { status: res.status });

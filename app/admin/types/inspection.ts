@@ -55,6 +55,7 @@ export interface ReceiptFormData {
   certificateStatus: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
 }
 
+
 export interface ObjectTypeOption {
   value: "SERVICE_MANAGER" | "IMPORTER";
   label: string;
@@ -69,7 +70,11 @@ export interface CertificateStatusOption {
   value: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
   label: string;
 }
-
+export type CertificateStatusBackend =
+  | "OBTAINED"
+  | "NOT_OBTAINED"
+  | "NOT_WITHIN_SCOPE"
+  | "PENDING";
 
 // components/types/inspection.ts
 export interface InspectionReport {
@@ -89,7 +94,7 @@ export interface InspectionReport {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust as per actual statuses
+  certificateStatus: CertificateStatusBackend
   createdAt: string;
   updatedAt: string;
 
@@ -191,3 +196,69 @@ export interface InspectionReportApi {
   createdAt: string;
   updatedAt: string;
 }
+
+
+export interface Dossier {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  customerSubmitName: string;
+  customerRelatedName: string;
+  inspectionTypeId: string;
+  inspectionTypeName: string;
+  declarationNo: string;
+  billOfLading: string;
+  shipName: string;
+  cout10: number;
+  cout20: number;
+  bulkShip: boolean;
+  declarationDoc: string;
+  declarationPlace: string;
+  inspectionDate: string;
+  certificateDate: string;
+  inspectionLocation: string;
+  files: string;
+  certificateStatus: "OBTAINED" | "NOT_OBTAINED" | "PENDING" | "NOT_WITHIN_SCOPE";
+  createdByUserId: number;
+  createdByUserName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ====== Spring Boot Pageable Metadata ======
+
+export interface Sort {
+  empty: boolean;
+  sorted: boolean;
+  unsorted: boolean;
+}
+
+export interface Pageable {
+  pageNumber: number;
+  pageSize: number;
+  sort: Sort;
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+// ====== Generic Page Response ======
+
+export interface PageResponse<T> {
+  content: T[];
+  pageable: Pageable;
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  first: boolean;
+  size: number;
+  number: number;
+  sort: Sort;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+// ====== Specialized Type for Dossier ======
+
+export type DossierPage = PageResponse<Dossier>;

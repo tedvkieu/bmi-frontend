@@ -1,7 +1,7 @@
 import React from "react";
 import AdminLayout from "../../component/AdminLayout";
 import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
-import CustomersContent from "./(component)/CustomerPageContent";
+import CustomersContent from "./(component)/CustomersContent";
 
 const ClientsPage = () => {
   return (

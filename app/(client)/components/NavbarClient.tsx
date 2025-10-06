@@ -16,12 +16,13 @@ interface NavbarClientProps {
   onScrollToContact?: (section: string) => void;
 }
 
+
 export interface Customer {
-  username: string;
   email: string;
-  role: string;
   fullName: string;
-  userId: number;
+  username?: string;
+  role?: string;
+  userId?: number;
 }
 
 export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
@@ -34,7 +35,6 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
     const u = customerApi.getUser();
     if (u) {
       setUser(u);
-      //setRole(u.role);
     }
     setLoading(false);
   }, []);

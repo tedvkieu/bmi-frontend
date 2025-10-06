@@ -14,6 +14,7 @@ import { authApi } from "@/app/services/authApi";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import CustomTooltip from "./CustomTooltip"; // Import your custom tooltip
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -22,7 +23,7 @@ interface DocumentsTableProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDeleteMany: (ids: string[]) => void;
-  onRefresh: (sortBy?: 'newest' | 'oldest') => void; 
+  onRefresh: (sortBy?: 'newest' | 'oldest', statusFilter?: InspectionReport['status'] | 'all', searchTerm?: string) => void;
 }
 
 const DocumentsTable: React.FC<DocumentsTableProps> = ({
@@ -119,7 +120,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     className="rounded text-blue-600 focus:ring-blue-500"
                     checked={selectedDocuments.length === documents.length && documents.length > 0}
                     onChange={handleSelectAllDocuments}
-                    title="Chọn tất cả"
+                    title="Chọn tất cả" // Giữ lại title cho accessibility
                   />
                 )}
               </th>
@@ -146,39 +147,44 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 className="px-6 py-4 text-right text-sm font-semibold text-black"
               >
                 <div className="flex items-center justify-end space-x-2">
-                  <button
-                    onClick={() => onRefresh(sortBy)}
-                    className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
-                    title="Làm mới dữ liệu"
-                  >
-                    <RefreshCw
-                      size={20}
-                      className="transition-transform duration-500 group-hover:rotate-180"
-                    />
-                  </button>
-                  {/* Nút chọn nhiều / thoát chọn nhiều */}
-                  {isAdminOrManager && (
+                  <CustomTooltip content="Làm mới dữ liệu">
                     <button
-                      onClick={toggleMultiSelectMode}
-                      className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${isMultiSelectMode
-                          ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
-                          : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
-                        }`}
-                      title={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"}
+                      onClick={() => onRefresh(sortBy)}
+                      className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
+                      // title="Làm mới dữ liệu" // Remove native title
                     >
-                      {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
+                      <RefreshCw
+                        size={20}
+                        className="transition-transform duration-500 group-hover:rotate-180"
+                      />
                     </button>
+                  </CustomTooltip>
+
+                  {isAdminOrManager && (
+                    <CustomTooltip content={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"}>
+                      <button
+                        onClick={toggleMultiSelectMode}
+                        className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${isMultiSelectMode
+                            ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                            : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
+                          }`}
+                        // title={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"} // Remove native title
+                      >
+                        {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
+                      </button>
+                    </CustomTooltip>
                   )}
 
-                  {/* Nút xóa nhiều (chỉ hiển thị trong chế độ chọn nhiều và khi có mục được chọn) */}
                   {isAdminOrManager && isMultiSelectMode && selectedDocuments.length > 0 && (
-                    <button
-                      onClick={handleDeleteSelected}
-                      className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                      title="Xóa các mục đã chọn"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                    <CustomTooltip content="Xóa các mục đã chọn">
+                      <button
+                        onClick={handleDeleteSelected}
+                        className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                        // title="Xóa các mục đã chọn" // Remove native title
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </CustomTooltip>
                   )}
                   <span>Tùy chọn</span>
                 </div>
@@ -217,6 +223,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           className="rounded text-blue-600 focus:ring-blue-500"
                           checked={selectedDocuments.includes(doc.id)}
                           onChange={() => handleSelectDocument(doc.id)}
+                          title="Chọn tài liệu này" // Giữ lại title cho accessibility
                         />
                       )}
                     </td>
@@ -227,90 +234,106 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         </p>
                       </div>
                     </td>
-                 <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
-  <span className="text-sm text-gray-800">
-    {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
-  </span>
-</td>
+                    <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                      <span className="text-sm text-gray-800">
+                        {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
+                      </span>
+                    </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={doc.status} size="md" />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        {/* Các nút hành động khác */}
-                        <button
-                          onClick={() => onView(doc.id)}
-                          className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                          title="Xem chi tiết"
+                        <CustomTooltip content="Xem chi tiết">
+                          <button
+                            onClick={() => onView(doc.id)}
+                            className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                            // title="Xem chi tiết" // Remove native title
+                          >
+                            <Eye size={20} />
+                          </button>
+                        </CustomTooltip>
+
+                        <CustomTooltip content="Tải xuống">
+                          <button
+                            onClick={() => onDownload(doc.id)}
+                            className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                            // title="Tải xuống" // Remove native title
+                          >
+                            <Download size={20} />
+                          </button>
+                        </CustomTooltip>
+
+                        <CustomTooltip content="Gán người dùng">
+                          <button
+                            onClick={() => {
+                              const reg = doc.registrationNo || doc.name;
+                              router.push(
+                                `/admin/phancong?registerNo=${encodeURIComponent(
+                                  reg
+                                )}`
+                              );
+                            }}
+                            className="p-2.5 rounded-full text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+                            // title="Gán người dùng" // Remove native title
+                          >
+                            <UserPlus size={20} />
+                          </button>
+                        </CustomTooltip>
+
+                        <CustomTooltip content="Đánh giá">
+                          <button
+                            onClick={() => {
+                              const reg = doc.registrationNo || doc.name;
+                              router.push(
+                                `/admin/evaluation?registerNo=${encodeURIComponent(
+                                  reg
+                                )}`
+                              );
+                            }}
+                            className="p-2.5 rounded-full text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+                            // title="Đánh giá" // Remove native title
+                          >
+                            <ClipboardCheck size={20} />
+                          </button>
+                        </CustomTooltip>
+
+                        <CustomTooltip
+                          content={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
                         >
-                          <Eye size={20} />
-                        </button>
-                        <button
-                          onClick={() => onDownload(doc.id)}
-                          className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-                          title="Tải xuống"
+                          <button
+                            onClick={() => {
+                              if (canEdit) onEdit(doc.id);
+                            }}
+                            disabled={!canEdit}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
+                                ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
+                                : "text-gray-300 cursor-not-allowed"
+                              }`}
+                            // title={ canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa" } // Remove native title
+                          >
+                            <Edit2 size={20} />
+                          </button>
+                        </CustomTooltip>
+
+                        <CustomTooltip
+                          content={canDelete ? "Xóa" : "Không có quyền xóa"}
                         >
-                          <Download size={20} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const reg = doc.registrationNo || doc.name;
-                            router.push(
-                              `/admin/phancong?registerNo=${encodeURIComponent(
-                                reg
-                              )}`
-                            );
-                          }}
-                          className="p-2.5 rounded-full text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
-                          title="Gán người dùng"
-                        >
-                          <UserPlus size={20} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const reg = doc.registrationNo || doc.name;
-                            router.push(
-                              `/admin/evaluation?registerNo=${encodeURIComponent(
-                                reg
-                              )}`
-                            );
-                          }}
-                          className="p-2.5 rounded-full text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-                          title="Đánh giá"
-                        >
-                          <ClipboardCheck size={20} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (canEdit) onEdit(doc.id);
-                          }}
-                          disabled={!canEdit}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
-                              ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
-                              : "text-gray-300 cursor-not-allowed"
-                            }`}
-                          title={
-                            canEdit
-                              ? "Chỉnh sửa"
-                              : "Không có quyền chỉnh sửa"
-                          }
-                        >
-                          <Edit2 size={20} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (canDelete) onDelete(doc.id);
-                          }}
-                          disabled={!canDelete}
-                          className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
-                              ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
-                              : "text-gray-300 cursor-not-allowed"
-                            }`}
-                          title={canDelete ? "Xóa" : "Không có quyền xóa"}
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                          <button
+                            onClick={() => {
+                              if (canDelete) onDelete(doc.id);
+                            }}
+                            disabled={!canDelete}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
+                                ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
+                                : "text-gray-300 cursor-not-allowed"
+                              }`}
+                            // title={canDelete ? "Xóa" : "Không có quyền xóa"} // Remove native title
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </CustomTooltip>
                       </div>
                     </td>
                   </tr>

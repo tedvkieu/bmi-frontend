@@ -182,7 +182,7 @@ const EditCustomerPage = () => {
                 </div>
 
 
-                <form className="space-y-5" onSubmit={handleSubmit}> {/* Add onSubmit handler here */}
+                <form className="space-y-5 text-gray-600" onSubmit={handleSubmit}> {/* Add onSubmit handler here */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {/* Tên khách hàng */}
                         <div>

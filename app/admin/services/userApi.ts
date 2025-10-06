@@ -57,7 +57,7 @@ export interface PaginatedUserResponse {
     totalPages: number;
     totalElements: number;
     size: number;
-    number: number; 
+    number: number;
     numberOfElements: number;
     first: boolean;
     last: boolean;
@@ -115,27 +115,39 @@ export const userApi = {
         });
         return handleResponse<{ hasAdmin: boolean; canCreateAdmin: boolean; isOnlyAdmin: boolean }>(res);
     },
-    async getAllUsersPage(page: number, size: number): Promise<PaginatedUserResponse> {
-        const token = authApi.getToken(); // Assuming authApi.getToken exists
-        if (!token) throw new Error("No authentication token found.");
+   async getAllUsersPage(
+    page: number,
+    size: number,
+    search: string | null = null,
+    role: string | null = null
+): Promise<PaginatedUserResponse> {
+    const token = authApi.getToken();
+    if (!token) throw new Error("No authentication token found.");
 
-        const params = new URLSearchParams({
-            page: page.toString(),
-            size: size.toString(),
-        });
-  
-        const response = await fetch(`/api/users/page?${params.toString()}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        });
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to fetch customers");
-        }
-        return response.json();
-    },
+    // Build query params
+    const params: Record<string, string> = {
+        page: page.toString(),
+        size: size.toString(),
+    };
+    if (search) params.search = search;
+    if (role && role !== 'all') params.role = role;
+
+    const queryString = new URLSearchParams(params).toString();
+
+    const response = await fetch(`/api/users/page?${queryString}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch users");
+    }
+
+    return response.json();
+},
 
 
     async getAll(): Promise<UserResponse[]> {

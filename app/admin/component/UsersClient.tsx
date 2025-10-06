@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react"; // Thêm useRef
 import {
   Plus,
   Edit,
@@ -26,6 +26,7 @@ import type {
   PaginatedReceiptResponse,
   ReceiptResponseLite,
 } from "../services/userApi";
+import toast from "react-hot-toast";
 
 const STAFF_ROLES: UserRole[] = ["INSPECTOR", "DOCUMENT_STAFF", "ISO_STAFF"];
 const ALL_ROLES: UserRole[] = [
@@ -56,9 +57,19 @@ const roleDisplayNames: Record<UserRole, string> = {
   INSPECTOR: "Kiểm định viên",
   DOCUMENT_STAFF: "Nhân viên tài liệu",
   ISO_STAFF: "Nhân viên ISO",
-  CUSTOMER: "",
-  GUEST: "",
+  CUSTOMER: "Khách hàng",
+  GUEST: "Khách",
 };
+const roleColors: Record<UserRole, { bg: string; text: string }> = {
+  ADMIN: { bg: "bg-red-100", text: "text-red-800" },
+  MANAGER: { bg: "bg-purple-100", text: "text-purple-800" },
+  INSPECTOR: { bg: "bg-yellow-100", text: "text-yellow-800" },
+  DOCUMENT_STAFF: { bg: "bg-blue-100", text: "text-blue-800" },
+  ISO_STAFF: { bg: "bg-indigo-100", text: "text-indigo-800" },
+  CUSTOMER: { bg: "bg-green-100", text: "text-green-800" },
+  GUEST: { bg: "bg-gray-100", text: "text-gray-800" },
+};
+
 
 const UsersClient: React.FC = () => {
   const statusVi: Record<string, string> = {
@@ -69,7 +80,7 @@ const UsersClient: React.FC = () => {
   };
   const [currentUser] = useState<AuthUser | null>(authApi.getUser());
   const [users, setUsers] = useState<UserResponse[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingTableData, setLoadingTableData] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   const [adminStatus, setAdminStatus] = useState<{
@@ -101,6 +112,9 @@ const UsersClient: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filterRole, setFilterRole] = useState<UserRole | "all">("all");
 
+  // Ref để lưu trữ timeout ID cho debounce
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const roleFromToken = authApi.getRoleFromToken() as UserRole | null;
   const role = roleFromToken ?? (currentUser as any)?.role;
   const isAdmin = role === "ADMIN";
@@ -117,31 +131,51 @@ const UsersClient: React.FC = () => {
     try {
       const status = await userApi.getAdminStatus();
       setAdminStatus(status);
-    } catch {}
+    } catch { }
   }, [isAdmin]);
 
-    const loadData = useCallback(async (page: number = currentPage, size: number = itemsPerPage) => {
-        setLoading(true);
-        setError("");
-        try {
-            const response: PaginatedUserResponse = await userApi.getAllUsersPage(page - 1, size);
-            setUsers(response.content);
-            setTotalPages(response.totalPages);
-            setTotalElements(response.totalElements);
-            setCurrentPage(response.number + 1);
-        } catch (_e) {
-            // setError("Không thể tải danh sách người dùng");
-        } finally {
-            setLoading(false);
-        }
-    }, [currentPage, itemsPerPage]);
+  // Hàm loadData được gọi khi có sự thay đổi từ debounce hoặc filter, page
+  const loadData = useCallback(async (page: number, size: number, search: string, role: UserRole | 'all') => {
+  setLoadingTableData(true);
+  setError("");
+  try {
+    const response: PaginatedUserResponse = await userApi.getAllUsersPage(page - 1, size, search, role === 'all' ? '' : role);
+    setUsers(response.content);
+    setTotalPages(response.totalPages);
+    setTotalElements(response.totalElements);
+    setCurrentPage(response.number + 1);
+  } catch (_e: any) {
+    setError(_e?.message || "Không thể tải danh sách người dùng");
+  } finally {
+    setLoadingTableData(false);
+  }
+}, []);
 
+  // Sử dụng một useEffect duy nhất để quản lý debounce và tải dữ liệu
+  useEffect(() => {
+    // Clear previous timeout if any
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
+    // Nếu search term rỗng hoặc không có gì thay đổi, có thể call ngay hoặc chờ
+    // Để tránh gửi request ngay lập tức khi component mount, có thể thêm một cờ `isInitialMount`
+    // Tuy nhiên, việc load dữ liệu lần đầu là cần thiết, nên chúng ta sẽ debounce tất cả
+    const handler = setTimeout(() => {
+      loadData(currentPage, itemsPerPage, searchTerm, filterRole);
+      loadAdminStatus(); // Load admin status cùng với dữ liệu user
+    }, 500); // 500ms delay cho debounce
 
-    useEffect(() => {
-        loadData(currentPage, itemsPerPage);
-        loadAdminStatus();
-    }, [roleFromToken, currentPage, itemsPerPage, searchTerm, filterRole, loadAdminStatus, loadData]);
+    searchTimeoutRef.current = handler; // Lưu lại timeout ID
+
+    // Cleanup function: sẽ chạy khi component unmount hoặc khi dependencies thay đổi
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [currentPage, itemsPerPage, searchTerm, filterRole, loadData, loadAdminStatus]);
+
 
   const resetForm = () => {
     setForm(initialForm);
@@ -246,6 +280,7 @@ const UsersClient: React.FC = () => {
     if (r === "ADMIN") return canSelectAdmin;
     if (isManager && r === "MANAGER") return false;
     if (r === "CUSTOMER" && isManager) return false;
+    if (r === "GUEST" && isManager) return false;
     return true;
   });
 
@@ -254,8 +289,8 @@ const UsersClient: React.FC = () => {
     if (!form.username.trim()) return "Vui lòng nhập username";
     if (!form.email.trim()) return "Vui lòng nhập email";
 
-    if (form.role === "ADMIN" && !canSelectAdmin)
-      return "Không thể chọn vai trò ADMIN";
+    if (form.role === "ADMIN" && !canSelectAdmin && formMode === "create")
+      return "Không thể tạo thêm vai trò ADMIN";
 
     if (
       formMode === "create" &&
@@ -297,8 +332,9 @@ const UsersClient: React.FC = () => {
         await userApi.update(editingId, payload);
       }
       closeModal();
-      await loadData();
-      await loadAdminStatus();
+      // Sau khi tạo/sửa thành công, gọi loadData mà không debounce để cập nhật ngay
+      loadData(currentPage, itemsPerPage, searchTerm, filterRole);
+      loadAdminStatus();
     } catch (e: any) {
       setError(e?.message || "Thao tác thất bại");
     }
@@ -315,9 +351,12 @@ const UsersClient: React.FC = () => {
     setError("");
     try {
       await userApi.remove(pendingDelete.userId);
-      await loadData();
-      await loadAdminStatus();
+      // Sau khi xóa thành công, gọi loadData mà không debounce để cập nhật ngay
+      toast.success("Xóa thành công!")
+      loadData(currentPage, itemsPerPage, searchTerm, filterRole);
+      loadAdminStatus();
     } catch (e: any) {
+      toast.error("Xóa thất bại!")
       setError(e?.message || "Xóa thất bại");
     } finally {
       setPendingDelete(null);
@@ -340,12 +379,12 @@ const UsersClient: React.FC = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterRole(e.target.value as UserRole | "all");
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -358,179 +397,180 @@ const UsersClient: React.FC = () => {
             {error}
           </div>
         )}
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-3">
-              <div className="relative flex-1 col-span-1 md:col-span-2 xl:col-span-2">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên, email, username hoặc vai trò..."
-                  className="pl-10 pr-4 py-2.5 border text-gray-800  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-              </div>
-
-              <div className="relative inline-block col-span-1">
-                <Filter
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-                <select
-                  className="pl-9 pr-8 py-2.5  w-full border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                  value={filterRole}
-                  onChange={handleFilterChange}
-                >
-                  <option value="all">Tất cả vai trò</option>
-                  {ALL_ROLES.map((roleOpt) => (
-                    <option key={roleOpt} value={roleOpt}>
-                      {roleDisplayNames[roleOpt]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                />
-              </div>
-              <div className="flex justify-end col-span-1">
-                <button
-                  onClick={() => loadData()}
-                  className="inline-flex items-center text-sm px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 mr-2"
-                >
-                  <RefreshCcw size={16} className="mr-2" /> Tải lại
-                </button>
-                {(isAdmin || isManager) && (
-                  <button
-                    onClick={openCreate}
-                    className="inline-flex text-sm items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    <Plus size={16} className="mr-2" /> Thêm người dùng
-                  </button>
-                )}
-              </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-3 mb-6">
+            <div className="relative flex-1 col-span-1 md:col-span-2 xl:col-span-2">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo tên, email, username..."
+                className="pl-10 pr-4 py-2.5 border text-gray-800  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
+            <div className="relative inline-block col-span-1">
+              <Filter
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
+              <select
+                className="pl-9 pr-8 py-2.5  w-full border border-gray-300 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                value={filterRole}
+                onChange={handleFilterChange}
+              >
+                <option value="all">Tất cả vai trò</option>
+                {ALL_ROLES.map((roleOpt) => (
+                  <option key={roleOpt} value={roleOpt}>
+                    {roleDisplayNames[roleOpt]}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
+            </div>
+            <div className="flex justify-end col-span-1">
+              <button
+                onClick={() => loadData(currentPage, itemsPerPage, searchTerm, filterRole)} // Gọi loadData ngay lập tức khi nhấn "Tải lại"
+                className="inline-flex items-center text-sm px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 mr-2"
+              >
+                <RefreshCcw size={16} className="mr-2" /> Tải lại
+              </button>
+              {(isAdmin || isManager) && (
+                <button
+                  onClick={openCreate}
+                  className="inline-flex text-sm items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Plus size={16} className="mr-2" /> Thêm người dùng
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto relative">
+              {loadingTableData && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
+                  <LoadingSpinner />
+                </div>
+              )}
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
+                      Email
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
+                      Họ tên
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
+                      Vai trò
+                    </th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-800 uppercase">
+                      Thao tác
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {!loadingTableData && users.length === 0 ? (
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
-                        Email
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
-                        Họ tên
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
-                        Vai trò
-                      </th>
-                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-800 uppercase">
-                        Thao tác
-                      </th>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-12 text-center text-gray-500 text-sm"
+                      >
+                        Không có dữ liệu
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
-                    {users.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-6 py-12 text-center text-gray-500 text-sm"
+                  ) : (
+                    !loadingTableData && users.map((u) => (
+                      <tr
+                        key={u.userId}
+                        className="hover:bg-blue-50 transition-colors duration-200"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-700 ">
+                          {u.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 ">
+                          {u.fullName}
+                        </td>
+                       <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleColors[u.role].bg} ${roleColors[u.role].text}`}
                         >
-                          Không có dữ liệu
+                          {roleDisplayNames[u.role]}
+                        </span>
+                      </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => openView(u)}
+                              className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                              title="Xem"
+                            >
+                              <Eye size={18} />
+                            </button>
+                            <button
+                              onClick={() => canEditRow(u) && openEdit(u)}
+                              disabled={!canEditRow(u)}
+                              className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canEditRow(u)
+                                ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                                : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                }`}
+                              title="Sửa"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                canDeleteRow(u) && requestDelete(u)
+                              }
+                              disabled={!canDeleteRow(u)}
+                              className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canDeleteRow(u)
+                                ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                                : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                                }`}
+                              title="Xóa"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ) : (
-                      users.map((u) => (
-                        <tr
-                          key={u.userId}
-                          className="hover:bg-blue-50 transition-colors duration-200"
-                        >
-                          <td className="px-6 py-4 text-sm text-gray-700 ">
-                            {u.email}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 ">
-                            {u.fullName}
-                          </td>
-                          <td className="px-6 py-4 text-sm ">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              {roleDisplayNames[u.role]}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm">
-                            <div className="flex justify-center gap-2">
-                              <button
-                                onClick={() => openView(u)}
-                                className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                title="Xem"
-                              >
-                                <Eye size={18} />
-                              </button>
-                              <button
-                                onClick={() => canEditRow(u) && openEdit(u)}
-                                disabled={!canEditRow(u)}
-                                className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
-                                  canEditRow(u)
-                                    ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                                    : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                }`}
-                                title="Sửa"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  canDeleteRow(u) && requestDelete(u)
-                                }
-                                disabled={!canDeleteRow(u)}
-                                className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
-                                  canDeleteRow(u)
-                                    ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                                    : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                                }`}
-                                title="Xóa"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
+          </div>
 
-            {totalElements > 0 && (
-              <div className="flex justify-center items-center gap-4 mt-4 text-sm">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                >
-                  Trước
-                </button>
-                <span className="text-gray-700">
-                  Trang {currentPage} trên {totalPages}
-                </span>
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                >
-                  Tiếp
-                </button>
-              </div>
-            )}
-          </>
-        )}
+          {totalElements > 0 && (
+            <div className="flex justify-center items-center gap-4 mt-4 text-sm">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1 || loadingTableData}
+                className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                Trước
+              </button>
+              <span className="text-gray-700">
+                Trang {currentPage} trên {totalPages}
+              </span>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages || loadingTableData}
+                className="px-2 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                Tiếp
+              </button>
+            </div>
+          )}
+        </>
       </div>
 
       {isModalOpen && (
@@ -545,8 +585,8 @@ const UsersClient: React.FC = () => {
                 {formMode === "create"
                   ? "Thêm người dùng"
                   : formMode === "edit"
-                  ? "Cập nhật người dùng"
-                  : "Xem thông tin người dùng"}
+                    ? "Cập nhật người dùng"
+                    : "Xem thông tin người dùng"}
               </h4>
               <button
                 onClick={closeModal}
@@ -562,11 +602,10 @@ const UsersClient: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab("detail")}
-                  className={`px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === "detail"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
+                  className={`px-4 py-3 text-sm font-medium transition-colors ${activeTab === "detail"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                    }`}
                 >
                   Thông tin chi tiết
                 </button>
@@ -580,11 +619,10 @@ const UsersClient: React.FC = () => {
                         loadUserDossiers(editingId, 1, 10);
                     }
                   }}
-                  className={`px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === "dossiers"
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
+                  className={`px-4 py-3 text-sm font-medium transition-colors ${activeTab === "dossiers"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                    }`}
                 >
                   Thống kê xử lý hồ sơ
                 </button>
@@ -769,6 +807,8 @@ const UsersClient: React.FC = () => {
                   {statsLoading ? (
                     <div className="py-2">
                       <LoadingSpinner />
+
+                      
                     </div>
                   ) : stats ? (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -803,13 +843,11 @@ const UsersClient: React.FC = () => {
                     </div>
                   )}
                 </div>
-
                 {/* Dossiers table */}
                 <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
                   <div className="overflow-x-auto">
                     {dossierLoading ? (
                       <div className="p-6">
-                        <LoadingSpinner />
                       </div>
                     ) : (
                       <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -919,12 +957,12 @@ const UsersClient: React.FC = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={confirmDelete}
         title="Xác nhận xóa người dùng"
-        message={`Bạn có chắc chắn muốn xóa người dùng${
-          pendingDelete ? ` "${pendingDelete.fullName}"` : ""
-        }? Hành động này không thể hoàn tác.`}
+        message={`Bạn có chắc chắn muốn xóa người dùng${pendingDelete ? ` "${pendingDelete.fullName}"` : ""
+          }? Hành động này không thể hoàn tác.`}
       />
     </>
   );
 };
+
 
 export default UsersClient;

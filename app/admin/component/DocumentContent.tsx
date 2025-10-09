@@ -18,13 +18,14 @@ import ConfirmationModal from "./document/ConfirmationModal";
 import { CheckCircle, Clock, ChevronLeft, ChevronRight, MinusCircle } from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 import DocumentSearchBar from "./DocumentSearchBar";
+import { Receipt, ReceiptResponse } from "../types/dossier";
 
 const DocumentViewModal = dynamic(
   () => import("./document/DocumentViewModal"),
   { ssr: false }
 );
 
-const BACKEND_URL = process.env.BACKEND_URL;
+
 
 // Define a type for your overall status counts
 interface OverallStatusCounts {
@@ -73,7 +74,7 @@ const DocumentsContent: React.FC = () => {
 
   // Pagination states for the current table view
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const [pageSize] = useState<number>(10);
+  const [pageSize] = useState<number>(20);
   const [totalElements, setTotalElements] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
 
@@ -120,95 +121,94 @@ const DocumentsContent: React.FC = () => {
     return params;
   }, []);
 
-  const fetchOverallCounts = useCallback(async () => {
-    setLoadingOverallCounts(true);
-    try {
-      const totalParams = buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "all");
-      const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
-      const totalData = await totalRes.json();
+const fetchOverallCounts = useCallback(async () => {
+  setLoadingOverallCounts(true);
+  try {
+    const totalParams = buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "all");
+    const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
+    const totalData: ReceiptResponse = await totalRes.json();
 
-      // Fetch counts for each status
-      const [
-        completedRes,
-        pendingRes,
-        notObtainedRes,
-        notWithinScopeRes,
-      ] = await Promise.all([
-        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "obtained").toString()}`),
-        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "pending").toString()}`),
-        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_obtained").toString()}`),
-        fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_within_scope").toString()}`),
-      ]);
+    const [completedRes, pendingRes, notObtainedRes, notWithinScopeRes] = await Promise.all([
+      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "obtained").toString()}`),
+      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "pending").toString()}`),
+      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_obtained").toString()}`),
+      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_within_scope").toString()}`),
+    ]);
 
-      const [
-        completedData,
-        pendingData,
-        notObtainedData,
-        notWithinScopeData,
-      ] = await Promise.all([
-        completedRes.json(),
-        pendingRes.json(),
-        notObtainedRes.json(),
-        notWithinScopeRes.json(),
-      ]);
+    const [completedData, pendingData, notObtainedData, notWithinScopeData]: ReceiptResponse[] =
+      await Promise.all([completedRes.json(), pendingRes.json(), notObtainedRes.json(), notWithinScopeRes.json()]);
 
-      setOverallCounts({
-        total: totalData.totalElements || 0,
-        completed: completedData.totalElements || 0,
-        pending: pendingData.totalElements || 0,
-        notObtained: notObtainedData.totalElements || 0,
-        notWithinScope: notWithinScopeData.totalElements || 0,
-      });
+    setOverallCounts({
+      total: totalData.pageData.page.totalElements || 0,
+      completed: completedData.pageData.page.totalElements || 0,
+      pending: pendingData.pageData.page.totalElements || 0,
+      notObtained: notObtainedData.pageData.page.totalElements || 0,
+      notWithinScope: notWithinScopeData.pageData.page.totalElements || 0,
+    });
+  } catch (err: any) {
+    console.error("Failed to fetch overall document counts:", err);
+  } finally {
+    setLoadingOverallCounts(false);
+  }
+}, [monthFilter, yearFilter, buildSearchParams]);
 
-    } catch (err: any) {
-      console.error("Failed to fetch overall document counts:", err);
-      // Optionally set an error state for overall counts if needed
-    } finally {
-      setLoadingOverallCounts(false);
-    }
-  }, [monthFilter, yearFilter, buildSearchParams]); // LOẠI BỎ searchTerm khỏi dependencies
 
-  // Fetch documents for the table (memoized)
-  const fetchDocuments = useCallback(
-    async () => {
-      setLoadingDocuments(true);
-      setErrorDocuments(null);
-      try {
-        const params = buildSearchParams(currentPage, pageSize, sortBy, searchTerm, monthFilter, yearFilter, statusFilter);
-        const res = await fetch(`/api/dossiers?${params.toString()}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+const fetchDocuments = useCallback(async () => {
+  setLoadingDocuments(true);
+  setErrorDocuments(null);
+  try {
+    const params = buildSearchParams(
+      currentPage,
+      pageSize,
+      sortBy,
+      searchTerm,
+      monthFilter,
+      yearFilter,
+      statusFilter
+    );
 
-        const data = await res.json();
+    const res = await fetch(`/api/dossiers?${params.toString()}`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-        const mappedDocuments: InspectionReport[] = data.content.map(
-          (doc: InspectionReportApi) => ({
-            id: String(doc.receiptId),
-            name: doc.registrationNo || doc.billOfLading || `Document ${doc.receiptId}`,
-            client: doc.customerRelatedName || doc.customerRelatedId?.toString() || "",
-            inspector: "N/A", // API might not provide this directly, keep as N/A or map if available
-            date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
-            type: doc.inspectionTypeName || doc.inspectionTypeId,
-            status: doc.certificateStatus.toLowerCase() as
-              | "obtained"
-              | "pending"
-              | "not_obtained"
-              | "not_within_scope",
-            ...doc, // Spread the rest of the API fields
-          })
-        );
+    const data: ReceiptResponse = await res.json();
 
-        setDocuments(mappedDocuments);
-        setTotalElements(data.totalElements);
-        setTotalPages(data.totalPages);
-      } catch (err: any) {
-        setErrorDocuments(err.message);
-        console.error("Failed to fetch documents:", err);
-      } finally {
-        setLoadingDocuments(false);
-      }
-    },
-    [currentPage, pageSize, sortBy, searchTerm, statusFilter, monthFilter, yearFilter, buildSearchParams]
+  const mappedDocuments: InspectionReport[] = data.pageData.content.map(
+    (doc: Receipt) => ({
+      id: String(doc.receiptId),
+      name: doc.registrationNo || doc.billOfLading || `Document ${doc.receiptId}`,
+      client: doc.customerSubmit?.name || "",
+      inspector: doc.createdByUserName || "N/A",
+      date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
+      type: doc.inspectionTypeName || doc.inspectionTypeId,
+      status: doc.certificateStatus.toLowerCase() as
+        | "obtained"
+        | "pending"
+        | "not_obtained"
+        | "not_within_scope",
+      ...doc,
+    })
   );
+
+    setDocuments(mappedDocuments);
+    setTotalElements(data.pageData.page.totalElements);
+    setTotalPages(data.pageData.page.totalPages);
+  } catch (err: any) {
+    setErrorDocuments(err.message);
+    console.error("Failed to fetch documents:", err);
+  } finally {
+    setLoadingDocuments(false);
+  }
+}, [
+  currentPage,
+  pageSize,
+  sortBy,
+  searchTerm,
+  statusFilter,
+  monthFilter,
+  yearFilter,
+  buildSearchParams,
+]);
+
 
   // Effects to fetch data when filters or pagination change
   useEffect(() => {
@@ -270,6 +270,7 @@ const DocumentsContent: React.FC = () => {
   }, [router]);
 
   const handleDownload = useCallback(async (id: string) => {
+    const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
     try {
       toast.loading("Đang tạo và tải file...", { id: "downloadToast" });
       const res = await fetch(
@@ -282,13 +283,16 @@ const DocumentsContent: React.FC = () => {
       }
 
       const data = await res.json();
+      console.log("AOUAABA", data)
       const fileName = data.files;
 
       if (!fileName) {
         throw new Error("Không có tên file trả về");
       }
+      toast.error(`${NEXT_PUBLIC_BACKEND_URL}`);
 
-      const fileRes = await fetch(`${BACKEND_URL}/api/exports/${fileName}`);
+      
+      const fileRes = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/api/exports/${fileName}`);
       if (!fileRes.ok) {
         const errorData = await fileRes.json();
         throw new Error(errorData.message || "Không thể tải file");
@@ -355,6 +359,9 @@ const DocumentsContent: React.FC = () => {
 
   // Memoized Pagination component
   const Pagination = useMemo(() => {
+    if (typeof totalElements !== "number" || totalElements <= 0) {
+      return null; 
+    }
     const startItem = currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 

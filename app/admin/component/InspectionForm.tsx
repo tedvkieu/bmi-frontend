@@ -9,20 +9,6 @@ import { useParams } from "next/navigation";
 import { CustomerProfileSection } from "./CustomerProfileSection";
 import LoadingSpinner from "./document/LoadingSpinner";
 
-// interface MachineryFormData {
-//   receiptId: number;
-//   registrationNo: string;
-//   itemName: string;
-//   brand: string;
-//   model: string;
-//   serialNumber: string;
-//   manufactureCountry: string;
-//   manufacturerName: string;
-//   manufactureYear: number;
-//   quantity: number;
-//   usage: string;
-//   note: string;
-// }
 
 const InspectionForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,11 +20,6 @@ const InspectionForm: React.FC = () => {
     null
   );
 
-  // const [receiptId, setReceiptId] = useState<number | null>(null);
-  // const [machineryData, setMachineryData] = useState<MachineryFormData | null>(
-  //   null
-  // );
-
   const [customerProfileData, setCustomerProfileData] =
     useState<InspectionFormData>({
       customerId: Number(id),
@@ -48,25 +29,6 @@ const InspectionForm: React.FC = () => {
       objectType: "SERVICE_MANAGER",
       inspectionTypeId: "",
     });
-
-  // const [receiptData, setReceiptData] = useState<ReceiptFormData>({
-  //   registrationNo: "",
-  //   customerSubmitId: Number(id) || 0,
-  //   customerRelatedId: 0,
-  //   inspectionTypeId: "",
-  //   declarationNo: "",
-  //   billOfLading: "",
-  //   shipName: "",
-  //   cout10: 0,
-  //   cout20: 0,
-  //   bulkShip: false,
-  //   declarationDoc: "",
-  //   declarationPlace: "",
-  //   inspectionDate: "",
-  //   certificateDate: "",
-  //   inspectionLocation: "",
-  //   certificateStatus: "PENDING",
-  // });
 
   const fetchCustomer = useCallback(async () => {
     try {
@@ -102,18 +64,6 @@ const InspectionForm: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Set inspectionTypeId (default to '04' if empty) and move to section 2
-      // setReceiptData((prev) => ({
-      //   ...prev,
-      //   inspectionTypeId:
-      //     customerProfileData.inspectionTypeId &&
-      //     customerProfileData.inspectionTypeId.trim() !== ""
-      //       ? customerProfileData.inspectionTypeId
-      //       : "04",
-      // }));
-
-      // Chuyển sang section 2 ngay lập tức
       setCurrentSection(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Có lỗi xảy ra");

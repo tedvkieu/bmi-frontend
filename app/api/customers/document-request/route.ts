@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API = `${process.env.BACKEND_URL}/api/customers/document-request`;
+const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/document-request`;
 
 export async function GET(request: NextRequest) {
   try {

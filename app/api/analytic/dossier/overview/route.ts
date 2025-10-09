@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("token")?.value;
 
-    const response = await fetch(`${process.env.BACKEND_URL}/api/dossiers/analytics/overview`, {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/overview`, {
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

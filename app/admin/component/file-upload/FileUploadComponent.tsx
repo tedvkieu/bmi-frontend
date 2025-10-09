@@ -96,7 +96,7 @@ const UploadResultDisplay: React.FC<{
           <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent mb-3">
             Upload Thành Công!
           </h1>
-          <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-700 text-base max-w-2xl mx-auto">
             Dữ liệu đã được xử lý và lưu trữ thành công vào hệ thống
           </p>
         </div>
@@ -431,21 +431,21 @@ const UploadResultDisplay: React.FC<{
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
           <button
             onClick={onGoHome}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-base hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
           >
             Về Trang Chủ
           </button>
 
           <button
             onClick={onStartNew}
-            className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
+            className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-bold text-base hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
           >
             Tạo Hồ Sơ Mới
           </button>
 
           <button
             onClick={() => window.print()}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold text-base hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
           >
             In Kết Quả
           </button>
@@ -613,7 +613,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
 
   const handleGoHome = () => {
     // Navigate to home page
-    window.location.href = "/";
+    window.location.href = "/admin";
   };
 
   const handleStartNew = () => {
@@ -662,7 +662,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
           <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
             Upload File Dữ Liệu
           </h1>
-          <p className="text-gray-700 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-700 text-base max-w-2xl mx-auto">
             Tải lên file Excel hoặc CSV chứa thông tin khách hàng và máy móc
           </p>
         </div>
@@ -746,7 +746,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-green-800">
+                      <h3 className="text-base font-semibold text-green-800">
                         {selectedFile.name}
                       </h3>
                       <p className="text-sm text-green-600">
@@ -834,7 +834,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
 
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">
+          <h3 className="text-base font-semibold text-blue-900 mb-3">
             Hướng dẫn:
           </h3>
           <ul className="space-y-2 text-blue-800">

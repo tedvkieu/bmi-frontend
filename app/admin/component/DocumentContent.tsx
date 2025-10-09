@@ -15,7 +15,13 @@ import DocumentMobileCard from "./document/DocumentMobileCard";
 import LoadingSpinner from "./document/LoadingSpinner";
 import ErrorMessage from "./document/ErrorMessage";
 import ConfirmationModal from "./document/ConfirmationModal";
-import { CheckCircle, Clock, ChevronLeft, ChevronRight, MinusCircle } from "lucide-react";
+import {
+  CheckCircle,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  MinusCircle,
+} from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 import DocumentSearchBar from "./DocumentSearchBar";
 import { Receipt, ReceiptResponse } from "../types/dossier";
@@ -24,8 +30,6 @@ const DocumentViewModal = dynamic(
   () => import("./document/DocumentViewModal"),
   { ssr: false }
 );
-
-
 
 // Define a type for your overall status counts
 interface OverallStatusCounts {
@@ -51,13 +55,15 @@ const DocumentsContent: React.FC = () => {
   const router = useRouter();
 
   const now = new Date();
-  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
   const currentYear = String(now.getFullYear());
 
   // State for filters and pagination
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [localSearchTerm, setLocalSearchTerm] = useState<string>(""); // For immediate input feedback
-  const [statusFilter, setStatusFilter] = useState<InspectionReport["status"] | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    InspectionReport["status"] | "all"
+  >("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
@@ -67,7 +73,9 @@ const DocumentsContent: React.FC = () => {
   const [loadingDocuments, setLoadingDocuments] = useState<boolean>(true);
   const [errorDocuments, setErrorDocuments] = useState<string | null>(null);
 
-  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
@@ -86,129 +94,192 @@ const DocumentsContent: React.FC = () => {
     notObtained: 0,
     notWithinScope: 0,
   });
-  const [loadingOverallCounts, setLoadingOverallCounts] = useState<boolean>(true);
-
+  const [loadingOverallCounts, setLoadingOverallCounts] =
+    useState<boolean>(true);
 
   // Helper to build URLSearchParams
-  const buildSearchParams = useCallback((
-    page: number,
-    size: number,
-    sort: "newest" | "oldest",
-    search: string,
-    month: string,
-    year: string,
-    status?: InspectionReport["status"] | "all" // Changed type here
-  ): URLSearchParams => {
-    const params = new URLSearchParams({
-      page: String(page),
-      size: String(size),
-      sortBy: sort,
-    });
+  const buildSearchParams = useCallback(
+    (
+      page: number,
+      size: number,
+      sort: "newest" | "oldest",
+      search: string,
+      month: string,
+      year: string,
+      status?: InspectionReport["status"] | "all" // Changed type here
+    ): URLSearchParams => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(size),
+        sortBy: sort,
+      });
 
-    if (search.trim() !== "") params.append("search", search);
-    if (month !== "") params.append("month", month);
-    if (year !== "") params.append("year", year);
+      if (search.trim() !== "") params.append("search", search);
+      if (month !== "") params.append("month", month);
+      if (year !== "") params.append("year", year);
 
-    if (status && status !== "all") {
-      let backendStatus: CertificateStatusBackend | null = null;
-      if (status === "obtained") backendStatus = "OBTAINED";
-      else if (status === "pending") backendStatus = "PENDING";
-      else if (status === "not_obtained") backendStatus = "NOT_OBTAINED";
-      else if (status === "not_within_scope") backendStatus = "NOT_WITHIN_SCOPE";
+      if (status && status !== "all") {
+        let backendStatus: CertificateStatusBackend | null = null;
+        if (status === "obtained") backendStatus = "OBTAINED";
+        else if (status === "pending") backendStatus = "PENDING";
+        else if (status === "not_obtained") backendStatus = "NOT_OBTAINED";
+        else if (status === "not_within_scope")
+          backendStatus = "NOT_WITHIN_SCOPE";
 
-      if (backendStatus) params.append("status", backendStatus.toString());
-    }
-    return params;
-  }, []);
-
-const fetchOverallCounts = useCallback(async () => {
-  setLoadingOverallCounts(true);
-  try {
-    const totalParams = buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "all");
-    const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
-    const totalData: ReceiptResponse = await totalRes.json();
-
-    const [completedRes, pendingRes, notObtainedRes, notWithinScopeRes] = await Promise.all([
-      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "obtained").toString()}`),
-      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "pending").toString()}`),
-      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_obtained").toString()}`),
-      fetch(`/api/dossiers?${buildSearchParams(0, 1, "newest", "", monthFilter, yearFilter, "not_within_scope").toString()}`),
-    ]);
-
-    const [completedData, pendingData, notObtainedData, notWithinScopeData]: ReceiptResponse[] =
-      await Promise.all([completedRes.json(), pendingRes.json(), notObtainedRes.json(), notWithinScopeRes.json()]);
-
-    setOverallCounts({
-      total: totalData.pageData.page.totalElements || 0,
-      completed: completedData.pageData.page.totalElements || 0,
-      pending: pendingData.pageData.page.totalElements || 0,
-      notObtained: notObtainedData.pageData.page.totalElements || 0,
-      notWithinScope: notWithinScopeData.pageData.page.totalElements || 0,
-    });
-  } catch (err: any) {
-    console.error("Failed to fetch overall document counts:", err);
-  } finally {
-    setLoadingOverallCounts(false);
-  }
-}, [monthFilter, yearFilter, buildSearchParams]);
-
-
-const fetchDocuments = useCallback(async () => {
-  setLoadingDocuments(true);
-  setErrorDocuments(null);
-  try {
-    const params = buildSearchParams(
-      currentPage,
-      pageSize,
-      sortBy,
-      searchTerm,
-      monthFilter,
-      yearFilter,
-      statusFilter
-    );
-
-    const res = await fetch(`/api/dossiers?${params.toString()}`);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-    const data: ReceiptResponse = await res.json();
-
-  const mappedDocuments: InspectionReport[] = data.pageData.content.map(
-    (doc: Receipt) => ({
-      id: String(doc.receiptId),
-      name: doc.registrationNo || doc.billOfLading || `Document ${doc.receiptId}`,
-      client: doc.customerSubmit?.name || "",
-      inspector: doc.createdByUserName || "N/A",
-      date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
-      type: doc.inspectionTypeName || doc.inspectionTypeId,
-      status: doc.certificateStatus.toLowerCase() as
-        | "obtained"
-        | "pending"
-        | "not_obtained"
-        | "not_within_scope",
-      ...doc,
-    })
+        if (backendStatus) params.append("status", backendStatus.toString());
+      }
+      return params;
+    },
+    []
   );
 
-    setDocuments(mappedDocuments);
-    setTotalElements(data.pageData.page.totalElements);
-    setTotalPages(data.pageData.page.totalPages);
-  } catch (err: any) {
-    setErrorDocuments(err.message);
-    console.error("Failed to fetch documents:", err);
-  } finally {
-    setLoadingDocuments(false);
-  }
-}, [
-  currentPage,
-  pageSize,
-  sortBy,
-  searchTerm,
-  statusFilter,
-  monthFilter,
-  yearFilter,
-  buildSearchParams,
-]);
+  const fetchOverallCounts = useCallback(async () => {
+    setLoadingOverallCounts(true);
+    try {
+      const totalParams = buildSearchParams(
+        0,
+        1,
+        "newest",
+        "",
+        monthFilter,
+        yearFilter,
+        "all"
+      );
+      const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
+      const totalData: ReceiptResponse = await totalRes.json();
 
+      const [completedRes, pendingRes, notObtainedRes, notWithinScopeRes] =
+        await Promise.all([
+          fetch(
+            `/api/dossiers?${buildSearchParams(
+              0,
+              1,
+              "newest",
+              "",
+              monthFilter,
+              yearFilter,
+              "obtained"
+            ).toString()}`
+          ),
+          fetch(
+            `/api/dossiers?${buildSearchParams(
+              0,
+              1,
+              "newest",
+              "",
+              monthFilter,
+              yearFilter,
+              "pending"
+            ).toString()}`
+          ),
+          fetch(
+            `/api/dossiers?${buildSearchParams(
+              0,
+              1,
+              "newest",
+              "",
+              monthFilter,
+              yearFilter,
+              "not_obtained"
+            ).toString()}`
+          ),
+          fetch(
+            `/api/dossiers?${buildSearchParams(
+              0,
+              1,
+              "newest",
+              "",
+              monthFilter,
+              yearFilter,
+              "not_within_scope"
+            ).toString()}`
+          ),
+        ]);
+
+      const [
+        completedData,
+        pendingData,
+        notObtainedData,
+        notWithinScopeData,
+      ]: ReceiptResponse[] = await Promise.all([
+        completedRes.json(),
+        pendingRes.json(),
+        notObtainedRes.json(),
+        notWithinScopeRes.json(),
+      ]);
+
+      setOverallCounts({
+        total: totalData.pageData.page.totalElements || 0,
+        completed: completedData.pageData.page.totalElements || 0,
+        pending: pendingData.pageData.page.totalElements || 0,
+        notObtained: notObtainedData.pageData.page.totalElements || 0,
+        notWithinScope: notWithinScopeData.pageData.page.totalElements || 0,
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch overall document counts:", err);
+    } finally {
+      setLoadingOverallCounts(false);
+    }
+  }, [monthFilter, yearFilter, buildSearchParams]);
+
+  const fetchDocuments = useCallback(async () => {
+    setLoadingDocuments(true);
+    setErrorDocuments(null);
+    try {
+      const params = buildSearchParams(
+        currentPage,
+        pageSize,
+        sortBy,
+        searchTerm,
+        monthFilter,
+        yearFilter,
+        statusFilter
+      );
+
+      const res = await fetch(`/api/dossiers?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data: ReceiptResponse = await res.json();
+
+      const mappedDocuments: InspectionReport[] = data.pageData.content.map(
+        (doc: Receipt) => ({
+          id: String(doc.receiptId),
+          name:
+            doc.registrationNo ||
+            doc.billOfLading ||
+            `Document ${doc.receiptId}`,
+          client: doc.customerSubmit?.name || "",
+          inspector: doc.createdByUserName || "N/A",
+          date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
+          type: doc.inspectionTypeName || doc.inspectionTypeId,
+          status: doc.certificateStatus.toLowerCase() as
+            | "obtained"
+            | "pending"
+            | "not_obtained"
+            | "not_within_scope",
+          ...doc,
+        })
+      );
+
+      setDocuments(mappedDocuments);
+      setTotalElements(data.pageData.page.totalElements);
+      setTotalPages(data.pageData.page.totalPages);
+    } catch (err: any) {
+      setErrorDocuments(err.message);
+      console.error("Failed to fetch documents:", err);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  }, [
+    currentPage,
+    pageSize,
+    sortBy,
+    searchTerm,
+    statusFilter,
+    monthFilter,
+    yearFilter,
+    buildSearchParams,
+  ]);
 
   // Effects to fetch data when filters or pagination change
   useEffect(() => {
@@ -232,10 +303,13 @@ const fetchDocuments = useCallback(async () => {
   }, [localSearchTerm]);
 
   // Handlers for filter changes
-  const handleStatusFilterChange = useCallback((filter: InspectionReport["status"] | "all") => {
-    setStatusFilter(filter);
-    setCurrentPage(0);
-  }, []);
+  const handleStatusFilterChange = useCallback(
+    (filter: InspectionReport["status"] | "all") => {
+      setStatusFilter(filter);
+      setCurrentPage(0);
+    },
+    []
+  );
 
   const handleSortChange = useCallback((sort: "newest" | "oldest") => {
     setSortBy(sort);
@@ -265,12 +339,14 @@ const fetchDocuments = useCallback(async () => {
     }
   }, []);
 
-  const handleEdit = useCallback((id: string) => {
-    router.push(`/admin/hoso/${id}`);
-  }, [router]);
+  const handleEdit = useCallback(
+    (id: string) => {
+      router.push(`/admin/hoso/${id}`);
+    },
+    [router]
+  );
 
   const handleDownload = useCallback(async (id: string) => {
-    const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
     try {
       toast.loading("Đang tạo và tải file...", { id: "downloadToast" });
       const res = await fetch(
@@ -278,31 +354,35 @@ const fetchDocuments = useCallback(async () => {
       );
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Không thể generate report");
+        let errorMessage = "Không thể tạo báo cáo kiểm định";
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch {
+          // ignore json parse error for binary responses
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await res.json();
-      console.log("AOUAABA", data)
-      const fileName = data.files;
-
-      if (!fileName) {
-        throw new Error("Không có tên file trả về");
-      }
-      toast.error(`${NEXT_PUBLIC_BACKEND_URL}`);
-
-      
-      const fileRes = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/api/exports/${fileName}`);
-      if (!fileRes.ok) {
-        const errorData = await fileRes.json();
-        throw new Error(errorData.message || "Không thể tải file");
+      const blob = await res.blob();
+      if (!blob.size) {
+        throw new Error("Tệp tải xuống rỗng");
       }
 
-      const blob = await fileRes.blob();
+      const disposition = res.headers.get("content-disposition") || "";
+      let downloadName = `inspection_report_${id}.docx`;
+      const utfMatch = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+      const asciiMatch = disposition.match(/filename="?([^\";]+)"?/i);
+      if (utfMatch && utfMatch[1]) {
+        downloadName = decodeURIComponent(utfMatch[1]);
+      } else if (asciiMatch && asciiMatch[1]) {
+        downloadName = asciiMatch[1];
+      }
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName;
+      link.download = downloadName;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -310,7 +390,9 @@ const fetchDocuments = useCallback(async () => {
       toast.success("File đã được tải xuống!", { id: "downloadToast" });
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "Có lỗi xảy ra khi tạo hoặc tải file", { id: "downloadToast" });
+      toast.error(error?.message || "Có lỗi xảy ra khi tải file", {
+        id: "downloadToast",
+      });
     }
   }, []);
 
@@ -340,27 +422,37 @@ const fetchDocuments = useCallback(async () => {
     }
   }, [docToDelete, handleRefresh]);
 
-  const handleDeleteMany = useCallback(async (ids: string[]) => {
-    if (ids.length === 0) return;
+  const handleDeleteMany = useCallback(
+    async (ids: string[]) => {
+      if (ids.length === 0) return;
 
-    try {
-      toast.loading(`Đang xóa ${ids.length} biên lai...`, { id: "deleteManyToast" });
-      const deletePromises = ids.map((id) => axios.delete(`/api/dossiers/${id}`));
-      await Promise.all(deletePromises);
-      toast.success(`Đã xóa thành công ${ids.length} biên lai.`, { id: "deleteManyToast" });
-    } catch (error) {
-      console.error("Error while deleting multiple receipts:", error);
-      toast.error("Không thể xóa các biên lai đã chọn, vui lòng thử lại.", { id: "deleteManyToast" });
-    } finally {
-      handleRefresh(); // Refresh all data after deletion
-    }
-  }, [handleRefresh]);
-
+      try {
+        toast.loading(`Đang xóa ${ids.length} biên lai...`, {
+          id: "deleteManyToast",
+        });
+        const deletePromises = ids.map((id) =>
+          axios.delete(`/api/dossiers/${id}`)
+        );
+        await Promise.all(deletePromises);
+        toast.success(`Đã xóa thành công ${ids.length} biên lai.`, {
+          id: "deleteManyToast",
+        });
+      } catch (error) {
+        console.error("Error while deleting multiple receipts:", error);
+        toast.error("Không thể xóa các biên lai đã chọn, vui lòng thử lại.", {
+          id: "deleteManyToast",
+        });
+      } finally {
+        handleRefresh(); // Refresh all data after deletion
+      }
+    },
+    [handleRefresh]
+  );
 
   // Memoized Pagination component
   const Pagination = useMemo(() => {
     if (typeof totalElements !== "number" || totalElements <= 0) {
-      return null; 
+      return null;
     }
     const startItem = currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
@@ -381,10 +473,11 @@ const fetchDocuments = useCallback(async () => {
           <button
             key={i}
             onClick={() => setCurrentPage(i)}
-            className={`px-3 py-1 border text-sm font-medium ${i === currentPage
-              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-              : "bg-white border-gray-300 text-black hover:bg-gray-50"
-              }`}
+            className={`px-3 py-1 border text-sm font-medium ${
+              i === currentPage
+                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                : "bg-white border-gray-300 text-black hover:bg-gray-50"
+            }`}
           >
             {i + 1}
           </button>
@@ -475,8 +568,12 @@ const fetchDocuments = useCallback(async () => {
                 <IoDocumentOutline size={24} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Tổng số tài liệu</p>
-                <p className="text-2xl font-semibold text-gray-900">{overallCounts.total}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Tổng số tài liệu
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {overallCounts.total}
+                </p>
               </div>
             </div>
 
@@ -486,7 +583,9 @@ const fetchDocuments = useCallback(async () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
-                <p className="text-2xl font-semibold text-gray-900">{overallCounts.completed}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {overallCounts.completed}
+                </p>
               </div>
             </div>
             <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
@@ -495,7 +594,9 @@ const fetchDocuments = useCallback(async () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
-                <p className="text-2xl font-semibold text-gray-900">{overallCounts.pending}</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {overallCounts.pending}
+                </p>
               </div>
             </div>
 
@@ -504,7 +605,9 @@ const fetchDocuments = useCallback(async () => {
                 <Clock size={24} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Không hoàn thành</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Không hoàn thành
+                </p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {overallCounts.notObtained}
                 </p>
@@ -516,7 +619,9 @@ const fetchDocuments = useCallback(async () => {
                 <MinusCircle size={24} />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Ngoài phạm vi</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Ngoài phạm vi
+                </p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {overallCounts.notWithinScope}
                 </p>
@@ -548,14 +653,19 @@ const fetchDocuments = useCallback(async () => {
             <LoadingSpinner />
           ) : documents.length === 0 ? (
             <div className="text-center py-10 text-lg text-gray-500 rounded-xl border border-gray-200">
-              <IoDocumentOutline size={48} className="mx-auto mb-4 text-gray-400" />
+              <IoDocumentOutline
+                size={48}
+                className="mx-auto mb-4 text-gray-400"
+              />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Không tìm thấy tài liệu nào
               </h3>
-              <p className="text-black">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+              <p className="text-black">
+                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
+              </p>
             </div>
           ) : (
-            documents.map(doc => (
+            documents.map((doc) => (
               <DocumentMobileCard
                 key={doc.id}
                 document={doc}

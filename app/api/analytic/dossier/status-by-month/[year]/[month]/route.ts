@@ -11,7 +11,7 @@ export async function GET(
     const { year, month } = await params;
 
     const response = await fetch(
-      `${process.env.BACKEND_URL}/api/dossiers/analytics/status-by-month/${year}/${month}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/status-by-month/${year}/${month}`,
       {
         headers: {
           "Content-Type": "application/json",

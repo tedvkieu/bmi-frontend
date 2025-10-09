@@ -10,7 +10,7 @@ export async function GET(
     const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `${process.env.BACKEND_URL}/api/customers/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`,
       {
         method: "GET",
         headers: {
@@ -49,7 +49,7 @@ export async function PUT(
     const token = req.cookies.get("token")?.value;
 
     const res = await fetch(
-      `${process.env.BACKEND_URL}/api/customers/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`,
       {
         method: "PUT",
         headers: {
@@ -76,7 +76,7 @@ export async function DELETE(
     const { id } = await params;
     const token = req.cookies.get("token")?.value;
 
-    const res = await fetch(`${process.env.BACKEND_URL}/api/customers/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`, {
       method: "DELETE",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API = `${process.env.BACKEND_URL}/api/customers`;
+const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers`;
 
 export async function POST(req: Request) {
   try {
@@ -55,11 +55,11 @@ export async function GET(request: NextRequest) {
       params.append("customerType", customerType);
     }
 
-    console.log("BACKEND_URL  =", process.env.BACKEND_URL);
+    console.log("NEXT_PUBLIC_BACKEND_URL  =", process.env.NEXT_PUBLIC_BACKEND_URL);
     const token = request.cookies.get("token")?.value;
 
     const response = await fetch(
-      `${process.env.BACKEND_URL}/api/customers/page?${params.toString()}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/page?${params.toString()}`,
       {
         method: "GET",
         headers: {

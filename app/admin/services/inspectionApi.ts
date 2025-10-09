@@ -12,7 +12,7 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
-const BACKEND_URL  = `${process.env.FRONTEND_URL}/api`;
+const NEXT_PUBLIC_BACKEND_URL  = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api`;
 
 class InspectionApi {
   private async makeRequest<T>(
@@ -20,7 +20,7 @@ class InspectionApi {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${BACKEND_URL}/dossiers`, {
+      const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/dossiers`, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
@@ -87,7 +87,7 @@ class InspectionApi {
     formData.append("type", type);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/upload`, {
+      const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/upload`, {
         method: "POST",
         body: formData,
       });

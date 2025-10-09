@@ -9,7 +9,7 @@ export async function GET(
     const { year } = await params;
     const token = req.cookies.get("token")?.value;
 
-    const response = await fetch(`${process.env.BACKEND_URL}/api/dossiers/analytics/monthly-chart/${year}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/monthly-chart/${year}`, {
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

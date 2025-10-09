@@ -84,6 +84,7 @@ export interface PaginatedReceiptResponse {
   empty: boolean;
 }
 
+
 function authHeaders() {
   const token = authApi.getToken();
   return {
@@ -124,33 +125,40 @@ export const userApi = {
       isOnlyAdmin: boolean;
     }>(res);
   },
-  async getAllUsersPage(
+   async getAllUsersPage(
     page: number,
-    size: number
-  ): Promise<PaginatedUserResponse> {
-    const token = authApi.getToken(); // Assuming authApi.getToken exists
+    size: number,
+    search: string | null = null,
+    role: string | null = null
+): Promise<PaginatedUserResponse> {
+    const token = authApi.getToken();
     if (!token) throw new Error("No authentication token found.");
 
-    const safePage = Number.isInteger(page) && page >= 0 ? page : 0;
-    const safeSize = Number.isInteger(size) && size > 0 ? size : 10;
+    // Build query params
+    const params: Record<string, string> = {
+        page: page.toString(),
+        size: size.toString(),
+    };
+    if (search) params.search = search;
+    if (role && role !== 'all') params.role = role;
 
-    const params = new URLSearchParams({
-      page: String(safePage),
-      size: String(safeSize),
+    const queryString = new URLSearchParams(params).toString();
+
+    const response = await fetch(`/api/users/page?${queryString}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
     });
 
-    const response = await fetch(`/api/users/page?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch users");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to fetch users");
     }
+
     return response.json();
-  },
+},
+
 
   async getAll(): Promise<UserResponse[]> {
     const res = await fetch(`/api/users`, {

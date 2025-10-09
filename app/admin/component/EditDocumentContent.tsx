@@ -96,7 +96,7 @@ const EditDocumentContent: React.FC = () => {
       case "Số đăng ký":
         return "registrationNo";
       case "Khách hàng yêu cầu giám định":
-        return "customerSubmitId";
+        return "customerSubmit";
       case "Khách hàng nhập khẩu":
         return "customerRelatedId";
       case "Loại hình giám định":
@@ -344,9 +344,9 @@ const EditDocumentContent: React.FC = () => {
               false
             )}{" "}
             {/* Đã sửa thành readonly */}
-            {renderDetailItem(
+           {renderDetailItem(
               "Khách hàng yêu cầu giám định",
-              document.customerSubmitName || document.customerSubmitId,
+              document.customerSubmitId,
               "Customer Submit",
               User
             )}

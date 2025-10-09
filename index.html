@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wealth Mastery Program - Chương Trình Làm Chủ Tài Chính</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        overflow-x: hidden;
+      }
+
+      /* Hero Section */
+      .hero {
+        height: 100vh;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 215, 0, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse 8s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        color: white;
+        padding: 20px;
+      }
+
+      .countdown {
+        background: rgba(255, 0, 0, 0.2);
+        border: 2px solid #ff4444;
+        padding: 20px 40px;
+        border-radius: 10px;
+        font-size: 48px;
+        font-weight: bold;
+        color: #ff4444;
+        margin-bottom: 30px;
+        display: inline-block;
+      }
+
+      .hero h1 {
+        font-size: 56px;
+        font-weight: 800;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .scroll-prompt {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateX(-50%) translateY(0);
+        }
+        50% {
+          transform: translateX(-50%) translateY(-10px);
+        }
+      }
+
+      /* Truth Section */
+      .truth-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .section-title {
+        font-size: 48px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 60px;
+        color: #1a1a1a;
+      }
+
+      .truth-card {
+        background: white;
+        padding: 40px;
+        margin-bottom: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .truth-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .lie {
+        color: #ff4444;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .truth {
+        color: #00aa44;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 15px;
+      }
+
+      /* Villain Section */
+      .villain-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        color: white;
+      }
+
+      .villain-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
+      }
+
+      .villain-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 40px;
+        border-radius: 15px;
+        border: 2px solid rgba(255, 68, 68, 0.3);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .villain-card:hover {
+        transform: scale(1.05);
+        border-color: #ff4444;
+        background: rgba(255, 68, 68, 0.1);
+      }
+
+      .villain-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+      }
+
+      .villain-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #ff4444;
+      }
+
+      /* Timeline Section */
+      .timeline-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .timeline {
+        position: relative;
+        max-width: 1000px;
+        margin: 60px auto;
+      }
+
+      .timeline-item {
+        display: flex;
+        margin-bottom: 50px;
+        position: relative;
+      }
+
+      .timeline-item:nth-child(even) {
+        flex-direction: row-reverse;
+      }
+
+      .timeline-content {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        width: 45%;
+        backdrop-filter: blur(10px);
+      }
+
+      .timeline-month {
+        font-size: 32px;
+        font-weight: 800;
+        color: #ffd700;
+        margin-bottom: 10px;
+      }
+
+      .timeline-target {
+        font-size: 24px;
+        color: #00ff88;
+        font-weight: 700;
+        margin-top: 15px;
+      }
+
+      /* Framework Section */
+      .framework-section {
+        padding: 100px 20px;
+        background: white;
+      }
+
+      .framework-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
+      }
+
+      .framework-item {
+        padding: 40px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        border-left: 5px solid #ffd700;
+      }
+
+      .framework-letter {
+        font-size: 64px;
+        font-weight: 900;
+        color: #667eea;
+        margin-bottom: 10px;
+      }
+
+      .framework-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #1a1a1a;
+      }
+
+      /* Case Study Section */
+      .case-study-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+        color: white;
+      }
+
+      .case-study {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 50px;
+        margin-bottom: 40px;
+        border-radius: 15px;
+        border: 2px solid #00ff88;
+      }
+
+      .case-name {
+        font-size: 32px;
+        font-weight: 800;
+        color: #ffd700;
+        margin-bottom: 20px;
+      }
+
+      .case-label {
+        font-size: 20px;
+        font-weight: 700;
+        color: #00ff88;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .case-quote {
+        font-style: italic;
+        font-size: 20px;
+        color: #ffd700;
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255, 215, 0, 0.1);
+        border-left: 4px solid #ffd700;
+      }
+
+      /* Fork Section */
+      .fork-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #434343 0%, #000000 100%);
+        color: white;
+      }
+
+      .fork-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        max-width: 1200px;
+        margin: 60px auto;
+      }
+
+      .door {
+        padding: 50px;
+        border-radius: 15px;
+        text-align: center;
+      }
+
+      .door-1 {
+        background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+      }
+
+      .door-2 {
+        background: linear-gradient(135deg, #00ff88 0%, #00aa44 100%);
+      }
+
+      .door-icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+      }
+
+      .door-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 30px;
+      }
+
+      .door ul {
+        text-align: left;
+        list-style: none;
+        font-size: 18px;
+        line-height: 2;
+      }
+
+      .door ul li:before {
+        content: "• ";
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      /* CTA Section */
+      .cta-section {
+        padding: 100px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        text-align: center;
+        color: white;
+      }
+
+      .cta-button {
+        display: inline-block;
+        padding: 25px 60px;
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #1a1a1a;
+        font-size: 28px;
+        font-weight: 800;
+        text-decoration: none;
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        margin-top: 30px;
+      }
+
+      .cta-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      .urgency {
+        background: rgba(255, 68, 68, 0.2);
+        border: 2px solid #ff4444;
+        padding: 30px;
+        border-radius: 15px;
+        margin: 40px auto;
+        max-width: 800px;
+      }
+
+      .spots-remaining {
+        font-size: 36px;
+        font-weight: 800;
+        color: #ff4444;
+      }
+
+      /* FAQ Section */
+      .faq-section {
+        padding: 100px 20px;
+        background: white;
+      }
+
+      .faq-item {
+        background: #f5f5f5;
+        padding: 30px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        border-left: 5px solid #667eea;
+      }
+
+      .faq-question {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 15px;
+      }
+
+      .faq-answer {
+        font-size: 18px;
+        color: #555;
+        line-height: 1.8;
+      }
+
+      /* Footer */
+      footer {
+        padding: 60px 20px;
+        background: #1a1a1a;
+        color: white;
+        text-align: center;
+      }
+
+      .social-proof {
+        font-size: 16px;
+        opacity: 0.8;
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 36px;
+        }
+        .countdown {
+          font-size: 32px;
+        }
+        .section-title {
+          font-size: 32px;
+        }
+        .fork-container {
+          grid-template-columns: 1fr;
+        }
+        .timeline-content {
+          width: 100%;
+        }
+        .timeline-item {
+          flex-direction: column !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="countdown" id="countdown">48:23:15</div>
+        <h1>
+          Điều gì sẽ xảy ra nếu mọi thứ bạn được dạy về xây dựng tài sản đều
+          SAI?
+        </h1>
+        <div class="scroll-prompt">👇 Cuộn xuống để khám phá sự thật</div>
+      </div>
+    </section>
+
+    <!-- Truth Section -->
+    <section class="truth-section">
+      <div class="container">
+        <h2 class="section-title">3 LỜI NÓI DỐI KHIẾN BẠN NGHÈO</h2>
+
+        <div class="truth-card">
+          <div class="lie">
+            ❌ LỜI NÓI DỐI #1: "Bạn cần có tiền để kiếm tiền"
+          </div>
+          <div class="truth">✅ SỰ THẬT:</div>
+          <p>
+            Những người giàu nhất tôi biết bắt đầu mà không có gì ngoài kiến
+            thức và chiến lược đúng đắn. Vốn theo sau năng lực, không phải ngược
+            lại.
+          </p>
+        </div>
+
+        <div class="truth-card">
+          <div class="lie">
+            ❌ LỜI NÓI DỐI #2: "Làm nhiều giờ hơn = Kiếm nhiều tiền hơn"
+          </div>
+          <div class="truth">✅ SỰ THẬT:</div>
+          <p>
+            Những người làm việc chăm chỉ nhất thường là người nghèo nhất. Đòn
+            bẩy và hệ thống tạo ra của cải, không phải mồ hôi và sự cố gắng. Làm
+            việc thông minh, không phải đến khi bạn kiệt sức.
+          </p>
+        </div>
+
+        <div class="truth-card">
+          <div class="lie">
+            ❌ LỜI NÓI DỐI #3: "Tự do tài chính mất hàng thập kỷ"
+          </div>
+          <div class="truth">✅ SỰ THẬT:</div>
+          <p>
+            Với phương tiện đúng đắn và sự hướng dẫn, bạn có thể nén 20 năm tiến
+            bộ vào 18 tháng. Thời gian là tương đối khi bạn có một lộ trình đã
+            được chứng minh.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Villain Section -->
+    <section class="villain-section">
+      <div class="container">
+        <h2 class="section-title">
+          KẺ THÙ THỰC SỰ KHÔNG PHẢI LÀ SỰ LƯỜI BIẾNG... MÀ LÀ HỆ THỐNG SAI LẦM
+        </h2>
+
+        <div class="villain-grid">
+          <div class="villain-card">
+            <div class="villain-icon">🏦</div>
+            <div class="villain-title">Cái Bẫy Công Sở</div>
+            <p>
+              Họ đổi lấy 40 năm cuộc đời bạn cho một chiếc đồng hồ vàng và khoản
+              lương hưu không đủ trả tiền thuê nhà. Họ lập trình bạn leo một
+              chiếc thang dẫn đến hư không.
+            </p>
+          </div>
+
+          <div class="villain-card">
+            <div class="villain-icon">📚</div>
+            <div class="villain-title">Trò Lừa Giáo Dục</div>
+            <p>
+              Họ dạy bạn giải tích nhưng không dạy dòng tiền. Họ chuẩn bị bạn
+              cho việc làm thuê, không phải kinh doanh. Kiến thức tài chính?
+              Không có trong chương trình.
+            </p>
+          </div>
+
+          <div class="villain-card">
+            <div class="villain-icon">💰</div>
+            <div class="villain-title">Cỗ Máy Nợ Nần</div>
+            <p>
+              Thẻ tín dụng, vay học, thế chấp - hệ thống được thiết kế để giữ
+              bạn trong nợ, trả lãi mãi mãi trong khi họ xây dựng của cải thế hệ
+              trên lưng bạn.
+            </p>
+          </div>
+
+          <div class="villain-card">
+            <div class="villain-icon">📱</div>
+            <div class="villain-title">Nền Kinh Tế Phân Tâm</div>
+            <p>
+              Mạng xã hội, Netflix, giải trí vô tận - tất cả được thiết kế để
+              giữ bạn tiêu thụ thay vì sáng tạo, cuộn thay vì xây dựng.
+            </p>
+          </div>
+        </div>
+
+        <p
+          style="
+            text-align: center;
+            font-size: 24px;
+            margin-top: 60px;
+            font-weight: 700;
+          "
+        >
+          Nhưng đây là tin tốt: Khi bạn NHÌN THẤY hệ thống, bạn có thể ĐÁNH BẠI
+          hệ thống.
+        </p>
+      </div>
+    </section>
+
+    <!-- Timeline Section -->
+    <section class="timeline-section">
+      <div class="container">
+        <h2 class="section-title">HÀNH TRÌNH CHUYỂN ĐỔI</h2>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-month">THÁNG 1: Nền Tảng</div>
+              <p>"Tiếng Gọi Thức Tỉnh"</p>
+              <ul style="margin-top: 15px; list-style: none">
+                <li>• Phá vỡ niềm tin giới hạn</li>
+                <li>• Cài đặt tư duy xây dựng của cải</li>
+                <li>• Thiết lập phương tiện thu nhập đầu tiên</li>
+              </ul>
+              <div class="timeline-target">💵 Mục tiêu: $2K-5K</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-month">THÁNG 2: Tăng Tốc</div>
+              <p>"Chuyển Động Lượng"</p>
+              <ul style="margin-top: 15px; list-style: none">
+                <li>• Mở rộng dòng thu nhập chính</li>
+                <li>• Ra mắt nguồn doanh thu thứ hai</li>
+                <li>• Tự động hóa hệ thống đầu tiên</li>
+              </ul>
+              <div class="timeline-target">💵 Mục tiêu: $7K-10K</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-month">THÁNG 3: Nhân Lên</div>
+              <p>"Đột Phá"</p>
+              <ul style="margin-top: 15px; list-style: none">
+                <li>• Thêm dòng thu nhập thứ 3 và 4</li>
+                <li>• Xây dựng đội ngũ tự do</li>
+                <li>• Tạo tài sản thu nhập thụ động</li>
+              </ul>
+              <div class="timeline-target">💵 Mục tiêu: $15K-25K</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-month">SAU ĐÓ: Giải Phóng</div>
+              <p>"Bình Thường Mới"</p>
+              <ul style="margin-top: 15px; list-style: none">
+                <li>• Tự do địa lý</li>
+                <li>• Chủ quyền thời gian</li>
+                <li>• Xây dựng di sản tài sản</li>
+              </ul>
+              <div class="timeline-target">💵 Mục tiêu: Không giới hạn</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Framework Section -->
+    <section class="framework-section">
+      <div class="container">
+        <h2 class="section-title">KHUNG W.E.A.L.T.H.™</h2>
+
+        <div class="framework-grid">
+          <div class="framework-item">
+            <div class="framework-letter">W</div>
+            <div class="framework-title">Wake-Up Protocol</div>
+            <p>
+              Lập trình lại bản đồ tiền bạc của bạn. Chúng tôi cài đặt hệ điều
+              hành triệu phú trong 7 ngày thông qua các kỹ thuật tái điều kiện
+              thần kinh được sử dụng bởi những người thành đạt hàng đầu.
+            </p>
+          </div>
+
+          <div class="framework-item">
+            <div class="framework-letter">E</div>
+            <div class="framework-title">Earn Vehicles</div>
+            <p>
+              4 mô hình thu nhập đòn bẩy cao. Không phải công việc. Không phải
+              việc làm thêm. Mô hình kinh doanh có thể mở rộng tạo doanh thu
+              24/7.
+            </p>
+          </div>
+
+          <div class="framework-item">
+            <div class="framework-letter">A</div>
+            <div class="framework-title">Automation Arsenal</div>
+            <p>
+              Nhân bản chính bạn bằng AI & Hệ thống. Thời gian là tài sản quý
+              giá nhất của bạn. Chúng tôi xây dựng máy tự động xử lý bán hàng,
+              marketing, vận hành và dịch vụ khách hàng.
+            </p>
+          </div>
+
+          <div class="framework-item">
+            <div class="framework-letter">L</div>
+            <div class="framework-title">Leverage Mastery</div>
+            <p>
+              Tiền của người khác + Thời gian của người khác + Chuyên môn của
+              người khác = Tăng trưởng theo cấp số nhân. Học cách tăng 10 lần
+              kết quả mà không tăng 10 lần nỗ lực.
+            </p>
+          </div>
+
+          <div class="framework-item">
+            <div class="framework-letter">T</div>
+            <div class="framework-title">Tax Optimization</div>
+            <p>
+              Giữ nhiều hơn những gì bạn kiếm được. Các chiến lược thuế hợp pháp
+              được người giàu sử dụng có thể tiết kiệm cho bạn $10K-$50K+ hàng
+              năm.
+            </p>
+          </div>
+
+          <div class="framework-item">
+            <div class="framework-letter">H</div>
+            <div class="framework-title">Hedge Strategies</div>
+            <p>
+              Bảo vệ & Nhân lên tài sản của bạn. Xây dựng pháo đài xung quanh
+              tài sản của bạn. Đa dạng hóa, bảo vệ tài sản và chiến thuật bảo
+              toàn của cải.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Case Study Section -->
+    <section class="case-study-section">
+      <div class="container">
+        <h2 class="section-title">
+          NGƯỜI THẬT. SỐ LIỆU THẬT. CHUYỂN ĐỔI THẬT.
+        </h2>
+
+        <div class="case-study">
+          <div class="case-name">
+            NGHIÊN CỨU #1: Người Mẹ Đơn Thân Nghỉ Việc
+          </div>
+          <p>Gặp Jessica - 34 tuổi, ly hôn, hai con, làm phục vụ</p>
+
+          <div class="case-label">TÌNH HUỐNG:</div>
+          <p>
+            Nợ $47K. Làm việc 60 giờ/tuần. Hầu như không đủ tiền mua thực phẩm.
+            Cảm thấy vô vọng.
+          </p>
+
+          <div class="case-label">ĐỘT PHÁ:</div>
+          <p>
+            Tháng 1: Học tạo tài sản kỹ thuật số<br />
+            Tháng 2: Thu nhập online đầu tiên $3K<br />
+            Tháng 3: Nghỉ phục vụ, tháng $11K<br />
+            Tháng 6: Tháng $28K, hết nợ
+          </p>
+
+          <div class="case-label">KẾT QUẢ:</div>
+          <p>
+            Giờ đây sở hữu thời gian của mình, đi du lịch cùng con, và điều hành
+            doanh nghiệp $400K/năm từ laptop.
+          </p>
+
+          <div class="case-quote">
+            "Tôi không cần động lực. Tôi cần một HỆ THỐNG. Anh ấy đã cho tôi
+            điều đó và thay đổi mọi thứ." — Jessica R.
+          </div>
+        </div>
+
+        <div class="case-study">
+          <div class="case-name">NGHIÊN CỨU #2: Người Chạy Trốn Công Sở</div>
+          <p>Gặp David - 42 tuổi, phó chủ tịch kiệt sức tại Fortune 500</p>
+
+          <div class="case-label">TÌNH HUỐNG:</div>
+          <p>
+            Lương $180K nhưng đau khổ. 80 giờ/tuần. Bỏ lỡ con cái lớn lên. Dùng
+            thuốc lo âu.
+          </p>
+
+          <div class="case-label">ĐỘT PHÁ:</div>
+          <p>
+            Tháng 1: Xây dựng dòng thu nhập tự động đầu tiên<br />
+            Tháng 2: Thu nhập phụ bằng lương công ty<br />
+            Tháng 3: Nộp đơn từ chức<br />
+            Tháng 12: $50K/tháng, làm 15 giờ/tuần
+          </p>
+
+          <div class="case-label">KẾT QUẢ:</div>
+          <p>
+            Huấn luyện Little League. Nghỉ 6 tuần. Không dùng đồng hồ báo thức
+            trong 18 tháng.
+          </p>
+
+          <div class="case-quote">
+            "Tôi nghĩ mình có 'công việc mơ ước.' Tôi đã sai. ĐÂY là tự do." —
+            David M.
+          </div>
+        </div>
+
+        <div class="case-study">
+          <div class="case-name">NGHIÊN CỨU #3: Sinh Viên Bỏ Học</div>
+          <p>Gặp Maria - 22 tuổi, bỏ học, nợ $40K tiền học</p>
+
+          <div class="case-label">TÌNH HUỐNG:</div>
+          <p>
+            Không bằng cấp. Không kinh nghiệm. Sống trong tầng hầm nhà bố mẹ.
+            Cảm thấy thất bại.
+          </p>
+
+          <div class="case-label">ĐỘT PHÁ:</div>
+          <p>
+            Tháng 1: $800 hoa hồng đầu tiên<br />
+            Tháng 2: Đột phá $4K<br />
+            Tháng 3: $12K/tháng ở tuổi 22<br />
+            Tháng 8: $35K/tháng, chuyển đến Miami
+          </p>
+
+          <div class="case-label">KẾT QUẢ:</div>
+          <p>
+            Giờ đây cố vấn cho người khác, trả hết nợ, và mua bất động sản đầu
+            tư đầu tiên ở tuổi 23.
+          </p>
+
+          <div class="case-quote">
+            "Họ nói tôi cần bằng cấp. Anh ấy chỉ cho tôi rằng tôi cần phương
+            tiện tốt hơn." — Maria L.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fork Section -->
+    <section class="fork-section">
+      <div class="container">
+        <h2 class="section-title">BẠN ĐANG Ở NGÃ RẼĐƯỜNG NGAY BÂY GIỜ</h2>
+
+        <div class="fork-container">
+          <div class="door door-1">
+            <div class="door-icon">🚪</div>
+            <div class="door-title">CỬA SỐ 1: TIẾP TỤC NHƯ BẠN ĐANG LÀM</div>
+            <p><strong>6 tháng từ bây giờ:</strong></p>
+            <ul>
+              <li>Vẫn đổi thời gian lấy tiền</li>
+              <li>Vẫn căng thẳng về hóa đơn</li>
+              <li>Vẫn mơ về "một ngày nào đó"</li>
+              <li>Vẫn nhìn người khác thắng</li>
+              <li>Vẫn cảm thấy bị mắc kẹt</li>
+            </ul>
+            <p style="margin-top: 30px; font-weight: 700">
+              Chi phí của việc không hành động: Giấc mơ, thời gian, tương lai
+              của bạn
+            </p>
+          </div>
+
+          <div class="door door-2">
+            <div class="door-icon">🚪</div>
+            <div class="door-title">CỬA SỐ 2: BƯỚC NHẢY VỌT</div>
+            <p><strong>6 tháng từ bây giờ:</strong></p>
+            <ul>
+              <li>Thức dậy không cần đồng hồ báo thức</li>
+              <li>Tiền chảy từ nhiều nguồn</li>
+              <li>Cảm thấy tự hào và tự tin</li>
+              <li>Xây dựng cuộc sống bạn thiết kế</li>
+              <li>Trở thành tấm gương cho người khác</li>
+            </ul>
+            <p style="margin-top: 30px; font-weight: 700">
+              Chi phí: Một quyết định. Một cam kết. Một sự chuyển đổi.
+            </p>
+          </div>
+        </div>
+
+        <p
+          style="
+            text-align: center;
+            font-size: 32px;
+            margin-top: 60px;
+            font-weight: 800;
+          "
+        >
+          Bạn sẽ chọn cửa nào?
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="container">
+        <h2 class="section-title">ĐÂY LÀ KHOẢNH KHẮC CỦA BẠN</h2>
+
+        <p
+          style="
+            font-size: 22px;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+          "
+        >
+          Trong 5 năm, bạn sẽ nhìn lại khoảnh khắc này với lòng biết ơn hoặc hối
+          tiếc.
+        </p>
+
+        <p
+          style="
+            font-size: 22px;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+          "
+        >
+          Bạn sẽ là bằng chứng sống rằng sự chuyển đổi là có thể, hoặc bạn sẽ bị
+          mắc kẹt tự hỏi "điều gì sẽ xảy ra nếu."
+        </p>
+
+        <div class="urgency">
+          <p style="font-size: 28px; margin-bottom: 20px">
+            ⏰ ĐÂY KHÔNG PHẢI SỰ KHAN HIẾM GIẢ - ĐÂY LÀ NĂNG LỰC THỰC
+          </p>
+          <p style="font-size: 20px; margin-bottom: 20px">
+            Tôi cá nhân cố vấn cho mọi học viên trong chương trình này. Tôi xem
+            xét mọi kế hoạch kinh doanh. Tôi ở trong nhóm chat trả lời câu hỏi.
+          </p>
+          <p style="font-size: 20px; margin-bottom: 20px">
+            Điều đó có nghĩa là tôi chỉ có thể nhận
+            <strong>12 học viên mới mỗi tháng</strong>. Không phải 100. Không
+            phải 1.000. Chỉ 12.
+          </p>
+          <p class="spots-remaining">
+            Hiện tại, 7 chỗ đã đầy. Còn lại 5 CHỖ cho đợt tuyển sinh này.
+          </p>
+          <p style="font-size: 18px; margin-top: 20px">
+            Khi chúng hết, cửa đóng lại cho đến tháng sau. Không có ngoại lệ.
+          </p>
+        </div>
+
+        <a href="#" class="cta-button"
+          >YÊU CẦU CHỖ CỦA BẠN NGAY - 5 CHỖ CÒN LẠI</a
+        >
+
+        <p style="margin-top: 30px; font-size: 18px">
+          Chưa sẵn sàng cam kết? Bắt đầu với cuộc gọi chiến lược 30 phút miễn
+          phí<br />
+          <a href="#" style="color: #ffd700; text-decoration: underline"
+            >ĐẶT TƯ VẤN MIỄN PHÍ</a
+          >
+        </p>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <div class="container">
+        <h2 class="section-title">CÂU HỎI BẠN ĐANG THỰC SỰ SUY NGHĨ</h2>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            ❓ "Đây có phải là một trò lừa đảo khác không?"
+          </div>
+          <div class="faq-answer">
+            Câu hỏi công bằng. Internet đầy những thứ đó. Đây là cách bạn biết
+            điều này khác biệt: Tôi không hứa giàu qua đêm hay giải pháp "nhấn
+            nút". Điều này đòi hỏi công việc, chiến lược và cam kết. Nhưng nếu
+            bạn sẵn sàng xuất hiện, tôi đảm bảo kết quả. Kiểm tra các nghiên cứu
+            trường hợp ở trên - tên thật, số liệu thật, người thật.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            ❓ "Nếu tôi quá già/trẻ/nghèo để bắt đầu thì sao?"
+          </div>
+          <div class="faq-answer">
+            Tôi đã làm việc với thanh niên 19 tuổi và người 67 tuổi. Cha mẹ đơn
+            thân nhận trợ cấp thực phẩm và giám đốc kiếm $200K. Tuổi tác và vốn
+            khởi đầu không quan trọng. Tư duy và cam kết của bạn mới quan trọng.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            ❓ "Điều này khác với [chương trình khác] như thế nào?"
+          </div>
+          <div class="faq-answer">
+            Hầu hết các chương trình cung cấp lý thuyết. Tôi cung cấp triển
+            khai. Hầu hết cung cấp video. Tôi cung cấp quyền truy cập cá nhân.
+            Hầu hết muốn tiền của bạn. Tôi muốn sự thành công của bạn. Đó là sự
+            khác biệt.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">❓ "Nếu tôi thất bại thì sao?"</div>
+          <div class="faq-answer">
+            Bạn sẽ không. Không phải vì bạn hoàn hảo, mà vì tôi sẽ không để bạn.
+            Bạn nhận được hỗ trợ không giới hạn cho đến khi đạt được mục tiêu.
+            Thành công của bạn là danh tiếng của tôi.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">❓ "Tại sao tôi nên tin bạn?"</div>
+          <div class="faq-answer">
+            Bạn không nên. Hãy tin vào kết quả. Tin vào các đánh giá. Tin vào
+            các nghiên cứu trường hợp. Tin vào hệ thống. Tôi chỉ là người đưa
+            tin.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <p style="font-size: 24px; font-weight: 700; margin-bottom: 30px">
+          Tham gia cộng đồng những người xây dựng của cải đã từ chối chấp nhận
+          ít hơn phi thường.
+        </p>
+
+        <div class="social-proof">
+          "James vừa đạt $10K/tháng" • "Sarah nghỉ việc hôm nay" • "Marcus mua
+          bất động sản cho thuê đầu tiên"
+        </div>
+
+        <p style="margin-top: 40px; font-size: 14px; opacity: 0.7">
+          © 2025 Wealth Mastery Program | Tài Sản. Tự Do. Di Sản.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Countdown Timer
+      function updateCountdown() {
+        const countdownEl = document.getElementById("countdown");
+        let hours = 48;
+        let minutes = 23;
+        let seconds = 15;
+
+        setInterval(() => {
+          seconds--;
+          if (seconds < 0) {
+            seconds = 59;
+            minutes--;
+          }
+          if (minutes < 0) {
+            minutes = 59;
+            hours--;
+          }
+          if (hours < 0) {
+            hours = 47;
+            minutes = 59;
+            seconds = 59;
+          }
+
+          const h = String(hours).padStart(2, "0");
+          const m = String(minutes).padStart(2, "0");
+          const s = String(seconds).padStart(2, "0");
+          countdownEl.textContent = `${h}:${m}:${s}`;
+        }, 1000);
+      }
+
+      updateCountdown();
+
+      // Smooth scroll
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
+<div class="case-study">
+  <div class="case-name">NGHIÊN CỨU #2: Người Chạy Trốn Công Sở</div>
+  <p>Gặp David - 42 tuổi, phó chủ tịch kiệt sức tại Fortune 500</p>
+
+  <div class="case-label">TÌNH HUỐNG:</div>
+  <p>
+    Lương $180K nhưng đau khổ. 80 giờ/tuần. Bỏ lỡ con cái lớn lên. Dùng thuốc lo
+    âu.
+  </p>
+
+  <div class="case-label">ĐỘT PHÁ:</div>
+  <p>
+    Tháng 1: Xây dựng dòng thu nhập tự động đầu tiên<br />
+    Tháng 2: Thu nhập phụ bằng lương công ty<br />
+    Tháng 3: Nộp đơn từ chức<br />
+    Tháng 12: $50K/tháng, làm 15 giờ/tuần
+  </p>
+
+  <div class="case-label">KẾT QUẢ:</div>
+  <p>
+    Huấn luyện Little League. Nghỉ 6 tuần. Không dùng đồng hồ báo thức trong 18
+    tháng.
+  </p>
+
+  <div class="case-quote">
+    "Tôi nghĩ mình có 'công việc mơ ước.' Tôi đã sai. ĐÂY là tự do." — David M.
+  </div>
+</div>
+
+<div class="case-study">
+  <div class="case-name">NGHIÊN CỨU #3: Sinh Viên Bỏ Học</div>
+  <p>Gặp Maria - 22 tuổi, bỏ học, nợ $40K tiền học</p>
+
+  <div class="case-label">TÌNH HUỐNG:</div>
+  <p>
+    Không bằng cấp. Không kinh nghiệm. Sống trong tầng hầm nhà bố mẹ. Cảm thấy
+    thất bại.
+  </p>
+
+  <div class="case-label">ĐỘT PHÁ:</div>
+  <p>
+    Tháng 1: $800 hoa hồng đầu tiên<br />
+    Tháng 2: Đột phá $4K<br />
+    Tháng 3: $12K/tháng ở tuổi 22<br />
+    Tháng 8: $35K/tháng, chuyển đến Miami
+  </p>
+</div>

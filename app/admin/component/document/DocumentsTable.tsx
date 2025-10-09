@@ -11,7 +11,6 @@ import {
 import { InspectionReport } from "../../types/inspection";
 import StatusBadge from "./StatusBadge";
 import { authApi } from "@/app/services/authApi";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import CustomTooltip from "./CustomTooltip"; // Import your custom tooltip
@@ -37,7 +36,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
 }) => {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
-  const [customerSubmit, setCustomerSubmit] = useState<Record<string, string>>({});
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
   const [sortBy, ] = useState<'newest' | 'oldest'>('newest');
@@ -45,32 +43,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   useEffect(() => {
     setRole(authApi.getRoleFromToken());
   }, []);
-
-  useEffect(() => {
-    const fetchCustomersSubmit = async () => {
-      const newCustomers: Record<string, string> = {};
-
-      for (const doc of documents) {
-        if (doc.customerSubmitId && !customerSubmit[doc.customerSubmitId]) {
-          try {
-            const res = await axios.get(`/api/customers/${doc.customerSubmitId}`);
-            newCustomers[doc.customerSubmitId] = res.data.name;
-          } catch (err) {
-            console.error("Lỗi tải khách hàng:", err);
-            newCustomers[doc.customerSubmitId] = "Không rõ khách hàng";
-          }
-        }
-      }
-
-      if (Object.keys(newCustomers).length > 0) {
-        setCustomerSubmit((prev) => ({ ...prev, ...newCustomers }));
-      }
-    };
-
-    if (documents.length > 0) {
-      fetchCustomersSubmit();
-    }
-  }, [documents, customerSubmit]);
 
   const handleSelectDocument = (id: string) => {
     setSelectedDocuments((prevSelected) =>
@@ -236,7 +208,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     </td>
                     <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
                       <span className="text-sm text-gray-800">
-                        {customerSubmit[doc.customerSubmitId] || "Đang tải..."}
+                        {doc.customerSubmit.name || "Đang tải..."}
                       </span>
                     </td>
 

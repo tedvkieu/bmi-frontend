@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL;
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `${BACKEND_URL}/api/stats`,
+      `${NEXT_PUBLIC_BACKEND_URL}/api/stats`,
       {
         method: "GET",
         headers: {

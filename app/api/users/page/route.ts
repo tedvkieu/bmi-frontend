@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // Tạo URL cho backend
-    const url = new URL(`${process.env.BACKEND_URL}/api/users/page`);
+    const url = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/page`);
 
     // Forward tất cả query params từ frontend
     searchParams.forEach((value, key) => {

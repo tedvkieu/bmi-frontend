@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     const springResponse = await fetch(
-      `${process.env.BACKEND_URL}/api/dossiers/upload-excel`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/upload-excel`,
       {
         method: "POST",
         headers: {

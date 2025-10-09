@@ -207,6 +207,7 @@ const UsersClient: React.FC = () => {
     itemsPerPage,
     searchTerm,
     filterRole,
+
     loadData,
     loadAdminStatus,
   ]);

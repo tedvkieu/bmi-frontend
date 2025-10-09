@@ -126,29 +126,35 @@ export const userApi = {
   },
   async getAllUsersPage(
     page: number,
-    size: number
+    size: number,
+    search: string | null = null,
+    role: string | null = null
   ): Promise<PaginatedUserResponse> {
-    const token = authApi.getToken(); // Assuming authApi.getToken exists
+    const token = authApi.getToken();
     if (!token) throw new Error("No authentication token found.");
 
-    const safePage = Number.isInteger(page) && page >= 0 ? page : 0;
-    const safeSize = Number.isInteger(size) && size > 0 ? size : 10;
+    // Build query params
+    const params: Record<string, string> = {
+      page: page.toString(),
+      size: size.toString(),
+    };
+    if (search && search.trim()) params.search = search.trim();
+    if (role && role !== "all") params.role = role;
 
-    const params = new URLSearchParams({
-      page: String(safePage),
-      size: String(safeSize),
-    });
+    const queryString = new URLSearchParams(params).toString();
 
-    const response = await fetch(`/api/users/page?${params.toString()}`, {
+    const response = await fetch(`/api/users/page?${queryString}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || "Failed to fetch users");
     }
+
     return response.json();
   },
 

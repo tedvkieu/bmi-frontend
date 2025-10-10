@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // Gọi trực tiếp sang BE Spring Boot
-    const springResponse = await fetch("http://localhost:8080/api/machines", {
+    const springResponse = await fetch(`${backendUrl}/api/machines`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -85,7 +85,7 @@ export default function NotificationBell() {
       <div className="flex items-center space-x-2 text-sm">
         <button
           onClick={() => setOpen(!open)}
-          className="relative p-2 rounded-full hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="relative p-2 bg-gray-100 rounded-full hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
           aria-label="Mở thông báo"
         >
           <BellIcon className="h-6 w-6 text-gray-600" />
@@ -95,6 +95,9 @@ export default function NotificationBell() {
             </span>
           )}
         </button>
+        <span className="text-sm text-gray-600">
+          Thông báo
+        </span>
       </div>
       {open && (
         <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-gray-200 rounded-xl shadow-lg transform translate-y-2 opacity-100 transition-all duration-300 ease-out z-50">
@@ -122,7 +125,7 @@ export default function NotificationBell() {
                   className="relative group flex items-start p-4 hover:bg-blue-50 transition-colors duration-150"
                 >
                   <Link
-                    href="/admin/khach-hang"
+                    href="/admin/khachhang"
                     className="flex-1 min-w-0 pr-10"
                     onClick={() => markAsRead(n.id)}
                   >

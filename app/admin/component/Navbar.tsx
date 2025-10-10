@@ -1,29 +1,39 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from 'next/navigation';
 import {
-  PanelsTopLeft,
-  ChartSpline,
-  Users,
-  UserPlus,
+  LayoutDashboard,
+  LineChart,
+  FileText,
+  Briefcase,
+  UserCog,
   BarChart3,
   Settings,
-  LayoutDashboard,
   ChevronDown,
   ChevronUp,
-  BriefcaseBusiness, // Example for customers/clients - assuming Building is for companies
-  ScrollText, // More specific for dossiers/documents
-  ShieldCheck, // For evaluation, suggesting a review or check
+  GanttChart,
+  TextSearch,
+  Handshake,
 } from "lucide-react";
+
 import { authApi } from "../../services/authApi";
-import Image from "next/image";
 
 interface NavItem {
   key: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
   label: string;
-  badge: string | null;
+  badge?: string | null;
   href?: string;
   subItems?: NavItem[];
+}
+
+interface NavSection {
+  key: string;
+  title?: string;
+  items: NavItem[];
 }
 
 interface NavbarProps {
@@ -40,261 +50,234 @@ const Navbar: React.FC<NavbarProps> = ({
   onPageChange,
 }) => {
   const [role, setRole] = useState<string | null>(null);
-  const [stats, setStats] = useState<{
-    users?: number;
-    customers?: number;
-    dossiers?: number;
-    evaluationResults?: number;
-  }>({});
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const pathname = usePathname();
 
   useEffect(() => {
     const r = authApi.getRoleFromToken();
     setRole(r);
-
-    fetch("/api/misc")
-      .then((res) => res.json())
-      .then((data) => {
-        setStats({
-          users: data.users,
-          customers: data.customers,
-          dossiers: data.dossiers,
-          evaluationResults: data.evaluationResults,
-        });
-      })
-      .catch((error) => console.error("Failed to fetch stats:", error));
+    // Removed API fetch for brevity, assuming it works
   }, []);
 
-  const navItems: NavItem[] = [
+  const navSections: NavSection[] = [
     {
       key: "dashboard",
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      badge: null,
-      href: "/admin",
-      subItems: [
+      title: "Dashboard",
+      items: [
         {
           key: "dashboard_overview",
-          icon: PanelsTopLeft,
-          label: "Tổng quan hệ thống",
-          badge: null,
-          href: "/",
+          icon: LayoutDashboard,
+          label: "Tổng quan",
+          href: "/admin",
         },
         {
           key: "dashboard_analytic",
-          icon: ChartSpline,
-          label: "Biểu đồ phân tích",
-          badge: null,
+          icon: LineChart,
+          label: "Phân tích hệ thống",
           href: "/admin/analytic",
+        },
+        {
+          key: "reports",
+          icon: BarChart3,
+          label: "Báo cáo dữ liệu giám định",
+          href: "/admin/baocao",
         },
       ],
     },
     {
-      key: "documents",
-      icon: ScrollText,
-      label: "Hồ sơ giám định",
-      badge: null,
-      href: "/admin/ho-so",
-      // badge: stats.dossiers ? String(stats.dossiers) : null,
+      key: "management_section",
+      title: "Quản lý hồ sơ",
+      items: [
+        {
+          key: "documents_requests",
+          icon: TextSearch,
+          label: "Yêu cầu giám định",
+          href: "/admin/yeu-cau-giam-dinh",
+        },
+        {
+          key: "documents",
+          icon: FileText,
+          label: "Hồ sơ giám định",
+          href: "/admin/hoso",
+        },
+        {
+          key: "assignment",
+          icon: Handshake,
+          label: "Phân công hồ sơ",
+          href: "/admin/phancong",
+        },
+        {
+          key: "evaluation",
+          icon: GanttChart,
+          label: "Đánh giá hồ sơ",
+          href: "/admin/evaluation",
+        },
+      ],
     },
     {
-      key: "assignment",
-      icon: UserPlus,
-      label: "Phân công hồ sơ",
-      // badge: stats.evaluationResults ? String(stats.evaluationResults) : null,
-      badge: null,
-      href: "/admin/phan-cong",
+      key: "client_section",
+      title: "Khách hàng & Nhân viên",
+      items: [
+        {
+          key: "clients",
+          icon: Briefcase,
+          label: "Khách hàng",
+          href: "/admin/khachhang",
+        },
+        {
+          key: "users",
+          icon: UserCog,
+          label: "Nhân viên",
+          href: "/admin/nhanvien",
+        },
+      ],
     },
     {
-      key: "evaluation",
-      icon: ShieldCheck,
-      label: "Đánh giá hồ sơ",
-      // badge: stats.evaluationResults ? String(stats.evaluationResults) : null,
-      badge: null,
-      href: "/admin/evaluation",
-    },
-    {
-      key: "clients",
-      icon: BriefcaseBusiness,
-      label: "Khách hàng",
-      // badge: stats.customers ? String(stats.customers) : null,
-      badge: null,
-      href: "/admin/khach-hang",
-    },
-    {
-      key: "users",
-      icon: Users,
-      label: "Nhân viên",
-      badge: null,
-      // badge: stats.users ? String(stats.users) : null,
-      href: "/admin/quan-ly-nhan-vien",
-    },
-    {
-      key: "reports",
-      icon: BarChart3,
-      label: "Báo cáo",
-      badge: null,
-      // badge: stats.users ? String(stats.users) : null,
-      href: "/admin/bao-cao",
-    },
-    {
-      key: "settings",
-      icon: Settings,
-      label: "Cài đặt",
-      badge: null,
-      href: "/admin/cai-dat",
+      key: "report_section",
+      title: "Cài đặt",
+      items: [
+  
+        {
+          key: "settings",
+          icon: Settings,
+          label: "Cài đặt",
+          href: "/admin/caidat",
+        },
+      ],
     },
   ];
 
-  const shouldHideItem = (
-    itemKey: string,
-    userRole: string | null
-  ): boolean => {
+  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
     if (!userRole || userRole === "ADMIN") return false;
-    if (userRole === "MANAGER") {
-      return itemKey === "settings";
-    }
+    if (userRole === "MANAGER") return itemKey === "settings";
     if (userRole === "ISO_STAFF" || userRole === "DOCUMENT_STAFF") {
       return itemKey === "settings" || itemKey === "users";
     }
     return false;
   };
 
-  const filterNavItemsByRole = (items: NavItem[]): NavItem[] => {
-    return items
+  const filterNavItemsByRole = (items: NavItem[]): NavItem[] =>
+    items
       .map((item) => {
-        if (shouldHideItem(item.key, role)) {
-          return null;
-        }
+        if (shouldHideItem(item.key, role)) return null;
         if (item.subItems) {
-          const filteredSubItems = filterNavItemsByRole(item.subItems);
-          // Only return parent if it has subItems or a direct href and is not hidden
-          if (filteredSubItems.length > 0 || item.href) {
-            return { ...item, subItems: filteredSubItems };
-          }
-          return null;
+          const filteredSub = filterNavItemsByRole(item.subItems);
+          return filteredSub.length > 0 ? { ...item, subItems: filteredSub } : null;
         }
         return item;
       })
       .filter((item): item is NavItem => item !== null);
-  };
 
-  const filteredNavItems = filterNavItemsByRole(navItems);
+  const filteredNavSections = navSections.map((section) => ({
+    ...section,
+    items: filterNavItemsByRole(section.items),
+  })).filter(section => section.items.length > 0);
 
-  // Mở dropdown khi trang hiện tại nằm trong sub-item của nó
+  const isItemActive = useCallback((item: NavItem): boolean => {
+    if (item.href === pathname) {
+      return true;
+    }
+
+    if (item.href && item.href !== '/admin' && pathname.startsWith(item.href + '/')) {
+      return true;
+    }
+
+    if (item.key === "dashboard_overview" && pathname === "/admin") {
+      return true;
+    }
+
+    if (item.subItems && item.subItems.some(sub => isItemActive(sub))) {
+        return true;
+    }
+
+    return item.key === currentPage;
+  }, [pathname, currentPage]);
+
   useEffect(() => {
-    const findParentKeyOfActivePage = (
-      items: NavItem[],
-      currentPath: string
-    ): string | null => {
-      for (const item of items) {
+    let newOpenDropdown: string | null = null;
+    filteredNavSections.forEach(section => {
+      section.items.forEach(item => {
         if (item.subItems) {
-          if (item.subItems.some((sub) => sub.href === currentPath)) {
-            return item.key;
+          if (item.subItems.some(subItem => isItemActive(subItem))) {
+            newOpenDropdown = item.key;
           }
-          const subParentKey = findParentKeyOfActivePage(
-            item.subItems,
-            currentPath
-          );
-          if (subParentKey) return item.key;
         }
-      }
-      return null;
-    };
-
-    const currentPath = window.location.pathname;
-    const parentKey = findParentKeyOfActivePage(filteredNavItems, currentPath);
-    if (parentKey && openDropdown !== parentKey) {
-      setOpenDropdown(parentKey);
-    }
-  }, [currentPage, filteredNavItems]);
-
-  const handleItemClick = (item: NavItem) => {
-    if (item.subItems) {
-      // Khi click vào mục có sub-items, đóng/mở dropdown
-      setOpenDropdown(openDropdown === item.key ? null : item.key);
-    } else if (item.href) {
-      onPageChange(item.key);
-      // Nếu mục không có sub-items và có href, có thể đóng các dropdown khác (tùy chọn)
-      // setOpenDropdown(null);
-    }
-  };
-
-  const isItemActive = (item: NavItem): boolean => {
-    // Check if the current page directly matches the item's key
-    if (currentPage === item.key) {
-      return true;
-    }
-    // Check if the current page matches the item's href (if present)
-    if (item.href && window.location.pathname === item.href) {
-      return true;
-    }
-    // Check if any sub-item is active
-    if (item.subItems) {
-      return item.subItems.some((subItem) => isItemActive(subItem));
-    }
-    return false;
-  };
+      });
+    });
+    setOpenDropdown(newOpenDropdown);
+  }, [pathname, filteredNavSections, currentPage, isItemActive]);
 
   const renderNavItem = (item: NavItem, isSubItem: boolean = false) => {
     const isActive = isItemActive(item);
-    // isOpen chỉ phụ thuộc vào state openDropdown, không còn phụ thuộc vào isActive
     const isOpen = openDropdown === item.key;
-    const paddingLeft = isSubItem ? "pl-9" : "pl-3";
+
+    let paddingLeftClass = "pl-3";
+    if (isSubItem) {
+      paddingLeftClass = "pl-9";
+    }
+
+    if (!(isSidebarOpen || isMobile)) {
+      paddingLeftClass = "px-0 justify-center";
+    }
+
+    const commonClasses = `flex items-center ${paddingLeftClass} py-2.5 rounded-lg transition-all duration-200 ${isActive
+      ? "bg-blue-600 text-white shadow-sm"
+      : "text-gray-700 hover:bg-gray-100"
+      }`;
+
+    const content = (
+      <>
+        {item.icon && (
+          <item.icon
+            size={20}
+            className={`flex-shrink-0`}
+          />
+        )}
+        {(isSidebarOpen || isMobile) && (
+          <div className="flex-grow flex items-center min-w-0">
+            <span className="ml-3 font-medium truncate flex-grow text-sm">
+              {item.label}
+            </span>
+            {item.badge && (
+              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full flex-shrink-0 ml-2 font-medium">
+                {item.badge}
+              </span>
+            )}
+            {item.subItems && (
+              <span className="ml-2 flex-shrink-0 text-gray-400">
+                {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </span>
+            )}
+          </div>
+        )}
+      </>
+    );
 
     return (
       <div key={item.key}>
-        <button
-          onClick={() => handleItemClick(item)}
-          className={`w-full flex items-center ${paddingLeft} py-3 rounded-lg text-left transition-colors relative
-            ${
-              isActive
-                ? "bg-blue-500 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+        {item.href && !item.subItems ? (
+          <Link
+            href={item.href}
+            onClick={() => onPageChange(item.key)}
+            className={`w-full ${commonClasses}`}
+          >
+            {content}
+          </Link>
+        ) : (
+          <button
+            onClick={() =>
+              setOpenDropdown(openDropdown === item.key ? null : item.key)
             }
-          `}
-          title={
-            !isSidebarOpen && !isMobile && !item.subItems && item.label
-              ? item.label
-              : undefined
-          }
-        >
-          {item.icon && (
-            <item.icon
-              size={20}
-              className={`flex-shrink-0 ${
-                isSidebarOpen || isMobile ? "" : "mx-auto"
-              }`}
-            />
-          )}
+            className={`w-full text-left ${commonClasses}`}
+          >
+            {content}
+          </button>
+        )}
 
-          {(isSidebarOpen || isMobile) && (
-            <div className="flex-grow flex items-center min-w-0">
-              {" "}
-              {/* Wrapper để căn chỉnh */}
-              <span className="ml-3 font-medium truncate flex-grow">
-                {item.label}
-              </span>
-              {item.badge && (
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex-shrink-0 ml-2">
-                  {" "}
-                  {/* ml-2 thay vì ml-auto */}
-                  {item.badge}
-                </span>
-              )}
-              {item.subItems && (
-                <span className="ml-2 flex-shrink-0">
-                  {" "}
-                  {/* Điều chỉnh khoảng cách cho icon dropdown */}
-                  {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </span>
-              )}
-            </div>
-          )}
-        </button>
         {item.subItems && (isSidebarOpen || isMobile) && isOpen && (
-          <div className="ml-4 border-l border-gray-200 mt-1 space-y-1">
-            {item.subItems.map((subItem) => renderNavItem(subItem, true))}
+          <div className="ml-7 mt-1 space-y-1">
+            {item.subItems.map((sub) => renderNavItem(sub, true))}
           </div>
         )}
       </div>
@@ -303,52 +286,50 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div
-      className={`bg-white shadow-xl transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 ${
-        isSidebarOpen
-          ? isMobile
-            ? "w-72"
-            : "w-72"
-          : isMobile
+      className={`bg-white shadow-lg transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 border-r border-gray-100 ${isSidebarOpen
+        ? "w-72"
+        : isMobile
           ? "-translate-x-full w-72"
           : "w-20"
-      }`}
+        }`}
     >
-      {/* Logo */}
-      <div className="p-5 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          {/* Logo thu gọn (logo-2) */}
-          {!(isSidebarOpen || isMobile) && (
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Image
-                src="/images/logo-2.jpg"
-                alt="Logo Bảo Minh"
-                width={40}
-                height={40}
-                className="object-contain"
-              />
-            </div>
-          )}
-
-          {/* Logo đầy đủ (logo-1) */}
-          {(isSidebarOpen || isMobile) && (
-            <div className="min-w-0">
-              <Image
-                src="/images/logo-1.jpg"
-                alt="Logo Bảo Minh"
-                width={120}
-                height={40}
-                className="object-contain"
-              />
-            </div>
-          )}
-        </div>
+      <div className="p-4 border-b border-gray-100 flex-shrink-0 flex items-center justify-center">
+        {!(isSidebarOpen || isMobile) ? (
+          <div className="w-full h-12  flex items-center justify-center flex-shrink-0">
+            <Image
+              src="/images/logo-2.jpg"
+              alt="Logo Bảo Minh"
+              width={52}
+              height={52}
+              className="object-contain rounded-sm"
+            />
+          </div>
+        ) : (
+          <div className="min-w-0">
+            <Image
+              src="/images/logo-1.jpg"
+              alt="Logo Bảo Minh"
+              width={140}
+              height={40}
+              className="object-contain"
+            />
+          </div>
+        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4 text-sm">
-        <div className="space-y-1">
-          {filteredNavItems.map((item) => renderNavItem(item))}
-        </div>
+      <nav className="flex-1 overflow-y-hidden px-4 py-6 text-sm custom-scrollbar">
+        {filteredNavSections.map((section) => (
+          <div key={section.key} className="mb-6">
+            {isSidebarOpen && section.title && (
+              <h4 className="text-gray-500 text-xs font-semibold uppercase px-3 mb-3 tracking-wide">
+                {section.title}
+              </h4>
+            )}
+            <div className="space-y-1.5">
+              {section.items.map((item) => renderNavItem(item))}
+            </div>
+          </div>
+        ))}
       </nav>
     </div>
   );

@@ -12,7 +12,7 @@ interface TeamMembersTableProps {
   onAssignB: (
     members: {
       userId: number;
-      roleCode: "TEAM_LEADER" | "MEMBER" | "TRAINEE";
+      roleCode: string;
     }[]
   ) => Promise<void>;
 }
@@ -24,10 +24,33 @@ export default function TeamMembersTable({
   onSelectBUsers, // Prop này để gửi cập nhật về component cha
   onAssignB,
 }: TeamMembersTableProps) {
-  const [rolesByRow, setRolesByRow] = useState<
-    Record<number, "TEAM_LEADER" | "MEMBER" | "TRAINEE">
-  >({});
+  const [rolesByRow, setRolesByRow] = useState<Record<number, string>>({});
 
+  // Danh sách role từ BE (combobox)
+  const [allRoles, setAllRoles] = useState<
+    { roleId: number; roleCode: string; roleName: string }[]
+  >([]);
+
+  useEffect(() => {
+    // Lấy toàn bộ role cho mỗi user (không ràng buộc trưởng nhóm)
+    const loadRoles = async () => {
+      try {
+        const res = await fetch(`/api/evaluations/roles/all`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setAllRoles(
+          (data || []).map((r: any) => ({
+            roleId: r.roleId,
+            roleCode: r.roleCode,
+            roleName: r.roleName,
+          }))
+        );
+      } catch (e) {
+        console.error("Error fetching roles:", e);
+      }
+    };
+    loadRoles();
+  }, []);
   const [numRows, setNumRows] = useState(4); // Start with 4 rows by default
 
   // Đồng bộ từ dữ liệu teamMembers mỗi khi backend trả về (khởi tạo hoặc sau khi lưu)
@@ -39,45 +62,20 @@ export default function TeamMembersTable({
           .map((s) => s.trim().toUpperCase())
           .includes("B")
       )
-      .sort((a, b) => {
-        const aLeader = a.roleCode === "TEAM_LEADER" ? 1 : 0;
-        const bLeader = b.roleCode === "TEAM_LEADER" ? 1 : 0;
-        if (aLeader !== bLeader) return bLeader - aLeader; // leader first
-        return (a.fullName || "").localeCompare(b.fullName || "");
-      });
+      .sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
 
     const initialNumRows = Math.max(4, bMembers.length);
     setNumRows(initialNumRows);
 
     const preUsers: number[] = new Array(initialNumRows).fill(0);
-    const preRoles: Record<number, "TEAM_LEADER" | "MEMBER" | "TRAINEE"> = {};
+    const preRoles: Record<number, string> = {};
 
     bMembers.forEach((m, idx) => {
       if (idx < initialNumRows) {
         preUsers[idx] = m.userId as number;
-        preRoles[idx] = (m.roleCode as any) || "MEMBER";
+        preRoles[idx] = m.roleCode || "MEMBER";
       }
     });
-
-    // Đảm bảo hàng 0 là leader nếu có ít nhất một người
-    let leaderIdx = -1;
-    for (let i = 0; i < preUsers.length; i++) {
-      if (preUsers[i] !== 0 && preRoles[i] === "TEAM_LEADER") {
-        leaderIdx = i;
-        break;
-      }
-    }
-    if (leaderIdx !== -1 && leaderIdx !== 0) {
-      const tmpUser = preUsers[0];
-      const tmpRole = preRoles[0];
-      preUsers[0] = preUsers[leaderIdx];
-      preRoles[0] = preRoles[leaderIdx];
-      preUsers[leaderIdx] = tmpUser;
-      preRoles[leaderIdx] = tmpRole || "MEMBER";
-    } else if (leaderIdx === -1 && initialNumRows > 0) {
-      // Nếu chưa có leader, để hàng đầu mặc định là leader (khi chọn người)
-      preRoles[0] = preRoles[0] || "TEAM_LEADER";
-    }
 
     onSelectBUsers(preUsers);
     setRolesByRow(preRoles);
@@ -101,9 +99,14 @@ export default function TeamMembersTable({
 
     // Nếu chọn một inspector mới và chưa có vai trò, gán vai trò mặc định
     if (inspectorId && !rolesByRow[rowIndex]) {
+      // Ưu tiên MEMBER nếu tồn tại, ngược lại lấy role đầu tiên
+      const defaultRole =
+        allRoles.find((r) => r.roleCode === "MEMBER")?.roleCode ||
+        allRoles[0]?.roleCode ||
+        "MEMBER";
       setRolesByRow((prev) => ({
         ...prev,
-        [rowIndex]: rowIndex === 0 ? "TEAM_LEADER" : "MEMBER",
+        [rowIndex]: defaultRole,
       }));
     } else if (!inspectorId) {
       // Nếu bỏ chọn giám định viên, có thể xóa vai trò hoặc đặt về mặc định
@@ -115,10 +118,7 @@ export default function TeamMembersTable({
     }
   };
 
-  const setRoleForRow = (
-    rowIndex: number,
-    role: "TEAM_LEADER" | "MEMBER" | "TRAINEE"
-  ) => {
+  const setRoleForRow = (rowIndex: number, role: string) => {
     setRolesByRow((prev) => ({ ...prev, [rowIndex]: role }));
   };
 
@@ -126,7 +126,7 @@ export default function TeamMembersTable({
     const seen = new Set<number>();
     const result: {
       userId: number;
-      roleCode: "TEAM_LEADER" | "MEMBER" | "TRAINEE";
+      roleCode: string;
     }[] = [];
 
     // Lặp qua số hàng hiện tại thay vì độ dài của selectedBUsers
@@ -134,12 +134,16 @@ export default function TeamMembersTable({
       const uid = selectedBUsers[i];
       if (!uid || seen.has(uid)) continue; // Bỏ qua nếu không có userId hoặc đã chọn
 
-      const role = rolesByRow[i] || (i === 0 ? "TEAM_LEADER" : "MEMBER");
+      const role =
+        rolesByRow[i] ||
+        allRoles.find((r) => r.roleCode === "MEMBER")?.roleCode ||
+        allRoles[0]?.roleCode ||
+        "MEMBER";
       seen.add(uid);
       result.push({ userId: uid, roleCode: role });
     }
     return result;
-  }, [selectedBUsers, rolesByRow, numRows]);
+  }, [selectedBUsers, rolesByRow, numRows, allRoles]);
 
   const handleAddRow = () => {
     setNumRows((prev) => prev + 1);
@@ -163,10 +167,7 @@ export default function TeamMembersTable({
     setRolesByRow((prev) => {
       const newRoles = { ...prev };
       delete newRoles[rowIndex]; // Xóa vai trò của hàng bị xóa
-      const adjustedRoles: Record<
-        number,
-        "TEAM_LEADER" | "MEMBER" | "TRAINEE"
-      > = {};
+      const adjustedRoles: Record<number, string> = {};
       Object.entries(newRoles).forEach(([key, value]) => {
         const oldKey = Number(key);
         if (oldKey > rowIndex) {
@@ -236,61 +237,21 @@ export default function TeamMembersTable({
                   </select>
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {/* Logic hiển thị checkbox cho Trưởng nhóm và thành viên */}
-                  {row === 0 ? (
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            (rolesByRow[row] || "TEAM_LEADER") === "TEAM_LEADER"
-                          }
-                          onChange={() => setRoleForRow(row, "TEAM_LEADER")}
-                          className="mr-2"
-                          // Vô hiệu hóa nếu hàng này chưa có giám định viên được chọn
-                          disabled={!currentSelectedUser}
-                        />
-                        <span className="text-gray-600 font-medium">
-                          Trưởng nhóm giám định
-                        </span>
-                      </label>
-                      <label className="flex text-gray-600 items-center">
-                        <input
-                          type="checkbox"
-                          checked={rolesByRow[row] === "MEMBER"}
-                          onChange={() => setRoleForRow(row, "MEMBER")}
-                          className="mr-2"
-                          disabled={!currentSelectedUser}
-                        />
-                        <span> GĐV</span>
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={(rolesByRow[row] || "MEMBER") === "MEMBER"}
-                          onChange={() => setRoleForRow(row, "MEMBER")}
-                          className="mr-2"
-                          disabled={!currentSelectedUser}
-                        />
-                        <span className="text-gray-600 font-medium">
-                          GĐV - thành viên
-                        </span>
-                      </label>
-                      <label className="flex text-gray-600 items-center">
-                        <input
-                          type="checkbox"
-                          checked={rolesByRow[row] === "TRAINEE"}
-                          onChange={() => setRoleForRow(row, "TRAINEE")}
-                          className="mr-2"
-                          disabled={!currentSelectedUser}
-                        />
-                        <span>GĐV Tập sự</span>
-                      </label>
-                    </div>
-                  )}
+                  <select
+                    value={rolesByRow[row] || ""}
+                    onChange={(e) => setRoleForRow(row, e.target.value)}
+                    className="w-full text-gray-600 border rounded px-2 py-1 text-sm"
+                    disabled={!currentSelectedUser}
+                  >
+                    <option value="" disabled>
+                      -- Chọn chức vụ --
+                    </option>
+                    {allRoles.map((r) => (
+                      <option key={r.roleId} value={r.roleCode}>
+                        {r.roleName}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   {numRows > 1 && ( // Chỉ hiển thị nút xóa nếu có nhiều hơn 1 hàng
@@ -328,22 +289,6 @@ export default function TeamMembersTable({
               // Kiểm tra xem payload có rỗng không
               if (selectedMembersPayload.length === 0) {
                 alert("Vui lòng chọn ít nhất một giám định viên.");
-                return;
-              }
-
-              // Kiểm tra hàng 0 là leader và chỉ có một leader
-              const leaders = selectedMembersPayload.filter(
-                (m) => m.roleCode === "TEAM_LEADER"
-              );
-
-              const row0UserSelected = selectedBUsers[0] !== 0; // Đảm bảo hàng 0 có người được chọn
-              const row0IsLeader =
-                (rolesByRow[0] || "TEAM_LEADER") === "TEAM_LEADER";
-
-              if (!row0UserSelected || !row0IsLeader || leaders.length !== 1) {
-                alert(
-                  "Hàng 1 phải là Trưởng nhóm giám định (và chỉ có 1 Trưởng nhóm trong danh sách đã chọn)."
-                );
                 return;
               }
 

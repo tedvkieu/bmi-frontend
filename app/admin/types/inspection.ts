@@ -55,6 +55,7 @@ export interface ReceiptFormData {
   certificateStatus: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
 }
 
+
 export interface ObjectTypeOption {
   value: "SERVICE_MANAGER" | "IMPORTER";
   label: string;
@@ -69,13 +70,27 @@ export interface CertificateStatusOption {
   value: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
   label: string;
 }
+export type CertificateStatusBackend =
+  | "OBTAINED"
+  | "NOT_OBTAINED"
+  | "NOT_WITHIN_SCOPE"
+  | "PENDING";
 
+
+
+export interface DossierStatistics {
+  total: number;
+  obtained: number;
+  pending: number;
+  notObtained: number;
+  notWithinScope: number;
+}
 
 // components/types/inspection.ts
 export interface InspectionReport {
   receiptId: number;
   registrationNo: string;
-  customerSubmitId: number;
+  customerSubmit: CustomerSubmitResponse;
   customerRelatedId: number;
   inspectionTypeId: string;
   declarationNo: string | null;
@@ -89,11 +104,10 @@ export interface InspectionReport {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust as per actual statuses
+  certificateStatus: CertificateStatusBackend
   createdAt: string;
   updatedAt: string;
 
-  // Add these for UI display, mapping from API fields
   id: string; // Mapped from registrationNo or receiptId
   name: string; // Mapped from registrationNo or billOfLading
   client: string; // You'll need to fetch customer details separately or use a placeholder
@@ -142,7 +156,10 @@ export interface ReceiptData {
   registrationNo: string;
   customerSubmitId: number;
   customerRelatedId: number;
+  customerSubmitName?: string | null;
+  customerRelatedName?: string | null;
   inspectionTypeId: string;
+  inspectionTypeName?: string | null;
   declarationNo: string | null;
   billOfLading: string;
   shipName: string | null;
@@ -155,17 +172,36 @@ export interface ReceiptData {
   certificateDate: string | null;
   inspectionLocation: string | null;
   certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED";
+  createdByUserId?: number | null;
+  createdByUserName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface CustomerSubmitResponse {
+  customerId: number;
+  name: string;
+  address: string;
+  email: string;
+  dob: string | null;
+  phone: string;
+  note: string;
+  taxCode: string;
+  customerType: string;
+  createdAt: string;
+  updatedAt: string;
+}
 // Type matching the API's 'content' array directly
 export interface InspectionReportApi {
   receiptId: number;
   registrationNo: string;
-  customerSubmitId: number;
+  customerSubmitId?: string;
+  customerSubmit: CustomerSubmitResponse
   customerRelatedId: number;
+  customerSubmitName?: string | null;
+  customerRelatedName?: string | null;
   inspectionTypeId: string;
+  inspectionTypeName?: string | null;
   declarationNo: string | null;
   billOfLading: string;
   shipName: string | null;
@@ -178,6 +214,74 @@ export interface InspectionReportApi {
   certificateDate: string | null;
   inspectionLocation: string | null;
   certificateStatus: "PENDING" | "NOT_WITHIN_SCOPE" | "NOT_OBTAINED" | "OBTAINED"; // Adjust based on actual values
+  createdByUserId?: number | null;
+  createdByUserName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+
+export interface Dossier {
+  receiptId: number;
+  registrationNo: string;
+  customerSubmitId: number;
+  customerRelatedId: number;
+  customerSubmitName: string;
+  customerRelatedName: string;
+  inspectionTypeId: string;
+  inspectionTypeName: string;
+  declarationNo: string;
+  billOfLading: string;
+  shipName: string;
+  cout10: number;
+  cout20: number;
+  bulkShip: boolean;
+  declarationDoc: string;
+  declarationPlace: string;
+  inspectionDate: string;
+  certificateDate: string;
+  inspectionLocation: string;
+  files: string;
+  certificateStatus: "OBTAINED" | "NOT_OBTAINED" | "PENDING" | "NOT_WITHIN_SCOPE";
+  createdByUserId: number;
+  createdByUserName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ====== Spring Boot Pageable Metadata ======
+
+export interface Sort {
+  empty: boolean;
+  sorted: boolean;
+  unsorted: boolean;
+}
+
+export interface Pageable {
+  pageNumber: number;
+  pageSize: number;
+  sort: Sort;
+  offset: number;
+  paged: boolean;
+  unpaged: boolean;
+}
+
+// ====== Generic Page Response ======
+
+export interface PageResponse<T> {
+  content: T[];
+  pageable: Pageable;
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  first: boolean;
+  size: number;
+  number: number;
+  sort: Sort;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+// ====== Specialized Type for Dossier ======
+
+export type DossierPage = PageResponse<Dossier>;

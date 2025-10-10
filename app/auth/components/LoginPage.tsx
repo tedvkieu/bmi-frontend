@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,7 +64,6 @@ const LoginPage: React.FC = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,11 +81,15 @@ const LoginPage: React.FC = () => {
 
       const response = await authApi.login(loginData);
 
+      // Lưu token vào cookie
       authApi.saveAuthData(response);
 
-      const role = authApi.getRoleFromToken();
-
-        router.push("/");
+      // Nếu cần đổi mật khẩu, redirect sang trang đổi mật khẩu
+      if (response.mustChangePassword) {
+        router.push("/auth/change-password"); // đường dẫn trang đổi mật khẩu
+      } else {
+        router.push("/"); // nếu không, đi thẳng trang chính
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setErrors({
@@ -95,6 +99,7 @@ const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div>

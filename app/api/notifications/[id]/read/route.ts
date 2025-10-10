@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_API = process.env.BACKEND_URL;
+const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const token = request.cookies.get("token")?.value;

@@ -42,7 +42,7 @@ interface EvaluationFormProps {
   onAssignB: (
     members: {
       userId: number;
-      roleCode: "TEAM_LEADER" | "MEMBER" | "TRAINEE";
+      roleCode: string;
     }[]
   ) => Promise<void>;
   onAssignTaskLetter: (
@@ -104,7 +104,7 @@ export default function EvaluationForm({
           <h2 className="text-xl text-gray-700 font-semibold">
             Biểu mẫu đánh giá
           </h2>
-          <div className="text-xs text-green-700">
+          <div className="text-sm text-green-700">
             {lastSavedAt
               ? `Đã lưu lúc ${new Date(lastSavedAt).toLocaleTimeString(
                   "vi-VN"
@@ -114,26 +114,26 @@ export default function EvaluationForm({
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="p-3 border rounded">
-            <div className="text-xs text-gray-600 mb-1">Tiêu chí</div>
+            <div className="text-sm text-gray-600 mb-1">Tiêu chí</div>
             <div className="h-2 bg-gray-200 rounded">
               <div
                 className="h-2 bg-blue-600 rounded"
                 style={{ width: `${criteriaPct}%` }}
               />
             </div>
-            <div className="text-xs text-gray-700 mt-1">
+            <div className="text-sm text-gray-700 mt-1">
               {criteriaAnswered}/{totalCriteria} ({criteriaPct}%)
             </div>
           </div>
           <div className="p-3 border rounded">
-            <div className="text-xs text-gray-600 mb-1">Hồ sơ</div>
+            <div className="text-sm text-gray-600 mb-1">Hồ sơ</div>
             <div className="h-2 bg-gray-200 rounded">
               <div
                 className="h-2 bg-emerald-600 rounded"
                 style={{ width: `${docsPct}%` }}
               />
             </div>
-            <div className="text-xs text-gray-700 mt-1">
+            <div className="text-sm text-gray-700 mt-1">
               {documentsCompleted}/{totalDocuments} ({docsPct}%)
             </div>
           </div>
@@ -142,7 +142,7 @@ export default function EvaluationForm({
               teamReadyForACD ? "bg-green-50" : "bg-yellow-50"
             }`}
           >
-            <div className="text-xs text-gray-600 mb-1">Tổ chức (mục B)</div>
+            <div className="text-sm text-gray-600 mb-1">Tổ chức (mục B)</div>
             <div
               className={`text-sm ${
                 teamReadyForACD ? "text-green-700" : "text-yellow-700"

@@ -5,23 +5,27 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import UserMenu from "@/app/admin/component/UserMenu";
-import { Bars3Icon, XMarkIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 import { customerApi } from "@/app/admin/services/customerApi";
 
 interface NavbarClientProps {
   onScrollToContact?: (section: string) => void;
 }
 
+
 export interface Customer {
-  username: string;
   email: string;
-  role: string;
   fullName: string;
-  userId: number;
+  username?: string;
+  role?: string;
+  userId?: number;
 }
 
 export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
-  const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +35,6 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
     const u = customerApi.getUser();
     if (u) {
       setUser(u);
-      setRole(u.role);
     }
     setLoading(false);
   }, []);
@@ -187,7 +190,9 @@ function NavScrollButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center text-gray-700 hover:text-blue-700 transition-colors text-sm font-medium ${className || ""}`}
+      className={`flex items-center text-gray-700 hover:text-blue-700 transition-colors text-sm font-medium ${
+        className || ""
+      }`}
     >
       {label}
       <ChevronDownIcon className="ml-1 w-4 h-4" />

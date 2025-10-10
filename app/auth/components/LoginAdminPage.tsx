@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthCard from "../components/AuthCard";
 import FormInput from "../components/FormInput";
@@ -17,10 +16,6 @@ const LoginPageAdmin: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const handleRegisterClick = () => {
-    router.push("/auth/register");
-  };
 
   useEffect(() => {
     if (searchParams.get("registered") === "true") {
@@ -85,7 +80,7 @@ const LoginPageAdmin: React.FC = () => {
 
       const role = authApi.getRoleFromToken();
 
-      if (role === "ADMIN" || role === "ISO_STAFF" || role === "IMPORTER" || role === "DOCUMENT_STAFF") {
+      if (role === "ADMIN" || role === "ISO_STAFF" || role === "MANAGER" || role === "DOCUMENT_STAFF") {
         router.push("/admin");
       }
     } catch (error: any) {
@@ -107,7 +102,7 @@ const LoginPageAdmin: React.FC = () => {
       >
         <MdHome className="text-2xl text-gray-600 hover:text-blue-500" size={26} />
       </button>
-      <AuthCard title="Đăng nhập" subtitle="Chào mừng bạn quay trở lại">
+      <AuthCard title="ADMIN" subtitle="Đăng nhập với quyền Admin">
 
         <form onSubmit={handleSubmit} className="space-y-6 text-sm">
           {showSuccessMessage && (
@@ -192,7 +187,7 @@ const LoginPageAdmin: React.FC = () => {
               </svg>
             }
           />
-
+{/* 
           <div className="flex items-center justify-between">
             <label className="flex items-center">
               <input
@@ -209,7 +204,7 @@ const LoginPageAdmin: React.FC = () => {
             >
               Quên mật khẩu?
             </Link>
-          </div>
+          </div> */}
 
           <button
             type="submit"
@@ -245,7 +240,7 @@ const LoginPageAdmin: React.FC = () => {
             )}
           </button>
 
-          <p className="text-center text-sm text-gray-600">
+          {/* <p className="text-center text-sm text-gray-600">
             Chưa có tài khoản?{" "}
             <button
               type="button"
@@ -254,7 +249,7 @@ const LoginPageAdmin: React.FC = () => {
             >
               Đăng ký
             </button>
-          </p>
+          </p> */}
         </form>
       </AuthCard>
     </div>

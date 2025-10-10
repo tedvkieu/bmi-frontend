@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
     }
 
-    const res = await fetch(`${process.env.BACKEND_URL}/api/customers/email?email=${encodeURIComponent(email)}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/email?email=${encodeURIComponent(email)}`);
 
     if (!res.ok) {
       const text = await res.text();

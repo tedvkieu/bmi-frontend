@@ -1,105 +1,227 @@
-// C:\Workspace\bmi-2\bmi-frontend\app\admin\(pages)\analytic\page.tsx
 "use client";
-import React, { useEffect, useState } from "react";
-import { FileText, CheckCircle, Users, Briefcase, TrendingUp, BarChart2, PieChart } from "lucide-react";
+
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart as RechartsPieChart, Pie, Cell,
-  BarChart, Bar
+  BarChart2, PieChart, ArrowRight,
+  ArrowUpRight, ArrowDownRight, CircleHelp
+} from "lucide-react";
+import {
+  ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart as RechartsPieChart, Pie, Cell, Bar
 } from 'recharts';
+import { useRouter } from "next/navigation";
 import AdminLayout from "../../component/AdminLayout";
+import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
+import LoadingSpinner from "../../component/document/LoadingSpinner";
+
+interface StatusCounts {
+  OBTAINED: number;
+  NOT_OBTAINED: number;
+  NOT_WITHIN_SCOPE: number;
+  PENDING: number;
+}
+
+interface MonthlyChartData {
+  statusCounts: StatusCounts;
+}
+
+interface OverviewData {
+  currentMonthCount: number;
+  previousMonthCount: number;
+  percentageChange: number;
+  statusCountsCurrentMonth: StatusCounts;
+  statusCountsPreviousMonth: StatusCounts;
+}
 
 interface MiscData {
   users: number;
   customers: number;
   dossiers: number;
   evaluationResults: number;
+  completedDossiers: number;
 }
 
-// --- Dữ liệu giả định cho phân tích ---
-const monthlyDossiersData = [
-  { name: 'Tháng 1', Hồ_sơ: 4000, Hoàn_thành: 2400 },
-  { name: 'Tháng 2', Hồ_sơ: 3000, Hoàn_thành: 1398 },
-  { name: 'Tháng 3', Hồ_sơ: 2000, Hoàn_thành: 9800 },
-  { name: 'Tháng 4', Hồ_sơ: 2780, Hoàn_thành: 3908 },
-  { name: 'Tháng 5', Hồ_sơ: 1890, Hoàn_thành: 4800 },
-  { name: 'Tháng 6', Hồ_sơ: 2390, Hoàn_thành: 3800 },
-];
+interface AnalyticState {
+  monthlyDossiersData: any[];
+  dossierStatusData: any[];
+  overviewData: OverviewData | null;
+  miscData: MiscData | null;
+  selectedMonthDossierCount: number;
+  selectedMonthCompletedCount: number;
+}
 
-const dossierStatusData = [
-  { name: 'Hoàn thành', value: 60, color: '#4CAF50' }, // Green
-  { name: 'Đang xử lý', value: 25, color: '#FFC107' }, // Yellow
-  { name: 'Chờ duyệt', value: 15, color: '#2196F3' }, // Blue
-];
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md text-sm">
+        <p className="font-semibold text-gray-800">{data.name}</p>
+        <p className="text-gray-700">Số hồ sơ: {data.value.toLocaleString('vi-VN')}</p>
+        <p className="text-gray-700">Tỷ lệ: {(data.percent * 100).toFixed(1)}%</p>
+      </div>
+    );
+  }
+  return null;
+};
 
-const topEmployeesData = [
-  { name: 'Nguyễn Văn A', dossiers: 120, completed: 95 },
-  { name: 'Trần Thị B', dossiers: 110, completed: 88 },
-  { name: 'Lê Văn C', dossiers: 95, completed: 75 },
-  { name: 'Phạm Thị D', dossiers: 80, completed: 60 },
-];
-
+const CustomComposedTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md text-sm">
+        <p className="font-semibold text-gray-800 mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={`item-${index}`} style={{ color: entry.color }}>
+            {entry.name}: <span className="font-medium">{entry.value.toLocaleString('vi-VN')}</span>
+          </p>
+        ))}
+        <p className="font-semibold text-gray-800 mt-1">
+          Tổng cộng: <span className="font-medium">{payload.reduce((sum: number, entry: any) => sum + entry.value, 0).toLocaleString('vi-VN')}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const AnalyticPage = () => {
-  const [miscData, setMiscData] = useState<MiscData | null>(null);
+  const [analyticState, setAnalyticState] = useState<AnalyticState>({
+    monthlyDossiersData: [],
+    dossierStatusData: [],
+    overviewData: null,
+    miscData: null,
+    selectedMonthDossierCount: 0,
+    selectedMonthCompletedCount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+  const currentMonth = useMemo(() => new Date().getMonth() + 1, []);
+
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+
+  const fetchAnalyticData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [overviewRes, miscRes] = await Promise.all([
+        fetch("/api/analytic/dossier/overview"),
+        fetch("/api/misc"),
+      ]);
+
+      if (!overviewRes.ok) throw new Error(`Lỗi HTTP khi tải dữ liệu tổng quan: ${overviewRes.status}`);
+      if (!miscRes.ok) throw new Error(`Lỗi HTTP khi tải dữ liệu khác: ${miscRes.status}`);
+
+      const overviewData: OverviewData = await overviewRes.json();
+      const miscData: MiscData = await miscRes.json();
+
+      let monthlyChartData: any[] = [];
+      let pieChartData: any[] = [];
+      let displayDossierCounts: StatusCounts = { OBTAINED: 0, NOT_OBTAINED: 0, NOT_WITHIN_SCOPE: 0, PENDING: 0 };
+
+      const zeroCounts = { OBTAINED: 0, NOT_OBTAINED: 0, NOT_WITHIN_SCOPE: 0, PENDING: 0 };
+
+      if (selectedMonth === 0) {
+        const monthFetches = Array.from({ length: 12 }, (_, i) => {
+          const month = i + 1;
+          return fetch(`/api/analytic/dossier/status-by-month/${selectedYear}/${month}`)
+            .then(async (res) => {
+              if (!res.ok) return { statusCounts: zeroCounts };
+              try {
+                const data: MonthlyChartData = await res.json();
+                return data;
+              } catch {
+                return { statusCounts: zeroCounts };
+              }
+            })
+            .catch((err) => {
+              console.warn(`Không thể tải dữ liệu tháng ${month}:`, err);
+              return { statusCounts: zeroCounts };
+            });
+        });
+
+        const monthsData = await Promise.all(monthFetches);
+
+        monthlyChartData = monthsData.map((m, idx) => {
+          const s = m?.statusCounts ?? zeroCounts;
+          return {
+            name: `T${idx + 1}`,
+            'Hoàn thành': Number(s.OBTAINED || 0),
+            'Đang xử lý': Number(s.PENDING || 0),
+            'Không đạt': Number(s.NOT_OBTAINED || 0),
+            'Ngoài phạm vi': Number(s.NOT_WITHIN_SCOPE || 0),
+          };
+        });
+
+        displayDossierCounts = monthsData.reduce(
+          (acc, m) => {
+            const s = m?.statusCounts ?? zeroCounts;
+            acc.OBTAINED += Number(s.OBTAINED || 0);
+            acc.PENDING += Number(s.PENDING || 0);
+            acc.NOT_OBTAINED += Number(s.NOT_OBTAINED || 0);
+            acc.NOT_WITHIN_SCOPE += Number(s.NOT_WITHIN_SCOPE || 0);
+            return acc;
+          },
+          { ...zeroCounts } as StatusCounts
+        );
+      } else {
+        const statusByMonthRes = await fetch(`/api/analytic/dossier/status-by-month/${selectedYear}/${selectedMonth}`);
+        if (!statusByMonthRes.ok) throw new Error(`Lỗi HTTP khi tải dữ liệu trạng thái theo tháng: ${statusByMonthRes.status}`);
+        const statusByMonthData: MonthlyChartData = await statusByMonthRes.json();
+        displayDossierCounts = statusByMonthData.statusCounts ?? displayDossierCounts;
+
+        monthlyChartData = [
+          {
+            name: `Tháng ${selectedMonth}/${selectedYear}`,
+            'Hoàn thành': displayDossierCounts.OBTAINED,
+            'Đang xử lý': displayDossierCounts.PENDING,
+            'Không đạt': displayDossierCounts.NOT_OBTAINED,
+            'Ngoài phạm vi': displayDossierCounts.NOT_WITHIN_SCOPE,
+          },
+        ];
+      }
+
+      const displayMonthTotalDossiers = Object.values(displayDossierCounts).reduce((acc, val) => acc + (Number(val) || 0), 0);
+      const displayMonthCompletedDossiers = Number(displayDossierCounts.OBTAINED || 0);
+
+      pieChartData = displayMonthTotalDossiers > 0 ? [
+        { name: 'Hoàn thành', value: displayDossierCounts.OBTAINED, color: '#22C55E', percent: (displayDossierCounts.OBTAINED / displayMonthTotalDossiers) },
+        { name: 'Đang xử lý', value: displayDossierCounts.PENDING, color: '#FACC15', percent: (displayDossierCounts.PENDING / displayMonthTotalDossiers) },
+        { name: 'Không đạt', value: displayDossierCounts.NOT_OBTAINED, color: '#EF4444', percent: (displayDossierCounts.NOT_OBTAINED / displayMonthTotalDossiers) },
+        { name: 'Ngoài phạm vi', value: displayDossierCounts.NOT_WITHIN_SCOPE, color: '#858585', percent: (displayDossierCounts.NOT_WITHIN_SCOPE / displayMonthTotalDossiers) },
+      ].filter(entry => entry.value > 0)
+        : [];
+
+      setAnalyticState({
+        monthlyDossiersData: monthlyChartData,
+        dossierStatusData: pieChartData,
+        overviewData,
+        miscData,
+        selectedMonthDossierCount: displayMonthTotalDossiers,
+        selectedMonthCompletedCount: displayMonthCompletedDossiers,
+      });
+
+    } catch (e: any) {
+      setError(e.message);
+      console.error("Không thể tải dữ liệu phân tích:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedYear, selectedMonth]);
 
   useEffect(() => {
-    const fetchMiscData = async () => {
-      try {
-        const response = await fetch("/api/misc"); // Your existing API endpoint
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: MiscData = await response.json();
-        setMiscData(data);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMiscData();
-  }, []);
-
-  const totalDocuments = miscData?.dossiers || 0;
-  const totalUsers = miscData?.users || 0;
-  const totalCustomers = miscData?.customers || 0;
-  const completedDocuments = miscData?.evaluationResults || 0;
-
-  const stats = [
-    {
-      label: "Khách hàng",
-      value: totalCustomers.toString(),
-      icon: Briefcase,
-      bgColor: "bg-gradient-to-br from-purple-500 to-indigo-600",
-    },
-    {
-      label: "Nhân viên",
-      value: totalUsers.toString(),
-      icon: Users,
-      bgColor: "bg-gradient-to-br from-green-500 to-emerald-600",
-    },
-    {
-      label: "Tổng hồ sơ",
-      value: totalDocuments.toString(),
-      icon: FileText,
-      bgColor: "bg-gradient-to-br from-blue-500 to-sky-600",
-    },
-    {
-      label: "Hoàn thành",
-      value: completedDocuments.toString(),
-      icon: CheckCircle,
-      bgColor: "bg-gradient-to-br from-orange-500 to-red-600",
-    },
-  ];
+    fetchAnalyticData();
+  }, [fetchAnalyticData]);
+  const percentageChange = analyticState.overviewData?.percentageChange || 0;
+  const isPercentagePositive = percentageChange >= 0;
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="text-center p-8 text-lg text-gray-700">Đang tải dữ liệu phân tích...</div>
+        <LoadingSpinner />
       </AdminLayout>
     );
   }
@@ -107,8 +229,16 @@ const AnalyticPage = () => {
   if (error) {
     return (
       <AdminLayout>
-        <div className="text-center p-8 text-lg text-red-600">
-          Lỗi: {error}. Vui lòng thử lại sau.
+        <div className="text-center p-8 text-lg text-red-600 bg-red-50 rounded-lg border border-red-200 m-4 flex flex-col items-center justify-center min-h-[calc(100vh-100px)]">
+          <CircleHelp size={48} className="text-red-500 mb-4" />
+          <p className="font-semibold mb-2">Lỗi khi tải dữ liệu:</p>
+          <p>{error}. Vui lòng kiểm tra kết nối mạng và thử lại.</p>
+          <button
+            onClick={fetchAnalyticData}
+            className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition duration-200 text-base"
+          >
+            Thử lại
+          </button>
         </div>
       </AdminLayout>
     );
@@ -116,183 +246,162 @@ const AnalyticPage = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Bảng Phân Tích Tổng Quan</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <Breadcrumb pageName="Phân Tích Dữ Liệu" />
+        <button
+          onClick={() => router.push("/admin/baocao")}
+          className="flex items-center text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium transition duration-200 mt-3 sm:mt-0 px-4 py-2 bg-blue-50 rounded-xl hover:bg-blue-100"
+        >
+          Xem báo cáo chi tiết <ArrowRight size={16} className="ml-1" />
+        </button>
+      </div>
 
-        {/* Overview Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className={`relative p-6 rounded-2xl shadow-lg ${stat.bgColor} text-white overflow-hidden`}
-            >
-              <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-white/10 opacity-70"></div>
-              <div className="absolute bottom-0 left-0 -ml-4 -mb-4 w-20 h-20 rounded-full bg-white/10 opacity-70"></div>
-
-              <div className="flex items-center justify-between mb-4 relative z-10">
-                <p className="text-sm font-medium opacity-80">{stat.label}</p>
-                <stat.icon size={24} className="opacity-80" />
-              </div>
-              <p className="text-3xl font-extrabold relative z-10">
-                {stat.value}
-              </p>
+      <div className="space-y-8 p-3 sm:p-3 lg:p-3 bg-gray-50 rounded-2xl">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base text-gray-700">Tổng hồ sơ</h3>
             </div>
-          ))}
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Monthly Dossiers Line Chart */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <TrendingUp size={20} className="mr-2 text-blue-500" />
-              Số lượng Hồ sơ theo Tháng
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart
-                data={monthlyDossiersData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  cursor={{ stroke: '#9ca3af', strokeWidth: 1 }}
-                  labelStyle={{ color: '#374151' }}
-                  itemStyle={{ color: '#4b5563' }}
-                  formatter={(value: number) => value.toLocaleString('vi-VN')}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="Hồ_sơ" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-                <Line type="monotone" dataKey="Hoàn_thành" stroke="#82ca9d" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            <p className="text-4xl font-bold text-gray-900 mb-1">{analyticState.miscData?.dossiers.toLocaleString('vi-VN') || 0}</p>
+            <div className="flex items-center text-sm font-medium">
+              {isPercentagePositive ? (
+                <ArrowUpRight className="text-green-500 mr-1" size={18} />
+              ) : (
+                <ArrowDownRight className="text-red-500 mr-1" size={18} />
+              )}
+              <span className={isPercentagePositive ? "text-green-600" : "text-red-600"}>
+                {Math.abs(percentageChange).toFixed(1)}%
+              </span>
+              <span className="text-gray-500 ml-1">so với tháng trước</span>
+            </div>
           </div>
 
-          {/* Dossier Status Pie Chart */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base text-gray-700">Người dùng</h3>
+            </div>
+            <p className="text-4xl font-bold text-gray-900 mb-1">{analyticState.miscData?.users.toLocaleString('vi-VN') || 0}</p>
+            <span className="text-sm text-gray-500">Tổng số</span>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base text-gray-700">Khách hàng</h3>
+            </div>
+            <p className="text-4xl font-bold text-gray-900 mb-1">{analyticState.miscData?.customers.toLocaleString('vi-VN') || 0}</p>
+            <span className="text-sm text-gray-500">Tổng số</span>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base text-gray-700">Hồ sơ hoàn thành</h3>
+            </div>
+            <p className="text-4xl font-bold text-gray-900 mb-1">{analyticState.miscData?.completedDossiers.toLocaleString('vi-VN') || 0}</p>
+            <span className="text-sm text-gray-500">Tổng số</span>
+          </div>
+        </section>
+
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-gray-500 transition font-bold text-base uppercase">Dữ liệu hồ sơ</p>
+        </div>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <PieChart size={20} className="mr-2 text-red-500" />
-              Tỷ lệ Trạng thái Hồ sơ
-            </h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsPieChart>
-                <Pie
-                  data={dossierStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base text-gray-800 flex items-center font-bold">
+                <BarChart2 size={20} className="mr-2 text-blue-500" />
+                Số lượng hồ sơ theo {selectedMonth === 0 ? 'năm' : 'tháng'}
+              </h2>
+              <div className="flex space-x-2">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="p-2 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
                 >
-                  {dossierStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  <option value={0}>Cả năm</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      Tháng {month}
+                    </option>
                   ))}
-                </Pie>
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="p-2 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
+                >
+                  {Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map((year) => (
+                    <option key={year} value={year}>
+                      Năm {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart
+                data={analyticState.monthlyDossiersData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} className="text-sm text-gray-600" />
+                <YAxis tickLine={false} axisLine={false} className="text-sm text-gray-600" />
                 <Tooltip
-                  formatter={(value: number) => `${value}%`}
-                  labelStyle={{ color: '#374151' }}
-                  itemStyle={{ color: '#4b5563' }}
+                  cursor={{ stroke: '#cbd5e1', strokeWidth: 1 }}
+                  content={<CustomComposedTooltip />}
                 />
-                <Legend />
-              </RechartsPieChart>
+                <Legend wrapperStyle={{ paddingTop: '15px', fontSize: '12px' }} iconType="circle" /> {/* Adjusted font size here */}
+                <Bar dataKey="Hoàn thành" stackId="a" fill="#22C55E" name="Hoàn thành" />
+                <Bar dataKey="Đang xử lý" stackId="a" fill="#FACC15" name="Đang xử lý" />
+                <Bar dataKey="Không đạt" stackId="a" fill="#EF4444" name="Không đạt" />
+                <Bar dataKey="Ngoài phạm vi" stackId="a" fill="#858585" name="Ngoài phạm vi" />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
-        </div>
 
-        {/* Top Employees Bar Chart */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <BarChart2 size={20} className="mr-2 text-yellow-600" />
-            Top Nhân viên thực hiện Hồ sơ
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={topEmployeesData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip
-                cursor={{ stroke: '#9ca3af', strokeWidth: 1 }}
-                labelStyle={{ color: '#374151' }}
-                itemStyle={{ color: '#4b5563' }}
-                formatter={(value: number) => value.toLocaleString('vi-VN')}
-              />
-              <Legend />
-              <Bar dataKey="dossiers" name="Tổng hồ sơ" fill="#8884d8" />
-              <Bar dataKey="completed" name="Hoàn thành" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h2 className="text-base text-gray-800 mb-4 flex items-center font-bold">
+              <PieChart size={20} className="mr-2 text-red-500" />
+              Trạng thái hồ sơ {selectedMonth === 0 ? `năm ${selectedYear}` : `tháng ${selectedMonth}/${selectedYear}`}
+            </h2>
+            {analyticState.dossierStatusData.length > 0 && analyticState.selectedMonthDossierCount > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    data={analyticState.dossierStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    isAnimationActive={true}
+                    labelLine={false}
+                    label={analyticState.dossierStatusData.length > 1 || (analyticState.dossierStatusData.length === 1 && analyticState.dossierStatusData[0].value > 0) ? ({ name, percent }) => `${name} ${((percent as number) * 100).toFixed(1)}%` : undefined}
+                  >
+                    {analyticState.dossierStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomPieTooltip />} />
+                  <Legend
+                    wrapperStyle={{ paddingTop: '15px', fontSize: '14px' }}
+                    iconType="square"
+                    layout={analyticState.dossierStatusData.length > 1 ? "horizontal" : "vertical"}
+                    verticalAlign={analyticState.dossierStatusData.length > 1 ? "bottom" : "middle"}
+                    align={analyticState.dossierStatusData.length > 1 ? "center" : "right"}
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[calc(100%-40px)] text-center text-gray-500 mt-4 p-4 bg-gray-50 rounded-xl">
+                <BarChart2 size={32} className="mb-3 text-gray-400" />
+                <p className="text-base font-medium">Không có dữ liệu trạng thái hồ sơ trong {selectedMonth === 0 ? `năm ${selectedYear}` : `tháng ${selectedMonth}/${selectedYear}`}.</p>
 
-        {/* Example of a simple table for more detailed data */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FileText size={20} className="mr-2 text-purple-600" />
-            Thống kê chi tiết Hồ sơ
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID Hồ sơ
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tên Hồ sơ
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày tạo
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Người phụ trách
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">BMI001</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Giám định Máy A</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Hoàn thành
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2023-01-15</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Nguyễn Văn A</td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">BMI002</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Giám định Xe B</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Đang xử lý
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2023-01-20</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Trần Thị B</td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">BMI003</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Đánh giá Công trình C</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      Chờ duyệt
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2023-02-01</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Lê Văn C</td>
-                </tr>
-              </tbody>
-            </table>
+                <p className="text-sm text-gray-400">Vui lòng kiểm tra các {selectedMonth === 0 ? 'năm' : 'tháng'} khác hoặc thêm hồ sơ mới.</p>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
       </div>
     </AdminLayout>
   );

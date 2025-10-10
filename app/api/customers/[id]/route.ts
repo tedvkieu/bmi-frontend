@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,7 +10,7 @@ export async function GET(
     const token = req.cookies.get("token")?.value;
 
     const springResponse = await fetch(
-      `${process.env.BACKEND_URL }/api/customers/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`,
       {
         method: "GET",
         headers: {
@@ -46,9 +47,9 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
     const token = req.cookies.get("token")?.value;
-    
+
     const res = await fetch(
-      `${process.env.BACKEND_URL }/api/customers/${id}`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`,
       {
         method: "PUT",
         headers: {
@@ -62,6 +63,39 @@ export async function PUT(
     const data = await res.json();
 
     return NextResponse.json(data, { status: res.status });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const token = req.cookies.get("token")?.value;
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (res.status === 204) {
+      // 204 không có body
+      return new NextResponse(null, { status: 204 });
+    }
+
+    let errorData: any = {};
+    try {
+      errorData = await res.json();
+    } catch {
+      // ignore nếu backend không trả JSON
+    }
+
+    return NextResponse.json(errorData, { status: res.status });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }

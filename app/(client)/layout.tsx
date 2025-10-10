@@ -1,8 +1,6 @@
-// app/(client)/layout.tsx
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import AuthWrapper from "./authWrapper";
-import GuideOver from "./components/GuideOver";
 import GuideOverWrapper from "./guideWrapper";
 
 export const metadata: Metadata = {
@@ -23,7 +21,7 @@ export default function ClientLayout({
       allowedRoles={[
         "SERVICE_MANAGER",
         "ADMIN",
-        "IMPORTER",
+        "MANAGER",
         "DOCUMENT_STAFF",
         "ISO_STAFF",
       ]}

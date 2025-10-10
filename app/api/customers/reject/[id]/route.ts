@@ -12,7 +12,7 @@ export async function PUT(
       return NextResponse.json({ success: false, message: "No authentication token" }, { status: 401 });
     }
 
-    const res = await fetch(`${process.env.BACKEND_URL}/api/customers/reject/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/reject/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -24,7 +24,7 @@ export async function PUT(
     let data: any = { success: true, message: "Tài khoản đã bị từ chối" };
     try {
       data = await res.json();
-    } catch (_) {}
+    } catch {}
 
     return NextResponse.json(data, { status: res.status });
   } catch (error: any) {

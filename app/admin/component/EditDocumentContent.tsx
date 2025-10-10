@@ -78,7 +78,7 @@ const EditDocumentContent: React.FC = () => {
     try {
       await axios.put(`/api/dossiers/${id}`, document);
       toast.success("Cập nhật tài liệu thành công!");
-      router.push("/admin/ho-so"); // Quay về trang danh sách sau khi cập nhật
+      router.push("/admin/hoso"); // Quay về trang danh sách sau khi cập nhật
     } catch (e: any) {
       console.error("Failed to update document:", e);
       setError("Không thể cập nhật tài liệu. Vui lòng thử lại.");
@@ -96,7 +96,7 @@ const EditDocumentContent: React.FC = () => {
       case "Số đăng ký":
         return "registrationNo";
       case "Khách hàng yêu cầu giám định":
-        return "customerSubmitId";
+        return "customerSubmit";
       case "Khách hàng nhập khẩu":
         return "customerRelatedId";
       case "Loại hình giám định":
@@ -222,9 +222,7 @@ const EditDocumentContent: React.FC = () => {
     isEditable: boolean = true
   ) => {
     const fieldName = getFieldName(label);
-    const dateValue = dateString
-      ? new Date(dateString).toISOString().split("T")[0]
-      : "";
+    const dateValue = dateString ?? "";
     return (
       <div className="col-span-1">
         <label
@@ -346,7 +344,7 @@ const EditDocumentContent: React.FC = () => {
               false
             )}{" "}
             {/* Đã sửa thành readonly */}
-            {renderDetailItem(
+           {renderDetailItem(
               "Khách hàng yêu cầu giám định",
               document.customerSubmitId,
               "Customer Submit",
@@ -354,13 +352,13 @@ const EditDocumentContent: React.FC = () => {
             )}
             {renderDetailItem(
               "Khách hàng nhập khẩu",
-              document.customerRelatedId,
+              document.customerRelatedName || document.customerRelatedId,
               "Customer Related",
               User
             )}
             {renderDetailItem(
               "Loại hình giám định",
-              document.inspectionTypeId,
+              document.inspectionTypeName || document.inspectionTypeId,
               "Inspection Type",
               FileText
             )}
@@ -389,12 +387,12 @@ const EditDocumentContent: React.FC = () => {
               "Container 40 Feets",
               Container
             )}
-            {renderDetailItem(
+            {/* {renderDetailItem(
               "Trạng thái rời cảng",
               document.bulkShip,
               "Bulk Ship",
               Ship
-            )}
+            )} */}
             {renderDetailItem(
               "Tài liệu khai báo",
               document.declarationDoc,
@@ -438,6 +436,12 @@ const EditDocumentContent: React.FC = () => {
               Clock,
               false
             )}{" "}
+            {renderDetailItem(
+              "Người tạo hồ sơ",
+              document.createdByUserName || document.createdByUserId,
+              "Created By",
+              User
+            )}
             {/* Read-only */}
           </div>
           {/* Footer buttons - Simplified */}
@@ -446,7 +450,7 @@ const EditDocumentContent: React.FC = () => {
             {/* Light gray footer, slightly rounded */}
             <button
               type="button"
-              onClick={() => router.push("/admin/ho-so")}
+              onClick={() => router.push("/admin/hoso")}
               className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-colors"
               disabled={isSaving}
             >

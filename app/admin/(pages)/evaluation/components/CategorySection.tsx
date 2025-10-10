@@ -23,7 +23,7 @@ interface CategorySectionProps {
   onAssignB: (
     members: {
       userId: number;
-      roleCode: "TEAM_LEADER" | "MEMBER" | "TRAINEE";
+      roleCode: string;
     }[]
   ) => Promise<void>;
   onAssignTaskLetter?: (
@@ -48,7 +48,6 @@ export default function CategorySection({
   onAssignB,
   onAssignTaskLetter,
   selectedAssigneesByTask,
-  teamReadyForACD,
 }: CategorySectionProps) {
   // Map category order to letter A/B/C/D
   const categoryLetter = String.fromCharCode(
@@ -70,7 +69,7 @@ export default function CategorySection({
           <select
             className="border rounded px-2 py-1 text-sm"
             value={selectedAssigneesByTask?.[categoryLetter] || ""}
-            disabled={!teamReadyForACD}
+            disabled={false}
             onChange={(e) =>
               onAssignTaskLetter &&
               onAssignTaskLetter(
@@ -86,11 +85,7 @@ export default function CategorySection({
               </option>
             ))}
           </select>
-          {!teamReadyForACD && (
-            <span className="text-red-600">
-              (Vui lòng phân công mục B trước)
-            </span>
-          )}
+          {/* Luôn sẵn sàng chọn, không cần thông báo ràng buộc mục B */}
         </div>
       )}
 

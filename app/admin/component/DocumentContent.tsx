@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
+import { dossierApi } from "../services/dossierApi";
 import {
   CertificateStatusBackend,
   InspectionReport,
@@ -97,136 +98,24 @@ const DocumentsContent: React.FC = () => {
   const [loadingOverallCounts, setLoadingOverallCounts] =
     useState<boolean>(true);
 
-  // Helper to build URLSearchParams
-  const buildSearchParams = useCallback(
-    (
-      page: number,
-      size: number,
-      sort: "newest" | "oldest",
-      search: string,
-      month: string,
-      year: string,
-      status?: InspectionReport["status"] | "all" // Changed type here
-    ): URLSearchParams => {
-      const params = new URLSearchParams({
-        page: String(page),
-        size: String(size),
-        sortBy: sort,
-      });
-
-      if (search.trim() !== "") params.append("search", search);
-      if (month !== "") params.append("month", month);
-      if (year !== "") params.append("year", year);
-
-      if (status && status !== "all") {
-        let backendStatus: CertificateStatusBackend | null = null;
-        if (status === "obtained") backendStatus = "OBTAINED";
-        else if (status === "pending") backendStatus = "PENDING";
-        else if (status === "not_obtained") backendStatus = "NOT_OBTAINED";
-        else if (status === "not_within_scope")
-          backendStatus = "NOT_WITHIN_SCOPE";
-
-        if (backendStatus) params.append("status", backendStatus.toString());
-      }
-      return params;
-    },
-    []
-  );
 
   const fetchOverallCounts = useCallback(async () => {
     setLoadingOverallCounts(true);
     try {
-      const totalParams = buildSearchParams(
-        0,
-        1,
-        "newest",
-        "",
-        monthFilter,
-        yearFilter,
-        "all"
-      );
-      const totalRes = await fetch(`/api/dossiers?${totalParams.toString()}`);
-      const totalData: ReceiptResponse = await totalRes.json();
-
-      const [completedRes, pendingRes, notObtainedRes, notWithinScopeRes] =
-        await Promise.all([
-          fetch(
-            `/api/dossiers?${buildSearchParams(
-              0,
-              1,
-              "newest",
-              "",
-              monthFilter,
-              yearFilter,
-              "obtained"
-            ).toString()}`
-          ),
-          fetch(
-            `/api/dossiers?${buildSearchParams(
-              0,
-              1,
-              "newest",
-              "",
-              monthFilter,
-              yearFilter,
-              "pending"
-            ).toString()}`
-          ),
-          fetch(
-            `/api/dossiers?${buildSearchParams(
-              0,
-              1,
-              "newest",
-              "",
-              monthFilter,
-              yearFilter,
-              "not_obtained"
-            ).toString()}`
-          ),
-          fetch(
-            `/api/dossiers?${buildSearchParams(
-              0,
-              1,
-              "newest",
-              "",
-              monthFilter,
-              yearFilter,
-              "not_within_scope"
-            ).toString()}`
-          ),
-        ]);
-
-      const [
-        completedData,
-        pendingData,
-        notObtainedData,
-        notWithinScopeData,
-      ]: ReceiptResponse[] = await Promise.all([
-        completedRes.json(),
-        pendingRes.json(),
-        notObtainedRes.json(),
-        notWithinScopeRes.json(),
-      ]);
-
-      setOverallCounts({
-        total: totalData.pageData.page.totalElements || 0,
-        completed: completedData.pageData.page.totalElements || 0,
-        pending: pendingData.pageData.page.totalElements || 0,
-        notObtained: notObtainedData.pageData.page.totalElements || 0,
-        notWithinScope: notWithinScopeData.pageData.page.totalElements || 0,
-      });
+      const counts = await dossierApi.getOverallCounts(monthFilter, yearFilter);
+      setOverallCounts(counts);
     } catch (err: any) {
       console.error("Failed to fetch overall document counts:", err);
     } finally {
       setLoadingOverallCounts(false);
     }
-  }, [monthFilter, yearFilter, buildSearchParams]);
+  }, [monthFilter, yearFilter]);
 
   const fetchDocuments = useCallback(async () => {
     setLoadingDocuments(true);
     setErrorDocuments(null);
     try {
-      const params = buildSearchParams(
+      const data = await dossierApi.getDocuments(
         currentPage,
         pageSize,
         sortBy,
@@ -236,13 +125,8 @@ const DocumentsContent: React.FC = () => {
         statusFilter
       );
 
-      const res = await fetch(`/api/dossiers?${params.toString()}`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-      const data: ReceiptResponse = await res.json();
-
       const mappedDocuments: InspectionReport[] = data.pageData.content.map(
-        (doc: Receipt) => ({
+        (doc: any) => ({
           id: String(doc.receiptId),
           name:
             doc.registrationNo ||
@@ -278,7 +162,6 @@ const DocumentsContent: React.FC = () => {
     statusFilter,
     monthFilter,
     yearFilter,
-    buildSearchParams,
   ]);
 
   // Effects to fetch data when filters or pagination change
@@ -328,9 +211,9 @@ const DocumentsContent: React.FC = () => {
 
   const handleView = useCallback(async (id: string) => {
     try {
-      const res = await axios.get<InspectionReportApi>(`/api/dossiers/${id}`);
-      if (res.data) {
-        setSelectedDoc(res.data);
+      const data = await dossierApi.getDocumentById(id);
+      if (data) {
+        setSelectedDoc(data);
         setIsModalOpen(true);
       }
     } catch (err) {
@@ -349,44 +232,18 @@ const DocumentsContent: React.FC = () => {
   const handleDownload = useCallback(async (id: string) => {
     try {
       toast.loading("Đang tạo và tải file...", { id: "downloadToast" });
-      const res = await fetch(
-        `/api/documents/generate-inspection-report/${id}`
-      );
 
-      if (!res.ok) {
-        let errorMessage = "Không thể tạo báo cáo kiểm định";
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData?.message || errorMessage;
-        } catch {
-          // ignore json parse error for binary responses
-        }
-        throw new Error(errorMessage);
-      }
-
-      const blob = await res.blob();
-      if (!blob.size) {
-        throw new Error("Tệp tải xuống rỗng");
-      }
-
-      const disposition = res.headers.get("content-disposition") || "";
-      let downloadName = `inspection_report_${id}.docx`;
-      const utfMatch = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
-      const asciiMatch = disposition.match(/filename="?([^\";]+)"?/i);
-      if (utfMatch && utfMatch[1]) {
-        downloadName = decodeURIComponent(utfMatch[1]);
-      } else if (asciiMatch && asciiMatch[1]) {
-        downloadName = asciiMatch[1];
-      }
+      const blob = await dossierApi.downloadInspectionReport(id);
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = downloadName;
+      link.download = `inspection_report_${id}.docx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+
       toast.success("File đã được tải xuống!", { id: "downloadToast" });
     } catch (error: any) {
       console.error(error);
@@ -410,7 +267,7 @@ const DocumentsContent: React.FC = () => {
   const handleDelete = useCallback(async () => {
     if (!docToDelete) return;
     try {
-      await axios.delete(`/api/dossiers/${docToDelete}`);
+      await dossierApi.deleteDocument(docToDelete);
       toast.success("Đã xóa biên lai");
     } catch (err) {
       console.error("Delete error:", err);
@@ -431,7 +288,7 @@ const DocumentsContent: React.FC = () => {
           id: "deleteManyToast",
         });
         const deletePromises = ids.map((id) =>
-          axios.delete(`/api/dossiers/${id}`)
+          dossierApi.deleteDocument(id)
         );
         await Promise.all(deletePromises);
         toast.success(`Đã xóa thành công ${ids.length} biên lai.`, {
@@ -473,11 +330,10 @@ const DocumentsContent: React.FC = () => {
           <button
             key={i}
             onClick={() => setCurrentPage(i)}
-            className={`px-3 py-1 border text-sm font-medium ${
-              i === currentPage
-                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                : "bg-white border-gray-300 text-black hover:bg-gray-50"
-            }`}
+            className={`px-3 py-1 border text-sm font-medium ${i === currentPage
+              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+              : "bg-white border-gray-300 text-black hover:bg-gray-50"
+              }`}
           >
             {i + 1}
           </button>

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page") || "0";
-    const size = searchParams.get("size") || "10";
+    const size = searchParams.get("size") || "20";
     const search = searchParams.get("search") || "";
     const customerType = searchParams.get("customerType") || "";
 

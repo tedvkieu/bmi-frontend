@@ -1,11 +1,10 @@
-// components/admin/CustomersContent.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Users, UserX, Mail, Phone, Calendar, MoreVertical, FileText, Edit2, Trash2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { IoMdCheckmark } from "react-icons/io";
-import { customerApi, UnactiveCustomer, Customer, CustomerResponse } from "@/app/admin/services/customerApi";
+import { customerApi, UnactiveCustomer, Customer, CustomerResponseNew } from "@/app/admin/services/customerApi";
 import { authApi } from "@/app/services/authApi";
 import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import ConfirmationModal from "@/app/admin/component/document/ConfirmationModal";
@@ -15,20 +14,21 @@ import CustomersNavbar from "./CustomerNavbar";
 import CustomersTable from "./CustomerTable";
 
 const CustomersContent = () => {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true); // Đổi tên để rõ ràng hơn
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [customerTypeFilter, setCustomerTypeFilter] = useState<"all" | "IMPORTER" | "SERVICE_MANAGER">("all");
 
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0); // Luôn là 0-indexed (API page)
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 20; // Đặt pageSize cố định, dùng cho cả API và UI
 
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-
-  const pageSize = 20;
+  const [gotoPageInput, setGotoPageInput] = useState<string>("");
 
   const [unapprovedCustomers, setUnapprovedCustomers] = useState<
     UnactiveCustomer[]
@@ -44,7 +44,35 @@ const CustomersContent = () => {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
   const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
-  const router = useRouter();
+  // Hàm thay đổi trang (luôn nhận 0-indexed page number)
+  const handlePageChange = useCallback((page: number) => {
+    if (page < 0 || (totalPages > 0 && page >= totalPages)) {
+      console.warn("Invalid page number attempted:", page);
+      return;
+    }
+    setCurrentPage(page);
+  }, [totalPages]);
+
+  const handleGotoPageSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!gotoPageInput) return;
+    const nextPageUi = Number.parseInt(gotoPageInput, 10); // Nhận UI page (1-indexed)
+    if (Number.isFinite(nextPageUi) && nextPageUi >= 1 && nextPageUi <= totalPages) {
+      handlePageChange(nextPageUi - 1); // Chuyển sang 0-indexed trước khi gọi
+    } else {
+      toast.error(`Số trang không hợp lệ. Vui lòng nhập số từ 1 đến ${totalPages}.`);
+    }
+    setGotoPageInput("");
+  };
+
+  const resultsRange = useMemo(() => {
+    if (!totalElements || customers.length === 0) {
+      return { start: 0, end: 0 };
+    }
+    const start = (currentPage * pageSize) + 1;
+    const end = Math.min(start + customers.length - 1, totalElements);
+    return { start, end };
+  }, [currentPage, pageSize, totalElements, customers.length]);
 
   const handleSelectCustomer = (customerId: number) => {
     setSelectedCustomers((prev) =>
@@ -55,7 +83,7 @@ const CustomersContent = () => {
   };
 
   const handleSelectAllCustomers = () => {
-    if (selectedCustomers.length === customers.length) {
+    if (selectedCustomers.length === customers.length && customers.length > 0) {
       setSelectedCustomers([]);
     } else {
       setSelectedCustomers(customers.map((c) => c.customerId));
@@ -94,6 +122,7 @@ const CustomersContent = () => {
       toast.error("Xóa khách hàng thất bại");
     } finally {
       setConfirmOpen(false);
+      setSelectedId(null);
     }
   };
 
@@ -128,23 +157,46 @@ const CustomersContent = () => {
 
   const fetchCustomers = useCallback(async () => {
     try {
-      setIsLoadingCustomers(true); // Bắt đầu loading cho bảng
-      const data: CustomerResponse = await customerApi.getAllCustomers(
-        currentPage,
+      setIsLoadingCustomers(true);
+
+      const data = await customerApi.getAllCustomers(
+        currentPage, // ✅ Spring Boot 0-index
         pageSize,
         debouncedSearchTerm,
         customerTypeFilter
       );
-      setCustomers(data.content);
-      setTotalPages(data.totalPages);
-      setTotalElements(data.totalElements);
-    } catch (error) {
-      console.error("Error fetching customers:", error);
+
+      const content = data.content ?? [];
+      const totalElements = data.page?.totalElements ?? 0;
+      const totalPages = data.page?.totalPages ?? 0;
+
+      setCustomers(content);
+      setTotalElements(totalElements);
+      setTotalPages(totalPages);
+
+      // ✅ Nếu currentPage vượt quá totalPages (sau khi lọc hoặc xóa)
+      // Điều chỉnh currentPage về trang cuối cùng có dữ liệu nếu nó vượt quá giới hạn
+      if (totalPages > 0 && currentPage >= totalPages) {
+        setCurrentPage(totalPages - 1);
+      } else if (totalPages === 0 && currentPage !== 0) {
+        // Nếu không có trang nào nhưng currentPage không phải 0
+        setCurrentPage(0);
+      }
+
+      console.log(
+        `Page ${currentPage + 1}/${totalPages} (${totalElements} items)`
+      );
+    } catch (err) {
+      console.error("Error fetching customers:", err);
       toast.error("Không thể tải danh sách khách hàng.");
+      setCustomers([]);
+      setTotalElements(0);
+      setTotalPages(0);
+      setCurrentPage(0); // Reset về trang 0 khi có lỗi
     } finally {
-      setIsLoadingCustomers(false); // Kết thúc loading cho bảng
+      setIsLoadingCustomers(false);
     }
-  }, [currentPage, debouncedSearchTerm, customerTypeFilter, pageSize]);
+  }, [currentPage, pageSize, debouncedSearchTerm, customerTypeFilter, totalPages]);
 
   useEffect(() => {
     fetchCustomers();
@@ -229,12 +281,12 @@ const CustomersContent = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(0);
+    setCurrentPage(0); // Reset về trang đầu tiên (0-indexed) khi tìm kiếm mới
   };
 
   const handleCustomerTypeFilter = (value: "all" | "IMPORTER" | "SERVICE_MANAGER") => {
     setCustomerTypeFilter(value);
-    setCurrentPage(0);
+    setCurrentPage(0); // Reset về trang đầu tiên (0-indexed) khi thay đổi bộ lọc
   };
 
   const onRefresh = () => {
@@ -288,10 +340,27 @@ const CustomersContent = () => {
     }
   };
 
-  // Loại bỏ điều kiện loading toàn bộ trang ở đây
-  // if (loading) {
-  //   return <LoadingSpinner />;
-  // }
+  // Logic hiển thị nút phân trang cho mobile (tương tự như CustomersPagination getPageNumbers)
+  const getMobilePaginationNumbers = () => {
+    const pageNumbers = [];
+    const maxPageButtons = 5;
+    let startPage = 0;
+    let endPage = totalPages - 1;
+
+    if (totalPages > maxPageButtons) {
+      startPage = Math.max(0, currentPage - Math.floor(maxPageButtons / 2));
+      endPage = Math.min(totalPages - 1, startPage + maxPageButtons - 1);
+
+      if (endPage - startPage + 1 < maxPageButtons) {
+        startPage = Math.max(0, totalPages - maxPageButtons);
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
+  };
 
   return (
     <div className="space-y-6">
@@ -329,148 +398,202 @@ const CustomersContent = () => {
           onDeleteSelected={() => openConfirm(null)}
           loading={isLoadingCustomers}
         />
-        {totalPages > 1 && (
-            <CustomersPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalElements={totalElements}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-            />
+        {/* Phân trang cho desktop */}
+        {totalPages > 0 && ( // totalPages > 0 để hiển thị phân trang
+          <CustomersPagination
+            currentPage={currentPage} // Truyền 0-indexed page number
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={pageSize}
+            onPageChange={handlePageChange} // Nhận 0-indexed page number
+          />
         )}
       </div>
 
       {/* Customers - Mobile Cards */}
-      <div className="block lg:hidden space-y-4 relative"> {/* Add relative for mobile spinner */}
-        {isLoadingCustomers && ( // Spinner cho mobile cards
-            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-xl">
-                <LoadingSpinner />
-            </div>
+      <div className="block lg:hidden space-y-4 relative">
+        {isLoadingCustomers && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-xl">
+            <LoadingSpinner />
+          </div>
         )}
-        {customers.length === 0 && !isLoadingCustomers ? ( // "Không có dữ liệu" cho mobile
-            <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <Users size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-base font-bold text-gray-900 mb-2">
-                    Hiện tại chưa có khách hàng nào
-                </h3>
-                <p className="text-black text-sm">
-                    Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn hoặc duyệt tài khoản khách hàng.
-                </p>
-            </div>
+        {customers.length === 0 && !isLoadingCustomers ? (
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+            <Users size={48} className="mx-auto text-gray-400 mb-4" />
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Hiện tại chưa có khách hàng nào
+            </h3>
+            <p className="text-black text-sm">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn hoặc duyệt tài khoản khách hàng.
+            </p>
+          </div>
         ) : (
-            customers.map((customer) => (
+          customers.map((customer) => (
             <div
-                key={customer.customerId}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
+              key={customer.customerId}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
             >
-                <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <Users size={16} className="text-gray-400 flex-shrink-0" />
-                    <div className="min-w-0">
+                  <Users size={16} className="text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 ">
-                        {customer.name}
+                      {customer.name}
                     </p>
                     <p className="text-xs text-black">
-                        ID: {customer.customerId}
+                      ID: {customer.customerId}
                     </p>
-                    </div>
+                  </div>
                 </div>
                 <div className="relative flex-shrink-0">
-                    <button className="p-1 hover:bg-gray-100 rounded">
+                  {/* Option menu (if needed) */}
+                  <button className="p-1 hover:bg-gray-100 rounded">
                     <MoreVertical size={16} className="text-gray-400" />
-                    </button>
+                  </button>
                 </div>
-                </div>
+              </div>
 
-                <div className="space-y-2 mb-3">
+              <div className="space-y-2 mb-3">
                 <div className="flex items-center space-x-2">
-                    <Mail size={14} className="text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-900 ">
+                  <Mail size={14} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-900 ">
                     {customer.email}
-                    </span>
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Phone size={14} className="text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-900 ">
+                  <Phone size={14} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-900 ">
                     {customer.phone}
-                    </span>
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
-                    <Calendar size={14} className="text-gray-400 flex-shrink-0" />
-                    <span className="text-sm text-gray-900">
+                  <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                  <span className="text-sm text-gray-900">
                     {formatDate(customer.createdAt)}
-                    </span>
+                  </span>
                 </div>
-                </div>
+              </div>
 
-                <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <span
-                    className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getCustomerTypeColor(
+                  className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${getCustomerTypeColor(
                     customer.customerType
-                    )}`}
+                  )}`}
                 >
-                    <span>{getCustomerTypeText(customer.customerType)}</span>
+                  <span>{getCustomerTypeText(customer.customerType)}</span>
                 </span>
 
                 <div className="flex items-center space-x-1">
-                    <button
+                  <button
                     onClick={() => handleOpenViewModal(customer)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600"
                     title="Xem chi tiết"
-                    >
+                  >
                     <Eye size={16} />
-                    </button>
-                    <button
+                  </button>
+                  <button
                     onClick={() => handleClickPageForProfile(customer.customerId)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
                     title="Lên hồ sơ"
-                    >
+                  >
                     <FileText size={16} />
-                    </button>
-                    <button
+                  </button>
+                  <button
                     onClick={() => handleEditCustomer(customer.customerId)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600"
                     title="Chỉnh sửa"
-                    >
+                  >
                     <Edit2 size={16} />
-                    </button>
-                    <button
+                  </button>
+                  <button
                     onClick={() => openConfirm(customer.customerId)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600"
                     title="Xóa"
-                    >
+                  >
                     <Trash2 size={16} />
-                    </button>
+                  </button>
                 </div>
-                </div>
+              </div>
             </div>
-            ))
+          ))
         )}
-        {totalPages > 1 && (
-            <CustomersPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalElements={totalElements}
-                pageSize={pageSize}
-                onPageChange={setCurrentPage}
-            />
+        {totalElements > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+            <div className="text-sm text-gray-700 font-medium">
+              Hiển thị{" "}
+              <span className="font-semibold text-gray-900">
+                {resultsRange.start}
+              </span>{" "}
+              -{" "}
+              <span className="font-semibold text-gray-900">
+                {resultsRange.end}
+              </span>{" "}
+              trong tổng số{" "}
+              <span className="font-semibold text-gray-900">
+                {totalElements}
+              </span>{" "}
+              người dùng
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)} // Gọi với 0-indexed page number
+                disabled={currentPage === 0 || isLoadingCustomers}
+                className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Trước
+              </button>
+
+              <div className="flex items-center gap-1">
+                {getMobilePaginationNumbers().map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)} // Gọi với 0-indexed page number
+                    disabled={isLoadingCustomers}
+                    className={`min-w-[36px] px-3 py-1.5 rounded-md text-sm font-medium transition-all ${pageNum === currentPage
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                      }`}
+                  >
+                    {pageNum + 1} {/* Hiển thị cho người dùng là 1-indexed */}
+                  </button>
+                ))}
+              </div>
+
+              {totalPages > 0 && (
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)} // Gọi với 0-indexed page number
+                  disabled={currentPage === totalPages - 1 || isLoadingCustomers}
+                  className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  Tiếp →
+                </button>
+              )}
+
+              <form
+                onSubmit={handleGotoPageSubmit}
+                className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300"
+              >
+                <span className="text-sm text-gray-700">Đến trang</span>
+                <input
+                  value={gotoPageInput}
+                  onChange={(e) => setGotoPageInput(e.target.value)}
+                  placeholder={(currentPage + 1).toString()} // Hiển thị UI page (1-indexed)
+                  className="w-14 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-700 text-center focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  inputMode="numeric"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Đi
+                </button>
+              </form>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Loại bỏ phần "No results" chung ở đây vì nó đã được xử lý trong table và mobile cards */}
-      {/* {customers.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <Users size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-base font-bold text-gray-900 mb-2">
-            Hiện tại chưa có khách hàng nào
-          </h3>
-          <p className="text-black text-sm">
-            Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn hoặc duyệt tài khoản khách hàng.
-          </p>
-        </div>
-      )} */}
-
-      {/* Unapproved Customers Modal */}
       {isUnapprovedModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div

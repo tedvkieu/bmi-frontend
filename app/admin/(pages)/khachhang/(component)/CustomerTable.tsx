@@ -1,4 +1,4 @@
-// components/admin/CustomersTable.tsx
+"use client"
 import React from 'react';
 import { Edit2, Trash2, Eye, FileText, RefreshCw } from 'lucide-react';
 import { Customer } from '@/app/admin/services/customerApi';
@@ -86,9 +86,9 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                                     />
                                 )}
                             </th>
-                            <th className="px-6 py-3 text-left text-sm text-black min-w-[50px]">
-                                STT
-                            </th>
+                            {/* <th className="px-6 py-3 text-left text-sm text-black min-w-[50px]">
+                                ID
+                            </th> */}
                             <th className="px-6 py-3 text-left text-sm font-bold text-black tracking-wider min-w-[150px]">
                                 Khách hàng
                             </th>
@@ -142,7 +142,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                                 </td>
                             </tr>
                         ) : (
-                            customers.map((customer, index) => (
+                            customers.map((customer) => (
                                 <tr key={customer.customerId} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {isMultiSelectMode && (
@@ -154,9 +154,9 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                                             />
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-800">
-                                        {index + 1}
-                                    </td>
+                                    {/* <td className="px-6 py-4 text-sm text-gray-800">
+                                        {customer.customerId}
+                                    </td> */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center space-x-3">
                                             <div className="max-w-[150px]">

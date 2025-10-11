@@ -3,11 +3,11 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CustomersPaginationProps {
-    currentPage: number;
+    currentPage: number; // Đã đổi: Nhận 0-indexed page number
     totalPages: number;
     totalElements: number;
     pageSize: number;
-    onPageChange: (page: number) => void;
+    onPageChange: (page: number) => void; // Gọi với 0-indexed page number
 }
 
 const CustomersPagination: React.FC<CustomersPaginationProps> = ({
@@ -17,26 +17,25 @@ const CustomersPagination: React.FC<CustomersPaginationProps> = ({
     pageSize,
     onPageChange,
 }) => {
-    const startItem = currentPage * pageSize + 1;
+    // Tính toán lại startItem và endItem dựa trên currentPage (0-indexed)
+    const startItem = totalElements === 0 ? 0 : currentPage * pageSize + 1;
     const endItem = Math.min((currentPage + 1) * pageSize, totalElements);
 
     if (totalPages <= 1) return null; // Don't show pagination if only one page
 
     const getPageNumbers = () => {
         const pageNumbers = [];
-        let startPage = Math.max(0, currentPage - 2);
-        let endPage = Math.min(totalPages - 1, currentPage + 2);
+        const maxPageButtons = 5;
+        let startPage = 0;
+        let endPage = totalPages - 1;
 
-        if (totalPages <= 5) {
-            startPage = 0;
-            endPage = totalPages - 1;
-        } else {
-            if (currentPage <= 2) {
-                startPage = 0;
-                endPage = 4;
-            } else if (currentPage >= totalPages - 3) {
-                startPage = totalPages - 5;
-                endPage = totalPages - 1;
+        if (totalPages > maxPageButtons) {
+            startPage = Math.max(0, currentPage - Math.floor(maxPageButtons / 2));
+            endPage = Math.min(totalPages - 1, startPage + maxPageButtons - 1);
+
+            // Điều chỉnh nếu ở gần cuối
+            if (endPage - startPage + 1 < maxPageButtons) {
+                startPage = Math.max(0, totalPages - maxPageButtons);
             }
         }
 
@@ -48,6 +47,7 @@ const CustomersPagination: React.FC<CustomersPaginationProps> = ({
 
     return (
         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            {/* Mobile Pagination */}
             <div className="flex-1 flex justify-between sm:hidden">
                 <button
                     onClick={() => onPageChange(Math.max(0, currentPage - 1))}
@@ -66,6 +66,7 @@ const CustomersPagination: React.FC<CustomersPaginationProps> = ({
                     Sau
                 </button>
             </div>
+            {/* Desktop Pagination */}
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                     <p className="text-sm text-black">
@@ -87,13 +88,13 @@ const CustomersPagination: React.FC<CustomersPaginationProps> = ({
                         {getPageNumbers().map((pageNum) => (
                             <button
                                 key={pageNum}
-                                onClick={() => onPageChange(pageNum)}
+                                onClick={() => onPageChange(pageNum)} // Gọi với 0-indexed page number
                                 className={`relative inline-flex items-center px-2 py-1 border text-sm font-medium ${currentPage === pageNum
                                         ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
                                         : "bg-white border-gray-300 text-black hover:bg-gray-50"
                                     }`}
                             >
-                                {pageNum + 1}
+                                {pageNum + 1} {/* Hiển thị cho người dùng là 1-indexed */}
                             </button>
                         ))}
 

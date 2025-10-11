@@ -34,7 +34,7 @@ export interface Sort {
   empty: boolean;
 }
 
-export interface CustomerResponse { // This is your standard CustomerResponse for paginated data
+export interface CustomerResponse { 
   content: Customer[];
   pageable: Pageable;
   totalPages: number;
@@ -117,7 +117,7 @@ export const customerApi = {
     size: number,
     search?: string,
     customerType?: string
-  ): Promise<CustomerResponse> { // Use the CustomerResponse interface here
+  ): Promise<CustomerResponseNew> { // Use the CustomerResponse interface here
     const token = authApi.getToken();
     if (!token) throw new Error("No authentication token found.");
 
@@ -358,3 +358,13 @@ export const customerApi = {
   }
 
 };
+
+export interface CustomerResponseNew {
+  content: Customer[];
+  page: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}

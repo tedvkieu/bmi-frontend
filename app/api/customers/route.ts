@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers`;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const response = await proxyRequest(req, "/api/customers");
+    const contentType = response.headers.get("content-type") || "";
 
-    const res = await fetch(BACKEND_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: "Spring Boot API error", error: text },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
 
-    console.log("Response from Spring Boot API:", res);
+    const data = await response.json().catch(() => ({}));
 
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
+    if (!response.ok) {
       return NextResponse.json(
-        { message: "Spring Boot API error", error },
-        { status: res.status }
+        { message: "Spring Boot API error", error: data },
+        { status: response.status }
       );
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(
       { message: "Internal Error", error },
@@ -42,11 +46,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const customerType = searchParams.get("customerType") || "";
 
-    // Build query params for Spring Boot API
-    const params = new URLSearchParams({
-      page,
-      size,
-    });
+    const params = new URLSearchParams({ page, size });
 
     if (search) {
       params.append("search", search);
@@ -55,29 +55,45 @@ export async function GET(request: NextRequest) {
       params.append("customerType", customerType);
     }
 
-    console.log("NEXT_PUBLIC_BACKEND_URL  =", process.env.NEXT_PUBLIC_BACKEND_URL);
-    const token = request.cookies.get("token")?.value;
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/page?${params.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        cache: "no-store", // Disable caching for real-time data
-      }
+    console.log(
+      "NEXT_PUBLIC_BACKEND_URL  =",
+      process.env.NEXT_PUBLIC_BACKEND_URL
     );
 
-    console.log("Response from Spring Boot API:", response);
+    const response = await proxyRequest(
+      request,
+      `/api/customers/page?${params.toString()}`
+    );
+    const contentType = response.headers.get("content-type") || "";
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch customers: ${response.statusText}`);
+      if (contentType.includes("application/json")) {
+        const errorBody = await response.json().catch(() => ({}));
+        console.error("Error fetching customers:", errorBody);
+        return NextResponse.json(
+          { error: "Failed to fetch customers", details: errorBody },
+          { status: response.status }
+        );
+      }
+
+      const text = await response.text();
+      console.error("Error fetching customers:", text);
+      return NextResponse.json(
+        { error: "Failed to fetch customers", details: text },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(

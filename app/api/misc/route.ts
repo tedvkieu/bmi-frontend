@@ -1,32 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("token")?.value;
+    const response = await proxyRequest(req, "/api/stats");
+    const contentType = response.headers.get("content-type") || "";
 
-    const springResponse = await fetch(
-      `${NEXT_PUBLIC_BACKEND_URL}/api/stats`,
-      {
-        method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: text || "Failed to fetch stats" },
+          { status: response.status }
+        );
       }
-    );
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
 
-    if (!springResponse.ok) {
-      const errorText = await springResponse.text();
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
       return NextResponse.json(
-        { error: errorText },
-        { status: springResponse.status }
+        { error: data || "Failed to fetch stats" },
+        { status: response.status }
       );
     }
 
-    const data = await springResponse.json();
-
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("API route error:", error);
     return NextResponse.json(

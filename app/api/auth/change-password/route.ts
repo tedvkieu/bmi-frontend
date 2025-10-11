@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-
-const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function PUT(req: NextRequest) {
   try {
@@ -11,35 +9,68 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { currentPassword, newPassword } = body;
+    const { currentPassword, newPassword } = body ?? {};
 
     if (!currentPassword || !newPassword) {
-      return NextResponse.json({ message: "Thiếu thông tin mật khẩu" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Thiếu thông tin mật khẩu" },
+        { status: 400 }
+      );
     }
 
-    // Gọi Spring Boot backend
-    const backendRes = await fetch(`${BACKEND_API}/api/customers/change-password`, {
+    const headers = new Headers(req.headers);
+    headers.set("content-type", "application/json");
+    headers.set("authorization", `Bearer ${token}`);
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      headers.set("cookie", cookieHeader);
+    }
+
+    const proxyReq = new Request(req.url, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify({ currentPassword, newPassword }),
     });
 
-    const data = await backendRes.json();
+    const response = await proxyRequest(
+      proxyReq,
+      "/api/customers/change-password"
+    );
+    const contentType = response.headers.get("content-type") || "";
 
-    if (!backendRes.ok) {
-      return NextResponse.json({ message: data.message || "Đổi mật khẩu thất bại" }, { status: backendRes.status });
+    let payload: any = {};
+    if (contentType.includes("application/json")) {
+      payload = await response.json().catch(() => ({}));
+    } else {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: text || "Đổi mật khẩu thất bại" },
+          { status: response.status }
+        );
+      }
+      payload = { message: text };
     }
 
-    // Xóa token cũ để user login lại
-    const response = NextResponse.json({ message: data.message });
-    response.cookies.set("token", "", { path: "/", expires: new Date(0) });
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: payload.message || "Đổi mật khẩu thất bại" },
+        { status: response.status }
+      );
+    }
 
-    return response;
+    const nextResponse = NextResponse.json(
+      { message: payload.message ?? "Đổi mật khẩu thành công" },
+      { status: response.status }
+    );
+    nextResponse.cookies.set("token", "", { path: "/", expires: new Date(0) });
+
+    return nextResponse;
   } catch (err: any) {
     console.error("Change password error:", err);
-    return NextResponse.json({ message: err.message || "Đổi mật khẩu thất bại" }, { status: 500 });
+    return NextResponse.json(
+      { message: err.message || "Đổi mật khẩu thất bại" },
+      { status: 500 }
+    );
   }
 }

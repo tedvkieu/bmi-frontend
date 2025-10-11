@@ -22,7 +22,11 @@ interface DocumentsTableProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDeleteMany: (ids: string[]) => void;
-  onRefresh: (sortBy?: 'newest' | 'oldest', statusFilter?: InspectionReport['status'] | 'all', searchTerm?: string) => void;
+  onRefresh: (
+    sortBy?: "newest" | "oldest",
+    statusFilter?: InspectionReport["status"] | "all",
+    searchTerm?: string
+  ) => void;
 }
 
 const DocumentsTable: React.FC<DocumentsTableProps> = ({
@@ -38,7 +42,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   const [role, setRole] = useState<string | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
-  const [sortBy, ] = useState<'newest' | 'oldest'>('newest');
+  const [sortBy] = useState<"newest" | "oldest">("newest");
 
   useEffect(() => {
     setRole(authApi.getRoleFromToken());
@@ -90,7 +94,10 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                   <input
                     type="checkbox"
                     className="rounded text-blue-600 focus:ring-blue-500"
-                    checked={selectedDocuments.length === documents.length && documents.length > 0}
+                    checked={
+                      selectedDocuments.length === documents.length &&
+                      documents.length > 0
+                    }
                     onChange={handleSelectAllDocuments}
                     title="Chọn tất cả" // Giữ lại title cho accessibility
                   />
@@ -133,13 +140,20 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                   </CustomTooltip>
 
                   {isAdminOrManager && (
-                    <CustomTooltip content={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"}>
+                    <CustomTooltip
+                      content={
+                        isMultiSelectMode
+                          ? "Thoát chế độ chọn nhiều"
+                          : "Chọn nhiều để xóa"
+                      }
+                    >
                       <button
                         onClick={toggleMultiSelectMode}
-                        className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${isMultiSelectMode
+                        className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                          isMultiSelectMode
                             ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
                             : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
-                          }`}
+                        }`}
                         // title={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"} // Remove native title
                       >
                         {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
@@ -147,17 +161,19 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     </CustomTooltip>
                   )}
 
-                  {isAdminOrManager && isMultiSelectMode && selectedDocuments.length > 0 && (
-                    <CustomTooltip content="Xóa các mục đã chọn">
-                      <button
-                        onClick={handleDeleteSelected}
-                        className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                        // title="Xóa các mục đã chọn" // Remove native title
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </CustomTooltip>
-                  )}
+                  {isAdminOrManager &&
+                    isMultiSelectMode &&
+                    selectedDocuments.length > 0 && (
+                      <CustomTooltip content="Xóa các mục đã chọn">
+                        <button
+                          onClick={handleDeleteSelected}
+                          className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                          // title="Xóa các mục đã chọn" // Remove native title
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </CustomTooltip>
+                    )}
                   <span>Tùy chọn</span>
                 </div>
               </th>
@@ -185,8 +201,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 return (
                   <tr
                     key={doc.id}
-                    className={`hover:bg-blue-50 transition-colors duration-200 ${selectedDocuments.includes(doc.id) && isMultiSelectMode ? "bg-blue-50" : ""
-                      }`}
+                    className={`hover:bg-blue-50 transition-colors duration-200 ${
+                      selectedDocuments.includes(doc.id) && isMultiSelectMode
+                        ? "bg-blue-50"
+                        : ""
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isMultiSelectMode && (
@@ -237,7 +256,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           </button>
                         </CustomTooltip>
 
-                        <CustomTooltip content="Gán người dùng">
+                        <CustomTooltip content="Phân công giám định viên">
                           <button
                             onClick={() => {
                               const reg = doc.registrationNo || doc.name;
@@ -272,17 +291,20 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         </CustomTooltip>
 
                         <CustomTooltip
-                          content={canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"}
+                          content={
+                            canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa"
+                          }
                         >
                           <button
                             onClick={() => {
                               if (canEdit) onEdit(doc.id);
                             }}
                             disabled={!canEdit}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                              canEdit
                                 ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
                                 : "text-gray-300 cursor-not-allowed"
-                              }`}
+                            }`}
                             // title={ canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa" } // Remove native title
                           >
                             <Edit2 size={20} />
@@ -297,10 +319,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                               if (canDelete) onDelete(doc.id);
                             }}
                             disabled={!canDelete}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                              canDelete
                                 ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
                                 : "text-gray-300 cursor-not-allowed"
-                              }`}
+                            }`}
                             // title={canDelete ? "Xóa" : "Không có quyền xóa"} // Remove native title
                           >
                             <Trash2 size={20} />

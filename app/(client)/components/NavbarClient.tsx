@@ -32,9 +32,14 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const u = customerApi.getUser();
-    if (u) {
-      setUser(u);
+    const stored = customerApi.getUser();
+    if (stored) {
+      setUser({
+        email: stored.email,
+        fullName: stored.fullName,
+        role: stored.customerType,
+        userId: stored.customerId,
+      });
     }
     setLoading(false);
   }, []);

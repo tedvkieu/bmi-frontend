@@ -1,27 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(req: NextRequest) {
   try {
     const email = req.nextUrl.searchParams.get("email");
     if (!email) {
-      return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Email is required" },
+        { status: 400 }
+      );
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/email?email=${encodeURIComponent(email)}`);
+    const response = await proxyRequest(
+      req,
+      `/api/customers/email?email=${encodeURIComponent(email)}`
+    );
+    const contentType = response.headers.get("content-type") || "";
 
-    if (!res.ok) {
-      const text = await res.text();
-      return NextResponse.json({ success: false, message: text || "Customer not found" }, { status: res.status });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      return NextResponse.json(
+        {
+          success: response.ok,
+          message: response.ok ? text : text || "Customer not found",
+        },
+        { status: response.status }
+      );
     }
 
-    const data = await res.json(); // trả CustPublicResponse từ BE
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            (data && data.message) || (data && data.error) || "Customer not found",
+        },
+        { status: response.status }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data, // không unwrap, để FE thấy rõ
+      data,
     });
   } catch (error: any) {
     console.error("Error fetching customer by email:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }

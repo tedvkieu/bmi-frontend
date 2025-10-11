@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
-const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const token = request.cookies.get("token")?.value;
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { id } = await params;
+  const response = await proxyRequest(
+    request,
+    `/api/notifications/${id}/read`
+  );
 
-  const res = await fetch(`${BACKEND_API}/api/notifications/${id}/read`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: "Failed to mark notification as read" }, { status: res.status });
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Failed to mark notification as read" },
+      { status: response.status }
+    );
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true }, { status: response.status });
 }

@@ -1,30 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ year: string}> }
+  { params }: { params: Promise<{ year: string }> }
 ) {
   try {
     const { year } = await params;
-    const token = req.cookies.get("token")?.value;
+    const response = await proxyRequest(
+      req,
+      `/api/dossiers/analytics/status-by-year/${year}`
+    );
+    const contentType = response.headers.get("content-type") || "";
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/status-by-year/${year}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      return NextResponse.json({ message: "API error", error }, { status: response.status });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: "API error", error: text },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: "API error", error: data },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json({ message: "Internal Error", error }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Error", error },
+      { status: 500 }
+    );
   }
 }

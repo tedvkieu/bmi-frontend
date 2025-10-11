@@ -1,40 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
+  try {
+    const response = await proxyRequest(request, "/api/customers/login");
+    const contentType = response.headers.get("content-type") || "";
 
-        // Get backend URL with fallback
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-        const loginUrl = `${backendUrl}/api/customers/login`;
-
-        // Forward request to backend
-        const response = await fetch(loginUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
-
-
-        const data = await response.json();
-        console.log('- Response data:', data);
-
-        if (!response.ok) {
-            return NextResponse.json(
-                { message: data.message || 'Đăng nhập thất bại' },
-                { status: response.status }
-            );
-        }
-
-        // Return the response from backend
-        return NextResponse.json(data);
-    } catch (error) {
-        console.error('❌ Auth proxy error:', error);
+    if (!contentType.includes("application/json")) {
+      const fallback = await response.text();
+      if (!response.ok) {
         return NextResponse.json(
-            { message: 'Lỗi kết nối đến server' },
-            { status: 500 }
+          { message: fallback || "Đăng nhập thất bại" },
+          { status: response.status }
         );
+      }
+      return new NextResponse(fallback, {
+        status: response.status,
+        headers: response.headers,
+      });
     }
+
+    const data = await response.json().catch(() => ({}));
+    console.log("- Response data:", data);
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: data.message || "Đăng nhập thất bại" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("❌ Auth proxy error:", error);
+    return NextResponse.json(
+      { message: "Lỗi kết nối đến server" },
+      { status: 500 }
+    );
+  }
 }

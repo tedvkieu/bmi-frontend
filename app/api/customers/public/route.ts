@@ -1,31 +1,35 @@
 import { NextResponse } from "next/server";
-
-const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL }/api/customers/public`;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const response = await proxyRequest(req, "/api/customers/public");
+    const contentType = response.headers.get("content-type") || "";
 
-    const res = await fetch(BACKEND_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: "Spring Boot API error", error: text },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
 
-    console.log("Response from Spring Boot API:", res);
+    const data = await response.json().catch(() => ({}));
 
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({}));
+    if (!response.ok) {
       return NextResponse.json(
-        { message: "Spring Boot API error", error },
-        { status: res.status }
+        { message: "Spring Boot API error", error: data },
+        { status: response.status }
       );
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(
       { message: "Internal Error", error },
@@ -33,4 +37,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

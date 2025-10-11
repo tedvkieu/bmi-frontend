@@ -1,31 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/document-request`;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get("token")?.value;
-
-    const response = await fetch(BACKEND_API, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      cache: "no-store",
-    });
+    const response = await proxyRequest(
+      request,
+      "/api/customers/document-request"
+    );
+    const contentType = response.headers.get("content-type") || "";
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Spring Boot error:", errorText);
+      if (contentType.includes("application/json")) {
+        const body = await response.json().catch(() => ({}));
+        console.error("Spring Boot error:", body);
+        return NextResponse.json(
+          { error: `Failed to fetch customers (${response.status})`, details: body },
+          { status: response.status }
+        );
+      }
+
+      const text = await response.text();
+      console.error("Spring Boot error:", text);
       return NextResponse.json(
-        { error: `Failed to fetch customers (${response.status})` },
+        { error: `Failed to fetch customers (${response.status})`, details: text },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(

@@ -1,35 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ year: string; month: string }> }
 ) {
   try {
-    const token = req.cookies.get("token")?.value;
-    
     const { year, month } = await params;
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/status-by-month/${year}/${month}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        cache: "no-store",
-      }
+    const response = await proxyRequest(
+      req,
+      `/api/dossiers/analytics/status-by-month/${year}/${month}`
     );
+    const contentType = response.headers.get("content-type") || "";
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      return NextResponse.json({ message: "API error", error }, { status: response.status });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: "API error", error: text },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: "API error", error: data },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Internal Error:", error);
-    return NextResponse.json({ message: "Internal Error", error }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Error", error },
+      { status: 500 }
+    );
   }
 }

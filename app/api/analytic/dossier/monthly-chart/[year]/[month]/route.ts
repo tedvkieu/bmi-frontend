@@ -1,38 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ year: string; month: string }> }
 ) {
   try {
     const { year, month } = await params;
-    const token = req.cookies.get("token")?.value;
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dossiers/analytics/status-by-month/${year}/${month}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        cache: "no-store",
-      }
+    const response = await proxyRequest(
+      req,
+      `/api/dossiers/analytics/status-by-month/${year}/${month}`
     );
+    const contentType = response.headers.get("content-type") || "";
 
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { message: "API error from backend", error: text },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      // Attempt to parse error message from backend, defaulting to an empty object
-      const error = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { message: "API error from backend", error }, // Added more specific message
+        { message: "API error from backend", error: data },
         { status: response.status }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    // Catch any unexpected errors during the process (e.g., network issues, JSON parsing errors)
     return NextResponse.json(
-      { message: "Internal server error", error: String(error) }, // Added more specific message
+      { message: "Internal server error", error: String(error) },
       { status: 500 }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,30 +11,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
-    const springResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/customers/upload-excel`,
+    const headers = new Headers();
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      headers.set("cookie", cookieHeader);
+    }
+
+    const response = await proxyRequest(
+      req,
+      "/api/customers/upload-excel",
       {
-        method: "POST",
-        headers: {
-          // "Content-Type": "multipart/form-data",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: formData,
+        headers,
+        contentType: null,
       }
     );
+    const contentType = response.headers.get("content-type") || "";
 
-    if (!springResponse.ok) {
-      const text = await springResponse.text();
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: text || "Upload failed" },
+          { status: response.status }
+        );
+      }
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
       return NextResponse.json(
-        { error: text },
-        { status: springResponse.status }
+        { error: data || "Upload failed" },
+        { status: response.status }
       );
     }
 
-    const data = await springResponse.json();
     console.log("Spring Response JSON:", data);
-
-    return NextResponse.json(data, { status: springResponse.status });
+    return NextResponse.json(data, { status: response.status });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

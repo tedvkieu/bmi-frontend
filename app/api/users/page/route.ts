@@ -1,34 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-
-    // Tạo URL cho backend
-    const url = new URL(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/page`);
-
-    // Forward tất cả query params từ frontend
+    const params = new URLSearchParams();
     searchParams.forEach((value, key) => {
-      url.searchParams.append(key, value);
+      params.append(key, value);
     });
 
-    const token = request.cookies.get("token")?.value;
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      cache: "no-store",
-    });
+    const response = await proxyRequest(
+      request,
+      `/api/users/page?${params.toString()}`
+    );
+    const contentType = response.headers.get("content-type") || "";
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch users: ${response.statusText}`);
+      if (contentType.includes("application/json")) {
+        const body = await response.json().catch(() => ({}));
+        console.error("Error fetching users:", body);
+        return NextResponse.json(
+          { error: "Failed to fetch users", details: body },
+          { status: response.status }
+        );
+      }
+
+      const text = await response.text();
+      console.error("Error fetching users:", text);
+      return NextResponse.json(
+        { error: "Failed to fetch users", details: text },
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(

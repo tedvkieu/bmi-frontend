@@ -2,15 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { dossierApi } from "../services/dossierApi";
-import {
-  CertificateStatusBackend,
-  InspectionReport,
-  InspectionReportApi,
-} from "../types/inspection";
+import { InspectionReport, InspectionReportApi } from "../types/inspection";
 import DocumentsTable from "./document/DocumentsTable";
 import DocumentMobileCard from "./document/DocumentMobileCard";
 import LoadingSpinner from "./document/LoadingSpinner";
@@ -25,7 +20,6 @@ import {
 } from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 import DocumentSearchBar from "./DocumentSearchBar";
-import { Receipt, ReceiptResponse } from "../types/dossier";
 
 const DocumentViewModal = dynamic(
   () => import("./document/DocumentViewModal"),
@@ -97,7 +91,6 @@ const DocumentsContent: React.FC = () => {
   });
   const [loadingOverallCounts, setLoadingOverallCounts] =
     useState<boolean>(true);
-
 
   const fetchOverallCounts = useCallback(async () => {
     setLoadingOverallCounts(true);
@@ -287,9 +280,7 @@ const DocumentsContent: React.FC = () => {
         toast.loading(`Đang xóa ${ids.length} biên lai...`, {
           id: "deleteManyToast",
         });
-        const deletePromises = ids.map((id) =>
-          dossierApi.deleteDocument(id)
-        );
+        const deletePromises = ids.map((id) => dossierApi.deleteDocument(id));
         await Promise.all(deletePromises);
         toast.success(`Đã xóa thành công ${ids.length} biên lai.`, {
           id: "deleteManyToast",
@@ -330,10 +321,11 @@ const DocumentsContent: React.FC = () => {
           <button
             key={i}
             onClick={() => setCurrentPage(i)}
-            className={`px-3 py-1 border text-sm font-medium ${i === currentPage
-              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-              : "bg-white border-gray-300 text-black hover:bg-gray-50"
-              }`}
+            className={`px-3 py-1 border text-sm font-medium ${
+              i === currentPage
+                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                : "bg-white border-gray-300 text-black hover:bg-gray-50"
+            }`}
           >
             {i + 1}
           </button>

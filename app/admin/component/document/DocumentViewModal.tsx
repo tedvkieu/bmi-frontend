@@ -202,7 +202,10 @@ const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             )}
             {renderDetailItem(
               "Khách hàng yêu cầu giám định",
-              document.customerSubmit.name,
+              document.customerSubmit?.name ??
+                document.customerSubmitName ??
+                document.customerSubmitId ??
+                "N/A",
               "Customer Submit"
             )}
             {renderDetailItem(

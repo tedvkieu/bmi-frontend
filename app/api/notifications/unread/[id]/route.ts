@@ -1,26 +1,41 @@
-// File: app/api/notifications/unread/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(
   request: NextRequest,
- { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const userId = id;
-  const token = request.cookies.get("token")?.value;
+  const response = await proxyRequest(
+    request,
+    `/api/notifications/unread/${id}`
+  );
+  const contentType = response.headers.get("content-type") || "";
 
-  const res = await fetch(`${BACKEND_API}/api/notifications/unread/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  if (!response.ok) {
+    if (contentType.includes("application/json")) {
+      const body = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: "Failed to fetch notifications", details: body },
+        { status: response.status }
+      );
+    }
 
-  if (!res.ok) {
-    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: res.status });
+    const text = await response.text();
+    return NextResponse.json(
+      { error: "Failed to fetch notifications", details: text },
+      { status: response.status }
+    );
   }
 
-  const data = await res.json();
-  return NextResponse.json(data);
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    return new NextResponse(text, {
+      status: response.status,
+      headers: response.headers,
+    });
+  }
+
+  const data = await response.json().catch(() => ({}));
+  return NextResponse.json(data, { status: response.status });
 }

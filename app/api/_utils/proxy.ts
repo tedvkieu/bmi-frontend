@@ -1,49 +1,103 @@
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export async function proxyRequest(request: Request, targetPath: string) {
+type ProxyOptions = {
+  body?: BodyInit | null;
+  headers?: HeadersInit;
+  /**
+   * When null, skips setting Content-Type so fetch can infer (e.g. multipart FormData).
+   * When string, forces a specific Content-Type.
+   * Undefined keeps the default behaviour (copy from original request or fall back to JSON).
+   */
+  contentType?: string | null;
+};
+
+export async function proxyRequest(
+  request: Request,
+  targetPath: string,
+  options: ProxyOptions = {}
+) {
   const url = `${BASE_URL}${targetPath}`;
 
-  const headers = new Headers();
-  // Copy over Authorization if present
-  const auth = request.headers.get("authorization");
-  if (auth) headers.set("authorization", auth);
+  const headers = new Headers(options.headers ?? undefined);
 
-  // Also forward token from cookies as Bearer
-  const cookie = request.headers.get("cookie") || "";
-  if (!auth && cookie) {
-    const token = cookie
+  // Determine authorization priority: explicit headers > incoming request > cookie token.
+  let authHeader = headers.get("authorization") || request.headers.get("authorization");
+  const cookieHeader =
+    headers.get("cookie") ??
+    request.headers.get("cookie") ??
+    "";
+
+  if (!authHeader && cookieHeader) {
+    const token = cookieHeader
       .split(";")
       .map((c) => c.trim())
       .find((c) => c.startsWith("token="))
       ?.split("=")[1];
-    if (token) headers.set("authorization", `Bearer ${token}`);
+    if (token) {
+      authHeader = `Bearer ${token}`;
+    }
   }
 
-  // Content-Type
+  if (authHeader && !headers.has("authorization")) {
+    headers.set("authorization", authHeader);
+  }
+
+  if (cookieHeader && !headers.has("cookie") && cookieHeader.length > 0) {
+    headers.set("cookie", cookieHeader);
+  }
+
   const method = request.method.toUpperCase();
-  const contentType = request.headers.get("content-type") || "application/json";
-  if (method !== "GET" && method !== "HEAD") {
-    headers.set("content-type", contentType);
+  const hasBody = method !== "GET" && method !== "HEAD";
+
+  const bodyToSend =
+    options.body !== undefined
+      ? options.body ?? undefined
+      : hasBody
+      ? ((request.body as BodyInit | null) ?? undefined)
+      : undefined;
+
+  const isFormDataBody =
+    typeof FormData !== "undefined" && bodyToSend instanceof FormData;
+
+  const originalContentType = request.headers.get("content-type");
+  const explicitContentType = options.contentType;
+
+  if (
+    hasBody &&
+    bodyToSend !== undefined &&
+    explicitContentType !== null &&
+    !headers.has("content-type")
+  ) {
+    if (typeof explicitContentType === "string") {
+      headers.set("content-type", explicitContentType);
+    } else if (!isFormDataBody && originalContentType) {
+      headers.set("content-type", originalContentType);
+    } else if (!isFormDataBody && !originalContentType) {
+      headers.set("content-type", "application/json");
+    }
   }
 
-  const init: RequestInit & { duplex?: string } = {
+  const init: RequestInit & { duplex?: "half" } = {
     method,
     headers,
-    body:
-      method === "GET" || method === "HEAD"
-        ? undefined
-        : request.body,
     cache: "no-store",
-    duplex: "half", // không báo lỗi nữa
-  };  
+  };
+
+  if (hasBody && bodyToSend !== undefined) {
+    init.body = bodyToSend;
+    const isReadableStream =
+      typeof ReadableStream !== "undefined" &&
+      bodyToSend instanceof ReadableStream;
+    if (isReadableStream) {
+      init.duplex = "half";
+    }
+  }
 
   const res = await fetch(url, init);
 
-  // Lấy content-type từ backend
-  const contentTypeRes = res.headers.get("content-type") || "";
+  const responseContentType = res.headers.get("content-type") || "";
 
-  // Nếu là JSON, parse ra để có thể xử lý/log dễ hơn
-  if (contentTypeRes.includes("application/json")) {
+  if (responseContentType.includes("application/json")) {
     const json = await res.json();
     return new Response(JSON.stringify(json), {
       status: res.status,
@@ -51,7 +105,6 @@ export async function proxyRequest(request: Request, targetPath: string) {
     });
   }
 
-  // Còn lại (Excel, PDF, ảnh, zip...) → forward raw stream
   return new Response(res.body, {
     status: res.status,
     headers: res.headers,

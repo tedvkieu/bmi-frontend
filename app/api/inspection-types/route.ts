@@ -1,25 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(request: NextRequest) {
   try {
-    const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL }/api/inspection-types`;
-    const token = request.cookies.get("token")?.value;
-    const res = await fetch(BACKEND_API, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      // Khi dùng Next.js server → tránh cache cứng
-      cache: "no-store",
-    });
+    const response = await proxyRequest(request, "/api/inspection-types");
+    const contentType = response.headers.get("content-type") || "";
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch: ${res.status}`);
+    if (!response.ok) {
+      if (contentType.includes("application/json")) {
+        const errorBody = await response.json().catch(() => ({}));
+        return NextResponse.json(
+          { error: errorBody?.error || `Failed to fetch: ${response.status}` },
+          { status: response.status }
+        );
+      }
+      const text = await response.text();
+      return NextResponse.json(
+        { error: text || `Failed to fetch: ${response.status}` },
+        { status: response.status }
+      );
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },

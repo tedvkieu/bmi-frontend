@@ -1,39 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const response = await proxyRequest(request, "/api/notifications/unread");
+  const contentType = response.headers.get("content-type") || "";
 
-  const res = await fetch(`${BACKEND_API}/api/notifications/unread`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  if (!response.ok) {
+    if (contentType.includes("application/json")) {
+      const body = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: "Failed to fetch notifications", details: body },
+        { status: response.status }
+      );
+    }
 
-  if (!res.ok) {
-    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: res.status });
+    const text = await response.text();
+    return NextResponse.json(
+      { error: "Failed to fetch notifications", details: text },
+      { status: response.status }
+    );
   }
 
-  const data = await res.json();
-  return NextResponse.json(data);
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    return new NextResponse(text, {
+      status: response.status,
+      headers: response.headers,
+    });
+  }
+
+  const data = await response.json().catch(() => ({}));
+  return NextResponse.json(data, { status: response.status });
 }
 
 export async function POST(request: NextRequest) {
   const { id } = await request.json();
   const token = request.cookies.get("token")?.value;
 
-  const res = await fetch(`${BACKEND_API}/api/notifications/${id}/read`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: "Failed to mark as read" }, { status: res.status });
+  if (!id) {
+    return NextResponse.json(
+      { error: "Notification id is required" },
+      { status: 400 }
+    );
   }
 
-  return NextResponse.json({ success: true });
+  const headers = new Headers(request.headers);
+  headers.set("content-type", "application/json");
+  if (token) {
+    headers.set("authorization", `Bearer ${token}`);
+  }
+  const cookieHeader = request.headers.get("cookie");
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
+  }
+
+  const proxyReq = new Request(request.url, {
+    method: "POST",
+    headers,
+  });
+
+  const response = await proxyRequest(
+    proxyReq,
+    `/api/notifications/${id}/read`
+  );
+  if (!response.ok) {
+    return NextResponse.json(
+      { error: "Failed to mark as read" },
+      { status: response.status }
+    );
+  }
+
+  return NextResponse.json({ success: true }, { status: response.status });
 }

@@ -1,33 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-
-
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const response = await proxyRequest(req, "/api/machines");
+    const contentType = response.headers.get("content-type") || "";
 
-    // Gọi trực tiếp sang BE Spring Boot
-    const springResponse = await fetch(`${backendUrl}/api/machines`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: text || "Failed to create machine" },
+          { status: response.status }
+        );
+      }
 
-    console.log("Response from Spring Boot API:", springResponse);
-    if (!springResponse.ok) {
-      const errorText = await springResponse.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
       return NextResponse.json(
-        { error: errorText },
-        { status: springResponse.status }
+        { error: data || "Failed to create machine" },
+        { status: response.status }
       );
     }
 
-    const data = await springResponse.json();
-
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("API route error:", error);
     return NextResponse.json(

@@ -1,34 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_API = `${process.env.NEXT_PUBLIC_BACKEND_URL }/api/inspection-files`;
+import { proxyRequest } from "@/app/api/_utils/proxy";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const response = await proxyRequest(req, "/api/inspection-files");
+    const contentType = response.headers.get("content-type") || "";
 
-    // Gọi trực tiếp sang BE Spring Boot
-    const springResponse = await fetch(
-      BACKEND_API,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    if (!contentType.includes("application/json")) {
+      const text = await response.text();
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: text || "Failed to create inspection file" },
+          { status: response.status }
+        );
       }
-    );
 
-    if (!springResponse.ok) {
-      const errorText = await springResponse.text();
+      return new NextResponse(text, {
+        status: response.status,
+        headers: response.headers,
+      });
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
       return NextResponse.json(
-        { error: errorText },
-        { status: springResponse.status }
+        { error: data || "Failed to create inspection file" },
+        { status: response.status }
       );
     }
 
-    const data = await springResponse.json();
-
-    return NextResponse.json(data);
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("API route error:", error);
     return NextResponse.json(

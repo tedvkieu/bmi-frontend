@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { dossierApi } from "../services/dossierApi";
-import { InspectionReport, InspectionReportApi } from "../types/inspection";
+import { InspectionReport } from "../types/inspection";
 import DocumentsTable from "./document/DocumentsTable";
 import DocumentMobileCard from "./document/DocumentMobileCard";
 import LoadingSpinner from "./document/LoadingSpinner";
@@ -20,11 +19,8 @@ import {
 } from "lucide-react";
 import { IoDocumentOutline } from "react-icons/io5";
 import DocumentSearchBar from "./DocumentSearchBar";
-
-const DocumentViewModal = dynamic(
-  () => import("./document/DocumentViewModal"),
-  { ssr: false }
-);
+import DossierViewModal from "../(pages)/hoso/(components)/DossierViewModal";
+import { DossierDetails } from "@/app/types/dossier";
 
 // Define a type for your overall status counts
 interface OverallStatusCounts {
@@ -55,7 +51,7 @@ const DocumentsContent: React.FC = () => {
 
   // State for filters and pagination
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [localSearchTerm, setLocalSearchTerm] = useState<string>(""); // For immediate input feedback
+  const [localSearchTerm, setLocalSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<
     InspectionReport["status"] | "all"
   >("all");
@@ -68,7 +64,7 @@ const DocumentsContent: React.FC = () => {
   const [loadingDocuments, setLoadingDocuments] = useState<boolean>(true);
   const [errorDocuments, setErrorDocuments] = useState<string | null>(null);
 
-  const [selectedDoc, setSelectedDoc] = useState<InspectionReportApi | null>(
+  const [selectedDoc, setSelectedDoc] = useState<DossierDetails | null>(
     null
   );
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -228,7 +224,7 @@ const DocumentsContent: React.FC = () => {
 
   const handleView = useCallback(async (id: string) => {
     try {
-      const data = await dossierApi.getDocumentById(id);
+      const data = await dossierApi.getDocumentByIdDetails(id);
       if (data) {
         setSelectedDoc(data);
         setIsModalOpen(true);
@@ -238,6 +234,7 @@ const DocumentsContent: React.FC = () => {
       toast.error("Không thể lấy dữ liệu biên lai");
     }
   }, []);
+
 
   const handleEdit = useCallback(
     (id: string) => {
@@ -569,7 +566,7 @@ const DocumentsContent: React.FC = () => {
       </div>
 
       {isModalOpen && selectedDoc && (
-        <DocumentViewModal
+        <DossierViewModal
           isOpen={true}
           onClose={() => setIsModalOpen(false)}
           document={selectedDoc}

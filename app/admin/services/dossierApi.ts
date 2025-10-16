@@ -1,5 +1,7 @@
+import { DossierDetails } from "@/app/types/dossier";
 import { authApi } from "../../services/authApi";
 import { InspectionReportApi } from "../types/inspection";
+import { MachineDetails } from "@/app/types/machines";
 
 export interface Receipt {
     receiptId: number;
@@ -227,6 +229,22 @@ export const dossierApi = {
             cache: "no-store",
         });
         return handleResponse<InspectionReportApi>(res);
+    },
+
+    async getDocumentByIdDetails(id: string): Promise<DossierDetails> {
+        const res = await fetch(`/api/dossiers/${id}/details`, {
+            headers: authHeaders(),
+            cache: "no-store",
+        });
+        return handleResponse<DossierDetails>(res);
+    },
+
+    async getMachinesByDossier(id: string): Promise<MachineDetails[]> {
+        const res = await fetch(`/api/dossiers/${id}/machines`, {
+            headers: authHeaders(),
+            cache: "no-store",
+        });
+        return handleResponse<MachineDetails[]>(res);
     },
 
     // Delete document by ID

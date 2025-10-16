@@ -15,6 +15,7 @@
     "axios": "^1.12.1",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
+    "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.22",
     "heroicons": "^2.2.0",

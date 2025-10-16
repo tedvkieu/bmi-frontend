@@ -9,11 +9,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { InspectionReport } from "../../types/inspection";
-import StatusBadge from "./StatusBadge";
 import { authApi } from "@/app/services/authApi";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import CustomTooltip from "./CustomTooltip"; // Import your custom tooltip
+import CustomTooltip from "./CustomTooltip";
+import StatusDropdown from "../dossier/StatusDropDown";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -22,6 +22,10 @@ interface DocumentsTableProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDeleteMany: (ids: string[]) => void;
+  onStatusChange: (
+    id: string,
+    newStatus: InspectionReport["status"]
+  ) => Promise<void>;
   onRefresh: (
     sortBy?: "newest" | "oldest",
     statusFilter?: InspectionReport["status"] | "all",
@@ -36,6 +40,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   onEdit,
   onDelete,
   onDeleteMany,
+  onStatusChange,
   onRefresh,
 }) => {
   const router = useRouter();
@@ -99,7 +104,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                       documents.length > 0
                     }
                     onChange={handleSelectAllDocuments}
-                    title="Chọn tất cả" // Giữ lại title cho accessibility
+                    title="Chọn tất cả"
                   />
                 )}
               </th>
@@ -130,7 +135,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     <button
                       onClick={() => onRefresh(sortBy)}
                       className="p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 group"
-                      // title="Làm mới dữ liệu" // Remove native title
                     >
                       <RefreshCw
                         size={20}
@@ -154,7 +158,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                             ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
                             : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
                         }`}
-                        // title={isMultiSelectMode ? "Thoát chế độ chọn nhiều" : "Chọn nhiều để xóa"} // Remove native title
                       >
                         {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
                       </button>
@@ -168,7 +171,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         <button
                           onClick={handleDeleteSelected}
                           className="p-2.5 rounded-full text-white bg-red-500 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                          // title="Xóa các mục đã chọn" // Remove native title
                         >
                           <Trash2 size={20} />
                         </button>
@@ -197,6 +199,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 const isCompleted = doc.status === "obtained";
                 const canDelete = isAdminOrManager;
                 const canEdit = isAdminOrManager || !isCompleted;
+                const canChangeStatus = isAdminOrManager;
 
                 return (
                   <tr
@@ -214,7 +217,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           className="rounded text-blue-600 focus:ring-blue-500"
                           checked={selectedDocuments.includes(doc.id)}
                           onChange={() => handleSelectDocument(doc.id)}
-                          title="Chọn tài liệu này" // Giữ lại title cho accessibility
+                          title="Chọn tài liệu này"
                         />
                       )}
                     </td>
@@ -232,7 +235,12 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={doc.status} size="md" />
+                      <StatusDropdown
+                        currentStatus={doc.status}
+                        receiptId={doc.id}
+                        onStatusChange={onStatusChange}
+                        disabled={!canChangeStatus}
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
@@ -240,7 +248,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           <button
                             onClick={() => onView(doc.id)}
                             className="p-2.5 rounded-full text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                            // title="Xem chi tiết" // Remove native title
                           >
                             <Eye size={20} />
                           </button>
@@ -250,7 +257,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                           <button
                             onClick={() => onDownload(doc.id)}
                             className="p-2.5 rounded-full text-gray-600 hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
-                            // title="Tải xuống" // Remove native title
                           >
                             <Download size={20} />
                           </button>
@@ -267,7 +273,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                               );
                             }}
                             className="p-2.5 rounded-full text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
-                            // title="Gán người dùng" // Remove native title
                           >
                             <UserPlus size={20} />
                           </button>
@@ -284,7 +289,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                               );
                             }}
                             className="p-2.5 rounded-full text-gray-600 hover:bg-amber-100 hover:text-amber-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-                            // title="Đánh giá" // Remove native title
                           >
                             <ClipboardCheck size={20} />
                           </button>
@@ -305,7 +309,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                 ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
                                 : "text-gray-300 cursor-not-allowed"
                             }`}
-                            // title={ canEdit ? "Chỉnh sửa" : "Không có quyền chỉnh sửa" } // Remove native title
                           >
                             <Edit2 size={20} />
                           </button>
@@ -324,7 +327,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                                 ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
                                 : "text-gray-300 cursor-not-allowed"
                             }`}
-                            // title={canDelete ? "Xóa" : "Không có quyền xóa"} // Remove native title
                           >
                             <Trash2 size={20} />
                           </button>

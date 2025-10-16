@@ -29,7 +29,7 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
   }, []);
 
   const handleLoginClick = () => {
-    router.push("/auth/login");
+    router.push("/auth");
     setIsOpen(false);
   };
 
@@ -53,9 +53,18 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
 
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6">
-          <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
-          <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
-          <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
+          <NavButton
+            label="Gửi Liên Hệ"
+            onClick={() => onScrollToContact("form")}
+          />
+          <NavButton
+            label="Thông tin liên hệ"
+            onClick={() => onScrollToContact("info")}
+          />
+          <NavButton
+            label="Tra cứu hồ sơ"
+            onClick={() => onScrollToContact("dossierSearch")}
+          />
 
           {user && role === "CUSTOMER" ? (
             <UserMenu />
@@ -85,9 +94,18 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
       {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden bg-white border-t mt-2 px-4 py-3 space-y-3">
-          <NavButton label="Gửi Liên Hệ" onClick={() => onScrollToContact("form")} />
-          <NavButton label="Thông tin liên hệ" onClick={() => onScrollToContact("info")} />
-          <NavButton label="Tra cứu hồ sơ" onClick={() => onScrollToContact("dossierSearch")} />
+          <NavButton
+            label="Gửi Liên Hệ"
+            onClick={() => onScrollToContact("form")}
+          />
+          <NavButton
+            label="Thông tin liên hệ"
+            onClick={() => onScrollToContact("info")}
+          />
+          <NavButton
+            label="Tra cứu hồ sơ"
+            onClick={() => onScrollToContact("dossierSearch")}
+          />
 
           {user && role === "CUSTOMER" ? (
             <UserMenu />

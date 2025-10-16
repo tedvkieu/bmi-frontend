@@ -16,7 +16,6 @@ interface NavbarClientProps {
   onScrollToContact?: (section: string) => void;
 }
 
-
 export interface Customer {
   email: string;
   fullName: string;
@@ -45,7 +44,7 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
   }, []);
 
   const handleLoginClick = () => {
-    router.push("/auth/login");
+    router.push("/auth");
     setIsOpen(false);
   };
 

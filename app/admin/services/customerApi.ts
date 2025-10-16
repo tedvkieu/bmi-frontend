@@ -81,6 +81,7 @@ export type DocumentRequest = {
   customerType: string;
   createdAt: string;
   updatedAt: string;
+  draftDossierId?: number | null;
 };
 
 export interface CustPublicResponse {

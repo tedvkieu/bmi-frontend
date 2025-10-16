@@ -2,7 +2,7 @@ import React from "react";
 
 interface Machine {
   machineId: number;
-  receiptId: number;
+  dossierId: number;
   registrationNo: string | null;
   itemName: string;
   brand: string;

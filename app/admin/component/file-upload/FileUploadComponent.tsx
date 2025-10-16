@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 interface Machine {
   machineId: number;
-  receiptId: number;
+  dossierId: number;
   registrationNo: string | null;
   itemName: string;
   brand: string;
@@ -45,6 +45,7 @@ interface UploadResultData {
   machines: Machine[];
 }
 interface FileUploadProps {
+  dossierId: number | null;
   onUploadSuccess: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
@@ -490,6 +491,7 @@ const UploadResultDisplay: React.FC<{
 };
 
 export const FileUploadComponent: React.FC<FileUploadProps> = ({
+  dossierId,
   onUploadSuccess,
   onCancel,
   loading,
@@ -564,15 +566,22 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   const handleUpload = async () => {
     if (!selectedFile) return;
 
+    if (!dossierId) {
+      setError("Không xác định được hồ sơ cần cập nhật.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
+    formData.append("dossierId", dossierId.toString());
 
     try {
       const res = await fetch("/api/dossiers/upload-excel", {
         method: "POST",
+        credentials: "include",
         body: formData,
       });
 
@@ -580,7 +589,30 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
 
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(errorText || "Có lỗi xảy ra khi upload file");
+        let errorMessage = "Có lỗi xảy ra khi upload file";
+        if (errorText) {
+          try {
+            const parsed = JSON.parse(errorText);
+            if (parsed?.error) {
+              if (typeof parsed.error === "string") {
+                errorMessage = parsed.error;
+              } else if (typeof parsed.error.message === "string") {
+                errorMessage = parsed.error.message;
+              } else if (typeof parsed.message === "string") {
+                errorMessage = parsed.message;
+              }
+            } else if (typeof parsed?.message === "string") {
+              errorMessage = parsed.message;
+            }
+          } catch {
+            errorMessage = errorText;
+          }
+        }
+        if (errorMessage.includes("Số đăng ký đã tồn tại")) {
+          const idx = errorMessage.indexOf("Số đăng ký đã tồn tại");
+          errorMessage = errorMessage.slice(idx).trim();
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();

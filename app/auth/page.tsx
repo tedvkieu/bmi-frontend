@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Shield, ArrowRight, ChevronLeft } from "lucide-react";
+import { Users, Shield, ArrowRight } from "lucide-react";
 
 const AuthPage: React.FC = () => {
   const router = useRouter();
@@ -20,10 +20,6 @@ const AuthPage: React.FC = () => {
         router.push("/auth/admin/login");
       }
     }, 300);
-  };
-
-  const resetSelection = () => {
-    setSelectedRole(null);
   };
 
   return (

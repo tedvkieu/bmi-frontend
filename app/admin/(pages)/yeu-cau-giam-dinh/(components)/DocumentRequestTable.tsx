@@ -28,6 +28,7 @@ interface DocumentRequest {
   note?: string;
   dob?: string | null;
   updatedAt?: string;
+  draftDossierId?: number | null;
 }
 
 interface DocumentRequestTableProps {
@@ -65,8 +66,12 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
   const [itemsPerPage] = useState(10);
   const router = useRouter();
 
-  const handleClickPage = (id: number) => {
-    router.push(`/admin/hoso/tao-ho-so/${id}`);
+  const handleClickPage = (dossierId?: number | null) => {
+    if (!dossierId) {
+      toast.error("Không tìm thấy hồ sơ nháp tương ứng để tạo.");
+      return;
+    }
+    router.push(`/admin/hoso/tao-ho-so/${dossierId}`);
   };
 
   const openConfirm = (id: number) => {
@@ -336,7 +341,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                             <div className="flex justify-center gap-2">
                               <button
                                 onClick={() =>
-                                  handleClickPage(request.customerId)
+                                  handleClickPage(request.draftDossierId)
                                 }
                                 className="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
                                 title="Lên hồ sơ"

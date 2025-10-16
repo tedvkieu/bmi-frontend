@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 
 interface CustomerProfileSectionProps {
   customer: Customer | null;
+  dossierId: number | null;
   formData: InspectionFormData;
   setFormData: React.Dispatch<React.SetStateAction<InspectionFormData>>;
   onSubmit: () => void;
@@ -35,6 +36,7 @@ const customerTypeOptions = [
 
 export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   customer,
+  dossierId,
   onUploadSuccess,
   onRelatedCustomerCreated,
 }) => {
@@ -155,6 +157,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   if (showUploadForm) {
     return (
       <FileUploadComponent
+        dossierId={dossierId ?? null}
         onUploadSuccess={handleUploadSuccess}
         onCancel={() => setShowUploadForm(false)}
         loading={uploadLoading}
@@ -635,7 +638,13 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
               </div>
             </div>
             <button
-              onClick={() => setShowUploadForm(true)}
+              onClick={() => {
+                if (!dossierId) {
+                  toast.error("Không xác định được hồ sơ cần cập nhật từ file.");
+                  return;
+                }
+                setShowUploadForm(true);
+              }}
               className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Upload File

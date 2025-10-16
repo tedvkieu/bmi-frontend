@@ -4,7 +4,7 @@ import { Users, UserX, Mail, Phone, Calendar, MoreVertical, FileText, Edit2, Tra
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { IoMdCheckmark } from "react-icons/io";
-import { customerApi, UnactiveCustomer, Customer, CustomerResponseNew } from "@/app/admin/services/customerApi";
+import { customerApi, UnactiveCustomer, Customer } from "@/app/admin/services/customerApi";
 import { authApi } from "@/app/services/authApi";
 import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import ConfirmationModal from "@/app/admin/component/document/ConfirmationModal";
@@ -45,13 +45,13 @@ const CustomersContent = () => {
   const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
   // Hàm thay đổi trang (luôn nhận 0-indexed page number)
-  const handlePageChange = useCallback((page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 0 || (totalPages > 0 && page >= totalPages)) {
       console.warn("Invalid page number attempted:", page);
       return;
     }
     setCurrentPage(page);
-  }, [totalPages]);
+  };
 
   const handleGotoPageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,23 +168,23 @@ const CustomersContent = () => {
 
       const content = data.content ?? [];
       const totalElements = data.page?.totalElements ?? 0;
-      const totalPages = data.page?.totalPages ?? 0;
+      const newTotalPages = data.page?.totalPages ?? 0;
 
       setCustomers(content);
       setTotalElements(totalElements);
-      setTotalPages(totalPages);
+      setTotalPages(newTotalPages);
 
       // ✅ Nếu currentPage vượt quá totalPages (sau khi lọc hoặc xóa)
       // Điều chỉnh currentPage về trang cuối cùng có dữ liệu nếu nó vượt quá giới hạn
-      if (totalPages > 0 && currentPage >= totalPages) {
-        setCurrentPage(totalPages - 1);
-      } else if (totalPages === 0 && currentPage !== 0) {
+      if (newTotalPages > 0 && currentPage >= newTotalPages) {
+        setCurrentPage(newTotalPages - 1);
+      } else if (newTotalPages === 0 && currentPage !== 0) {
         // Nếu không có trang nào nhưng currentPage không phải 0
         setCurrentPage(0);
       }
 
       console.log(
-        `Page ${currentPage + 1}/${totalPages} (${totalElements} items)`
+        `Page ${currentPage + 1}/${newTotalPages} (${totalElements} items)`
       );
     } catch (err) {
       console.error("Error fetching customers:", err);
@@ -196,7 +196,7 @@ const CustomersContent = () => {
     } finally {
       setIsLoadingCustomers(false);
     }
-  }, [currentPage, pageSize, debouncedSearchTerm, customerTypeFilter, totalPages]);
+  }, [currentPage, pageSize, debouncedSearchTerm, customerTypeFilter]);
 
   useEffect(() => {
     fetchCustomers();

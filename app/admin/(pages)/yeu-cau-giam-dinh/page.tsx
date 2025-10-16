@@ -18,6 +18,7 @@ interface DocumentRequest {
   note?: string;
   dob?: string | null;
   updatedAt?: string;
+  draftDossierId?: number | null;
 }
 
 const DocumentRequestPage: React.FC = () => {

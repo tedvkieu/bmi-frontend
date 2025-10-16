@@ -198,6 +198,7 @@ const InspectionFormClient: React.FC = () => {
         {currentSection === 1 && (
           <CustomerProfileSection
             customer={customer}
+            dossierId={null}
             formData={customerProfileData}
             setFormData={setCustomerProfileData}
             onSubmit={handleCustomerProfileSubmit}

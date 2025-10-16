@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import LoginPageAdmin from "../../components/LoginAdminPage";
+import LoginPageAdmin from "../../../components/LoginAdminPage";
 
 export default function Page() {
   return (

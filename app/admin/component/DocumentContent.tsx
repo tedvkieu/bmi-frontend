@@ -178,6 +178,30 @@ const DocumentsContent: React.FC = () => {
     };
   }, [localSearchTerm]);
 
+  const handleStatusChange = useCallback(
+    async (id: string, newStatus: InspectionReport["status"]) => {
+      try {
+        // Gọi API để cập nhật trạng thái
+        //await dossierApi.updateDocumentStatus(id, newStatus);
+
+        // Cập nhật state local ngay lập tức cho UX mượt mà
+        setDocuments((prev) =>
+          prev.map((doc) =>
+            doc.id === id ? { ...doc, status: newStatus } : doc
+          )
+        );
+
+        // Refresh overall counts vì trạng thái đã thay đổi
+        fetchOverallCounts();
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        // Throw lại error để StatusDropdown xử lý hiển thị toast
+        throw error;
+      }
+    },
+    [fetchOverallCounts]
+  );
+
   // Handlers for filter changes
   const handleStatusFilterChange = useCallback(
     (filter: InspectionReport["status"] | "all") => {
@@ -533,11 +557,12 @@ const DocumentsContent: React.FC = () => {
             <DocumentsTable
               documents={documents}
               onView={handleView}
-              onDelete={confirmDelete}
               onDownload={handleDownload}
               onEdit={handleEdit}
-              onRefresh={handleRefresh}
+              onDelete={confirmDelete}
               onDeleteMany={handleDeleteMany}
+              onStatusChange={handleStatusChange} // Thêm prop mới
+              onRefresh={handleRefresh}
             />
           )}
         </div>

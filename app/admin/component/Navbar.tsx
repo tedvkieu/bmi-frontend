@@ -1,9 +1,10 @@
+// app/admin/components/Navbar.tsx
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   LineChart,
@@ -18,266 +19,162 @@ import {
   TextSearch,
   Handshake,
 } from "lucide-react";
-
 import { authApi } from "../../services/authApi";
 
-interface NavItem {
+type NavItem = {
   key: string;
-  icon?: React.ElementType;
   label: string;
-  badge?: string | null;
   href?: string;
+  icon?: React.ElementType;
+  badge?: string | number | null;
   subItems?: NavItem[];
-}
+};
 
-interface NavSection {
-  key: string;
-  title?: string;
-  items: NavItem[];
-}
 
 interface NavbarProps {
-  currentPage: string;
-  isSidebarOpen: boolean;
+  collapsed: boolean; // true = collapsed (thin), false = expanded
+  onToggle: () => void;
+  onNavigate: (route: string) => void;
   isMobile: boolean;
-  onPageChange: (page: string) => void;
+  currentPageKey: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-  currentPage,
-  isSidebarOpen,
-  isMobile,
-  onPageChange,
-}) => {
+const Navbar: React.FC<NavbarProps> = ({ collapsed, onToggle, onNavigate, currentPageKey }) => {
+  const pathname = usePathname();
   const [role, setRole] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const pathname = usePathname();
-
   useEffect(() => {
-    const r = authApi.getRoleFromToken();
+    const r = authApi.getRoleFromToken?.() ?? null;
     setRole(r);
-    // Removed API fetch for brevity, assuming it works
   }, []);
 
-  const navSections: NavSection[] = [
-    {
-      key: "dashboard",
-      title: "Dashboard",
-      items: [
-        {
-          key: "dashboard_overview",
-          icon: LayoutDashboard,
-          label: "Tổng quan",
-          href: "/admin",
-        },
-        {
-          key: "dashboard_analytic",
-          icon: LineChart,
-          label: "Phân tích hệ thống",
-          href: "/admin/analytic",
-        },
-        {
-          key: "reports",
-          icon: BarChart3,
-          label: "Báo cáo dữ liệu giám định",
-          href: "/admin/baocao",
-        },
-      ],
-    },
-    {
-      key: "management_section",
-      title: "Quản lý hồ sơ",
-      items: [
-        {
-          key: "documents_requests",
-          icon: TextSearch,
-          label: "Yêu cầu giám định",
-          href: "/admin/yeu-cau-giam-dinh",
-        },
-        {
-          key: "documents",
-          icon: FileText,
-          label: "Hồ sơ giám định",
-          href: "/admin/hoso",
-        },
-        {
-          key: "assignment",
-          icon: Handshake,
-          label: "Phân công hồ sơ",
-          href: "/admin/phancong",
-        },
-        {
-          key: "evaluation",
-          icon: GanttChart,
-          label: "Đánh giá hồ sơ",
-          href: "/admin/evaluation",
-        },
-      ],
-    },
-    {
-      key: "client_section",
-      title: "Khách hàng & Nhân viên",
-      items: [
-        {
-          key: "clients",
-          icon: Briefcase,
-          label: "Khách hàng",
-          href: "/admin/khachhang",
-        },
-        {
-          key: "users",
-          icon: UserCog,
-          label: "Nhân viên",
-          href: "/admin/nhanvien",
-        },
-      ],
-    },
-    {
-      key: "report_section",
-      title: "Cài đặt",
-      items: [
-  
-        {
-          key: "settings",
-          icon: Settings,
-          label: "Cài đặt",
-          href: "/admin/caidat",
-        },
-      ],
-    },
-  ];
+  // Navigation structure grouped by workflow + management
+  const navSections = useMemo(
+    () => [
+      {
+        key: "dashboard",
+        title: "Dashboard",
+        items: [
+          { key: "dashboard_overview", label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
+          { key: "dashboard_analytic", label: "Phân tích dữ liệu", href: "/admin/analytic", icon: LineChart },
+          { key: "reports", label: "Tổng hợp / Báo cáo", href: "/admin/baocao", icon: BarChart3 },
+        ] as NavItem[],
+      },
+      {
+        key: "workflow",
+        title: "Quy trình giám định",
+        items: [
+          { key: "documents_requests", label: "Tiếp nhận yêu cầu", href: "/admin/yeu-cau-giam-dinh", icon: TextSearch },
+          { key: "documents", label: "Giám sát / Quản lý hồ sơ", href: "/admin/hoso", icon: FileText },
+          { key: "assignment", label: "Phân công giám định", href: "/admin/phancong", icon: Handshake },
+          { key: "evaluation", label: "Đánh giá hồ sơ", href: "/admin/evaluation", icon: GanttChart },
+        ] as NavItem[],
+      },
+      {
+        key: "management",
+        title: "Khách hàng & Nhân sự",
+        items: [
+          { key: "clients", label: "Khách hàng", href: "/admin/khachhang", icon: Briefcase },
+          { key: "users", label: "Nhân viên", href: "/admin/nhanvien", icon: UserCog },
+        ] as NavItem[],
+      },
+      {
+        key: "system",
+        title: "Hệ thống",
+        items: [{ key: "settings", label: "Cài đặt", href: "/admin/caidat", icon: Settings }],
+      },
+    ],
+    []
+  );
 
-  const shouldHideItem = (itemKey: string, userRole: string | null): boolean => {
-    if (!userRole || userRole === "ADMIN") return false;
-    if (userRole === "MANAGER") return itemKey === "settings";
-    if (userRole === "ISO_STAFF" || userRole === "DOCUMENT_STAFF") {
+  // Role-based hide logic
+  const shouldHideItem = (itemKey: string) => {
+    if (!role || role === "ADMIN") return false;
+    if (role === "MANAGER") return itemKey === "settings";
+    if (role === "ISO_STAFF" || role === "DOCUMENT_STAFF") {
       return itemKey === "settings" || itemKey === "users";
     }
     return false;
   };
 
-  const filterNavItemsByRole = (items: NavItem[]): NavItem[] =>
-    items
-      .map((item) => {
-        if (shouldHideItem(item.key, role)) return null;
-        if (item.subItems) {
-          const filteredSub = filterNavItemsByRole(item.subItems);
-          return filteredSub.length > 0 ? { ...item, subItems: filteredSub } : null;
-        }
-        return item;
-      })
-      .filter((item): item is NavItem => item !== null);
+  const filteredSections = navSections
+    .map((sec) => ({
+      ...sec,
+      items: sec.items.filter((i) => !shouldHideItem(i.key)),
+    }))
+    .filter((s) => s.items.length > 0);
 
-  const filteredNavSections = navSections.map((section) => ({
-    ...section,
-    items: filterNavItemsByRole(section.items),
-  })).filter(section => section.items.length > 0);
+  // active detection
+  const isActive = (item: NavItem) => {
+    if (item.href && pathname === item.href) return true;
+    if (item.href && item.href !== "/admin" && pathname?.startsWith(item.href + "/")) return true;
+    if (item.key === currentPageKey) return true;
+    if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
+    return false;
+  };
 
-  const isItemActive = useCallback((item: NavItem): boolean => {
-    if (item.href === pathname) {
-      return true;
-    }
-
-    if (item.href && item.href !== '/admin' && pathname.startsWith(item.href + '/')) {
-      return true;
-    }
-
-    if (item.key === "dashboard_overview" && pathname === "/admin") {
-      return true;
-    }
-
-    if (item.subItems && item.subItems.some(sub => isItemActive(sub))) {
-        return true;
-    }
-
-    return item.key === currentPage;
-  }, [pathname, currentPage]);
 
   useEffect(() => {
-    let newOpenDropdown: string | null = null;
-    filteredNavSections.forEach(section => {
-      section.items.forEach(item => {
-        if (item.subItems) {
-          if (item.subItems.some(subItem => isItemActive(subItem))) {
-            newOpenDropdown = item.key;
-          }
+    let autoOpen: string | null = null;
+    filteredSections.forEach((sec) =>
+      (sec.items as NavItem[]).forEach((it) => {
+        if (it.subItems && it.subItems.some((s) => isActive(s))) {
+          autoOpen = it.key;
         }
-      });
-    });
-    setOpenDropdown(newOpenDropdown);
-  }, [pathname, filteredNavSections, currentPage, isItemActive]);
-
-  const renderNavItem = (item: NavItem, isSubItem: boolean = false) => {
-    const isActive = isItemActive(item);
-    const isOpen = openDropdown === item.key;
-
-    let paddingLeftClass = "pl-3";
-    if (isSubItem) {
-      paddingLeftClass = "pl-9";
-    }
-
-    if (!(isSidebarOpen || isMobile)) {
-      paddingLeftClass = "px-0 justify-center";
-    }
-
-    const commonClasses = `flex items-center ${paddingLeftClass} py-2.5 rounded-lg transition-all duration-200 ${isActive
-      ? "bg-blue-600 text-white shadow-sm"
-      : "text-gray-700 hover:bg-gray-100"
-      }`;
-
-    const content = (
-      <>
-        {item.icon && (
-          <item.icon
-            size={20}
-            className={`flex-shrink-0`}
-          />
-        )}
-        {(isSidebarOpen || isMobile) && (
-          <div className="flex-grow flex items-center min-w-0">
-            <span className="ml-3 font-medium truncate flex-grow text-sm">
-              {item.label}
-            </span>
-            {item.badge && (
-              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full flex-shrink-0 ml-2 font-medium">
-                {item.badge}
-              </span>
-            )}
-            {item.subItems && (
-              <span className="ml-2 flex-shrink-0 text-gray-400">
-                {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </span>
-            )}
-          </div>
-        )}
-      </>
+      })
     );
+    setOpenDropdown((prev) => (prev ?? autoOpen));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, role]);
+
+
+  const handleItemClick = (item: NavItem) => {
+    if (item.subItems) {
+      setOpenDropdown((prev) => (prev === item.key ? null : item.key));
+      return;
+    }
+    if (item.href) onNavigate(item.href);
+  };
+
+  const renderItem = (item: NavItem, isSub = false) => {
+    const active = isActive(item);
+    const open = openDropdown === item.key;
+
+    const base = `flex items-center ${isSub ? "pl-6" : "pl-3"} pr-3 py-2 rounded-lg transition-all duration-150
+      ${active ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"}`;
 
     return (
-      <div key={item.key}>
-        {item.href && !item.subItems ? (
-          <Link
-            href={item.href}
-            onClick={() => onPageChange(item.key)}
-            className={`w-full ${commonClasses}`}
-          >
-            {content}
-          </Link>
-        ) : (
-          <button
-            onClick={() =>
-              setOpenDropdown(openDropdown === item.key ? null : item.key)
-            }
-            className={`w-full text-left ${commonClasses}`}
-          >
-            {content}
-          </button>
-        )}
+      <div key={item.key} className={isSub ? "ml-2" : ""}>
+        <button
+          onClick={() => handleItemClick(item)}
+          className={`w-full text-left ${base}`}
+          aria-expanded={!!open}
+          aria-current={active ? "page" : undefined}
+          title={collapsed ? item.label : undefined} // tooltip text when collapsed
+        >
+          {item.icon && (
+            <span className="flex-shrink-0">
+              <item.icon size={18} className={`${active ? "text-blue-600" : "text-gray-500"}`} />
+            </span>
+          )}
 
-        {item.subItems && (isSidebarOpen || isMobile) && isOpen && (
-          <div className="ml-7 mt-1 space-y-1">
-            {item.subItems.map((sub) => renderNavItem(sub, true))}
+          {!collapsed && (
+            <span className="ml-3 flex items-center justify-between w-full">
+              <span className="text-sm font-medium truncate">{item.label}</span>
+              {item.subItems && (open ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+            </span>
+          )}
+        </button>
+
+        {/* Subitems */}
+        {item.subItems && !collapsed && open && (
+          <div className="mt-1 space-y-1 pl-2">
+            {item.subItems.map((sub) => (
+              <div key={sub.key} className="pl-3">
+                {renderItem(sub, true)}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -285,53 +182,59 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <div
-      className={`bg-white shadow-lg transition-all duration-300 z-50 h-screen flex flex-col fixed left-0 top-0 border-r border-gray-100 ${isSidebarOpen
-        ? "w-72"
-        : isMobile
-          ? "-translate-x-full w-72"
-          : "w-20"
-        }`}
+    <aside
+      className={`fixed left-0 top-0 h-screen z-50 flex flex-col border-r border-gray-100 bg-white transition-all duration-200
+        ${collapsed ? "w-20" : "w-64"}`}
+      aria-label="Sidebar"
     >
-      <div className="p-4 border-b border-gray-100 flex-shrink-0 flex items-center justify-center">
-        {!(isSidebarOpen || isMobile) ? (
-          <div className="w-full h-12  flex items-center justify-center flex-shrink-0">
-            <Image
-              src="/images/logo-2.jpg"
-              alt="Logo Bảo Minh"
-              width={52}
-              height={52}
-              className="object-contain rounded-sm"
-            />
+      <div className="h-16 flex items-center justify-between px-3 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <Link href="/admin" onClick={() => onNavigate("/admin")} className="flex items-center">
+              <div className="w-8 h-8 relative">
+                <Image src="/images/logo-2.jpg" alt="Logo" fill sizes="32px" className="object-contain rounded-sm" />
+              </div>
+              {!collapsed && <span className="ml-2 font-semibold text-gray-800 text-sm">Bảo Minh</span>}
+            </Link>
           </div>
-        ) : (
-          <div className="min-w-0">
-            <Image
-              src="/images/logo-1.jpg"
-              alt="Logo Bảo Minh"
-              width={140}
-              height={40}
-              className="object-contain"
-            />
-          </div>
-        )}
+        </div>
+
+        {/* collapse toggle */}
+        <div>
+          <button
+            onClick={onToggle}
+            className="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
+            aria-label={collapsed ? "Mở sidebar" : "Thu nhỏ sidebar"}
+          >
+            {/* simple chevron */}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d={collapsed ? "M8 5v14l11-7L8 5z" : "M16 19V5l-11 7 11 7z"} fill="currentColor" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-hidden px-4 py-6 text-sm custom-scrollbar">
-        {filteredNavSections.map((section) => (
-          <div key={section.key} className="mb-6">
-            {isSidebarOpen && section.title && (
-              <h4 className="text-gray-500 text-xs font-semibold uppercase px-3 mb-3 tracking-wide">
-                {section.title}
-              </h4>
+      <nav className="flex-1 overflow-y-auto px-2 py-4 custom-scrollbar">
+        {filteredSections.map((sec) => (
+          <div key={sec.key} className="mb-6">
+            {!collapsed && (
+              <div className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">{sec.title}</div>
             )}
-            <div className="space-y-1.5">
-              {section.items.map((item) => renderNavItem(item))}
+            <div className="space-y-1">
+              {sec.items.map((item) => renderItem(item))}
             </div>
           </div>
         ))}
       </nav>
-    </div>
+
+      <div className="p-3 border-t border-gray-100">
+        {!collapsed ? (
+          <div className="text-xs text-gray-500">Phiên bản hệ thống • v1.0</div>
+        ) : (
+          <div className="sr-only">Phiên bản hệ thống</div>
+        )}
+      </div>
+    </aside>
   );
 };
 

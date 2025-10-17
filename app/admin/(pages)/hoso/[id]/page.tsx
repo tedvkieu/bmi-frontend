@@ -4,14 +4,14 @@ import AdminLayout from "@/app/admin/component/AdminLayout";
 import Breadcrumb from "@/app/admin/component/breadcrumb/Breadcrumb";
 
 export const metadata = {
-  title: "BMI - Chi tiết yêu cầu dám định",
+  title: "BMI - CHỈNH SỬA HỒ SƠ GIÁM ĐỊNH",
 };
 
 
 const DocumentsPage = () => {
   return (
     <AdminLayout>
-      <Breadcrumb pageName="Hồ sơ giám định" pageHref="/admin/hoso" pageNameSecond="Thông tin chi tiết"/>
+      <Breadcrumb pageName="GIÁM SÁT / QUẢN LÝ HỒ SƠ" pageHref="/admin/hoso" pageNameSecond="CHỈNH SỬA HỒ SƠ GIÁM ĐỊNH"/>
       <DossierDetail />
     </AdminLayout>
   );

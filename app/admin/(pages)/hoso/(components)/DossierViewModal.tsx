@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { IoCloseCircle } from "react-icons/io5";
 import classNames from 'classnames';
 import MachineInfoSectionView from "./MachineInfoSectionView";
+import Image from "next/image";
 
 interface DocumentViewModalProps {
     isOpen: boolean;
@@ -76,25 +77,39 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                 <div className="flex-grow overflow-y-auto p-4 font-sans text-base text-gray-800">
                     {activeTab === 'generalInfo' && (
                         <>
+                            ;
+
                             <div className="flex justify-between items-start mb-3 border-b pb-2">
                                 <div className="flex items-center">
-                                    <img src="/BMI_LOGO.png" alt="BMI Logo" className="h-14 mr-3" />
+                                    <Image
+                                        src="/BMI_LOGO.png"
+                                        alt="BMI Logo"
+                                        width={160}
+                                        height={56}
+                                        className="h-14 w-auto mr-3"
+                                        priority
+                                    />
                                 </div>
+
                                 <div className="flex flex-col items-center">
                                     <h1 className="text-3xl font-bold text-[#1e3a8a] whitespace-nowrap">
                                         GIẤY YÊU CẦU GIÁM ĐỊNH
                                     </h1>
+
                                     <div className="text-base mt-1">
-                                        <span className="text-[#1e3a8a]">
-                                            Đăng ký số:
-                                        </span>
-                                        <span className={classNames(inputClass, "font-semibold text-red-600 text-center text-base inline-block")} style={{ width: '120px' }}>
-                                            {document.registrationNo || ''}
+                                        <span className="text-[#1e3a8a]">Đăng ký số:</span>{" "}
+                                        <span
+                                            className={classNames(
+                                                inputClass,
+                                                "font-semibold text-red-600 text-center text-base inline-block"
+                                            )}
+                                            style={{ width: "120px" }}
+                                        >
+                                            {document.registrationNo || ""}
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-
+                            </div>;
                             <div className="flex flex-col items-center mb-3">
                                 <div className="flex items-center text-base text-gray-800 space-x-1">
                                     <span className="font-bold italic underline text-[#1e3a8a]">Kính gửi:</span>

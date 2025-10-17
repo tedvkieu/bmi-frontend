@@ -80,8 +80,11 @@ const LoginPageAdmin: React.FC = () => {
 
       const role = authApi.getRoleFromToken();
 
-      if (role === "ADMIN" || role === "ISO_STAFF" || role === "MANAGER" || role === "DOCUMENT_STAFF") {
+      if (role === "ADMIN"  || role === "MANAGER") {
         router.push("/admin");
+      }
+      else if (role === "ISO_STAFF" || role === "DOCUMENT_STAFF") {
+        router.push("/admin/yeu-cau-giam-dinh");
       }
     } catch (error: any) {
       console.error("Login error:", error);

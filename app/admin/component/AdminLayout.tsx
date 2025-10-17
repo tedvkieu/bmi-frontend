@@ -1,4 +1,3 @@
-// app/admin/components/AdminLayout.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -70,7 +69,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* Main area */}
         <div
           className={`flex-1 min-h-screen transition-all duration-200 flex flex-col ${
-            sidebarCollapsed ? "ml-20" : "ml-64"
+            sidebarCollapsed ? "ml-20" : "ml-72"
           }`}
         >
           <Header

@@ -1,84 +1,85 @@
-// components/Header.tsx
 "use client";
 
-import React from "react";
-import { AlignLeft, X } from "lucide-react";
-
-import UserMenu from "./UserMenu";
+import React, { useMemo } from "react";
+import { AlignLeft, Search } from "lucide-react";
 import NotificationBell from "./NotificationBell";
+import UserMenu from "./UserMenu";
 
 interface HeaderProps {
-  currentPage: string;
-  isSidebarOpen: boolean;
-  isMobile: boolean;
-  onSidebarToggle: () => void; // Prop này sẽ được sử dụng cho nút toggle
+  currentPageKey: string;
+  isMobile?: boolean;
+  onSidebarToggle: () => void;
 }
 
-// components/Header.tsx
-const Header: React.FC<HeaderProps> = ({
-  currentPage,
-  isSidebarOpen,
-  isMobile,
-  onSidebarToggle,
-}) => {
-  const getPageTitle = (page: string) => {
-    switch (page) {
-      case "dasboard":
-        return "Dashboard";
-      case "dashboard_overview":
-        return "Dashboard Overview";
-      case "dashboard_analytic":
-        return "Dashboard Analytic";
-      case "documents":
-        return "Hồ sơ giám định";
-      case "documents_requests":
-        return "Yêu cầu giám định";
-      case "assignment":
-        return "Phân công hồ sơ";
-      case "evaluation":
-        return "Đánh giá hồ sơ";
-      case "clients":
-        return "Khách hàng";
-      case "users":
-        return "Quản lý nhân viên";
-      case "approve-users":
-        return "Phê duyệt khách hàng";
-      case "reports":
-        return "Báo cáo";
-      case "settings":
-        return "Cài đặt";
-      default:
-        return "Dashboard";
+const pageTitleMap: Record<string, { title: string; subtitle?: string }> = {
+  dashboard_overview: { title: "Tổng quan hệ thống", subtitle: "Tình trạng chung và cập nhật nhanh" },
+  dashboard_analytic: { title: "Phân tích dữ liệu", subtitle: "Biểu đồ & số liệu theo thời gian" },
+  documents_requests: { title: "Tiếp nhận yêu cầu", subtitle: "Danh sách yêu cầu chờ xử lý" },
+  documents: { title: "Quản lý hồ sơ", subtitle: "Thao tác nhanh, chỉnh sửa và theo dõi tiến trình" },
+  assignment: { title: "Phân công", subtitle: "Gán giám định viên và theo dõi" },
+  evaluation: { title: "Đánh giá hồ sơ", subtitle: "Đánh giá chất lượng và kết luận" },
+  clients: { title: "Khách hàng", subtitle: "Quản lý thông tin khách hàng" },
+  users: { title: "Nhân viên", subtitle: "Quản lý tài khoản nhân sự" },
+  reports: { title: "Báo cáo", subtitle: "Tổng hợp & xuất báo cáo" },
+  settings: { title: "Cài đặt hệ thống", subtitle: "Thiết lập & quyền hạn" },
+  dashboard: { title: "Dashboard", subtitle: "" },
+};
+
+const Header: React.FC<HeaderProps> = ({ currentPageKey, isMobile = false, onSidebarToggle }) => {
+  const page = pageTitleMap[currentPageKey] ?? { title: "Dashboard", subtitle: "" };
+
+  // Breadcrumb simple derivation from key
+  const breadcrumb = useMemo(() => {
+    const parts = currentPageKey.split("_");
+    if (currentPageKey === "dashboard_overview") return ["Dashboard", "Tổng quan"];
+    if (parts.length >= 2) {
+      return [parts[0][0].toUpperCase() + parts[0].slice(1), parts.slice(1).join(" ")];
     }
-  };
+    return ["Dashboard"];
+  }, [currentPageKey]);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
-      <div className="flex items-center justify-between h-14">
-        {/* Left side: Nút toggle sidebar và tiêu đề trang */}
-        <div className="flex items-center gap-3 min-w-0">
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+        <div className="flex items-center gap-4 min-w-0">
+          {/* Sidebar toggle (mobile) */}
           <button
             onClick={onSidebarToggle}
-            className="p-2 text-gray-800 hover:bg-gray-100 rounded-lg flex items-center justify-center"
-            aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-label="Toggle sidebar"
+            className="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
           >
-            {isSidebarOpen && isMobile ? <X size={22} /> : <AlignLeft size={22} />}
+            <AlignLeft size={20} color="black" />
           </button>
 
-          <h2 className="text-lg lg:text-2xl font-semibold text-gray-800 truncate">
-            {getPageTitle(currentPage)}
-          </h2>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg lg:text-xl font-semibold text-gray-800 truncate">{page.title}</h1>
+              {!isMobile && page.subtitle && <span className="text-sm text-gray-500">{page.subtitle}</span>}
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5 truncate">
+              {breadcrumb.join(" / ")}
+            </div>
+          </div>
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-3">
-          <NotificationBell />
-          <div className="pl-3 border-l border-gray-200">
-            <UserMenu />
+        <div className="flex items-center gap-3 text-gray-800">
+          <div className="hidden md:flex items-center bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 min-w-[240px]">
+            <Search size={16} className="text-gray-400" />
+            <input
+              type="search"
+              placeholder="Tìm hồ sơ, khách hàng"
+              className="bg-transparent flex-1 text-sm px-2 py-1 outline-none"
+              aria-label="Tìm kiếm"
+            />
+            <button className="text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-100">Tìm</button>
           </div>
+
+          <NotificationBell />
+          <UserMenu />
         </div>
       </div>
     </header>
   );
 };
-export default Header; // This export is handled below in AdminLayout
+
+export default Header;

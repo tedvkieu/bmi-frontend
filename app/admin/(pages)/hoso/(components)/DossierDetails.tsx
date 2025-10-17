@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import DossierNav from './DossierNav';
 import { DossierDetails } from "@/app/types/dossier";
 import MachineInfoSection from "./MachineInfoSection";
+import Image from "next/image";
 
 export default function DossierDetail() {
     const { id } = useParams();
@@ -101,27 +102,36 @@ export default function DossierDetail() {
                     <>
                         <div className="flex justify-between items-start mb-3 border-b pb-2">
                             <div className="flex items-center">
-                                <img src="/BMI_LOGO.png" alt="BMI Logo" className="h-14 mr-3" />
+                                <Image
+                                    src="/BMI_LOGO.png"
+                                    alt="BMI Logo"
+                                    width={160}
+                                    height={56}
+                                    className="h-14 w-auto mr-3"
+                                    priority
+                                />
                             </div>
                             <div className="flex flex-col items-center">
                                 <h1 className="text-3xl font-bold text-[#1e3a8a] whitespace-nowrap">
                                     GIẤY YÊU CẦU GIÁM ĐỊNH
                                 </h1>
                                 <div className="text-base mt-1">
-                                    <span className="text-[#1e3a8a]">
-                                        Đăng ký số:
-                                    </span>
+                                    <span className="text-[#1e3a8a]">Đăng ký số:</span>
                                     <input
                                         type="text"
                                         name="registrationNo"
-                                        value={dossier.registrationNo || ''}
+                                        value={dossier.registrationNo || ""}
                                         onChange={handleInputChange}
-                                        className={classNames(editableInputClass, "font-semibold text-red-600 text-center text-base")}
-                                        style={{ width: '120px' }}
+                                        className={classNames(
+                                            editableInputClass,
+                                            "font-semibold text-red-600 text-center text-base"
+                                        )}
+                                        style={{ width: "120px" }}
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </div>;
+
 
                         <div className="flex flex-col items-center mb-3">
                             <div className="flex items-center text-base text-gray-800 space-x-1">

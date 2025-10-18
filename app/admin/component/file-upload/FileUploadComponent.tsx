@@ -157,7 +157,7 @@ const UploadResultDisplay: React.FC<{
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <label className="block text-xs font-bold text-gray-600 mb-1">
-                Bill of Lading
+                Số Vận Đơn
               </label>
               <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {data.billOfLading || "Chưa có"}
@@ -165,7 +165,7 @@ const UploadResultDisplay: React.FC<{
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày B/L
+                Ngày Vận Đơn
               </label>
               <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {formatDate(data.billOfLadingDate)}
@@ -181,7 +181,7 @@ const UploadResultDisplay: React.FC<{
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày Tờ Khai
+                Ngày cấp Tờ Khai
               </label>
               <span className="text-sm text-gray-900 break-words whitespace-normal">
                 {formatDate(data.declarationDate)}
@@ -197,10 +197,10 @@ const UploadResultDisplay: React.FC<{
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày Hóa Đơn
+                Ngày cấp Hóa Đơn
               </label>
               <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {formatDate(data.invoiceDate ?? null)}
+                {data.invoiceDate ?? null}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -408,7 +408,7 @@ const UploadResultDisplay: React.FC<{
                       Số Lượng
                     </label>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      {machine.quantity} đơn vị
+                      {machine.quantity}
                     </span>
                   </div>
 

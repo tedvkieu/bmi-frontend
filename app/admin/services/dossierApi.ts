@@ -42,6 +42,12 @@ export interface BackendError {
     message?: string;
 }
 
+export interface StatusUpdateResponse {
+    success: boolean;
+    message?: string;
+    data?: any;
+}
+
 // Helper function to create auth headers
 function authHeaders() {
     const token = authApi.getToken();
@@ -247,7 +253,75 @@ export const dossierApi = {
         return handleResponse<MachineDetails[]>(res);
     },
 
+    async updateDossierDetails(id: string, payload: unknown): Promise<DossierDetails> {
+        const res = await fetch(`/api/dossiers/${id}/details`, {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+        });
+        return handleResponse<DossierDetails>(res);
+    },
+
+    async saveMachines(id: string, machines: unknown[]): Promise<MachineDetails[]> {
+        const res = await fetch(`/api/dossiers/${id}/machines`, {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify({ machines }),
+        });
+        return handleResponse<MachineDetails[]>(res);
+    },
+
     // Delete document by ID
+
+
+    async updateDocumentStatus(
+        id: string,
+        status: "obtained" | "pending" | "not_obtained" | "not_within_scope"
+    ): Promise<StatusUpdateResponse> {
+        const statusMap: Record<string, string> = {
+            obtained: "OBTAINED",
+            pending: "PENDING",
+            not_obtained: "NOT_OBTAINED",
+            not_within_scope: "NOT_WITHIN_SCOPE",
+        };
+
+        const backendStatus = statusMap[status];
+        if (!backendStatus) {
+            return {
+                success: false,
+                message: "Trạng thái không hợp lệ",
+            };
+        }
+
+        const res = await fetch(`/api/dossiers/${id}/status`, {
+            method: "PATCH",
+            headers: authHeaders(),
+            body: JSON.stringify({ status: backendStatus }),
+        });
+
+        let payload: BackendError | Record<string, unknown> | null = null;
+        try {
+            payload = await res.json();
+        } catch {
+            payload = null;
+        }
+
+        if (!res.ok) {
+            const message =
+                (payload as BackendError | null)?.message ||
+                (payload as BackendError | null)?.error ||
+                "Cập nhật trạng thái thất bại";
+            return {
+                success: false,
+                message,
+            };
+        }
+
+        return {
+            success: true,
+            data: payload,
+        };
+    },
     async deleteDocument(id: string): Promise<void> {
         const res = await fetch(`/api/dossiers/${id}`, {
             method: "DELETE",

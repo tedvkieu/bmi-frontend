@@ -52,3 +52,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
     );
   }
 }
+
+export async function PUT(request: NextRequest, context: RouteContext) {
+  const params = await Promise.resolve(context.params);
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing dossier id" }, { status: 400 });
+  }
+
+  try {
+    return await proxyRequest(request, `/api/dossiers/${id}/details`);
+  } catch (error) {
+    console.error("Error updating dossier details:", error);
+    return NextResponse.json(
+      { error: "Failed to update dossier details" },
+      { status: 500 }
+    );
+  }
+}

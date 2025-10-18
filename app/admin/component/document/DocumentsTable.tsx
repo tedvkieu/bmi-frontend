@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import CustomTooltip from "./CustomTooltip";
 import StatusDropdown from "../dossier/StatusDropDown";
+import { StatusUpdateResponse } from "../../services/dossierApi";
 
 interface DocumentsTableProps {
   documents: InspectionReport[];
@@ -25,7 +26,7 @@ interface DocumentsTableProps {
   onStatusChange: (
     id: string,
     newStatus: InspectionReport["status"]
-  ) => Promise<void>;
+  ) => Promise<StatusUpdateResponse>;
   onRefresh: (
     sortBy?: "newest" | "oldest",
     statusFilter?: InspectionReport["status"] | "all",
@@ -89,8 +90,8 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
   const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
 
   return (
-    <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-visible">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>

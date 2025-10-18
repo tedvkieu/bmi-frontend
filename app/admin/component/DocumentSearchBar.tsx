@@ -34,8 +34,12 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
   setYearFilter,
   onRefresh,
 }) => {
-  const years = Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() - i));
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
+  const years = Array.from({ length: 10 }, (_, i) =>
+    String(new Date().getFullYear() - i)
+  );
+  const months = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, "0")
+  );
 
   const handleClearSearch = () => {
     setLocalSearchTerm("");
@@ -54,7 +58,7 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
 
           <input
             type="text"
-            placeholder="Tìm kiếm theo số đăng ký đơn hàng"
+            placeholder="Tìm kiếm theo số đăng ký"
             className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
@@ -92,7 +96,9 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
         <select
           value={statusFilter}
           onChange={(e) =>
-            setStatusFilter(e.target.value as InspectionReport["status"] | "all")
+            setStatusFilter(
+              e.target.value as InspectionReport["status"] | "all"
+            )
           }
           className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black"
         >

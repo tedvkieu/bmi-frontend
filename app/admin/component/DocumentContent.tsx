@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { dossierApi } from "../services/dossierApi";
+import { dossierApi, StatusUpdateResponse } from "../services/dossierApi";
 import { InspectionReport } from "../types/inspection";
 import DocumentsTable from "./document/DocumentsTable";
 import DocumentMobileCard from "./document/DocumentMobileCard";
@@ -175,24 +175,35 @@ const DocumentsContent: React.FC = () => {
   }, [localSearchTerm]);
 
   const handleStatusChange = useCallback(
-    async (id: string, newStatus: InspectionReport["status"]) => {
+    async (
+      id: string,
+      newStatus: InspectionReport["status"]
+    ): Promise<StatusUpdateResponse> => {
       try {
-        // Gọi API để cập nhật trạng thái
-        //await dossierApi.updateDocumentStatus(id, newStatus);
+        const result = await dossierApi.updateDocumentStatus(id, newStatus);
 
-        // Cập nhật state local ngay lập tức cho UX mượt mà
+        if (!result.success) {
+          return result;
+        }
+
         setDocuments((prev) =>
           prev.map((doc) =>
             doc.id === id ? { ...doc, status: newStatus } : doc
           )
         );
 
-        // Refresh overall counts vì trạng thái đã thay đổi
         fetchOverallCounts();
+
+        return result;
       } catch (error) {
         console.error("Failed to update status:", error);
-        // Throw lại error để StatusDropdown xử lý hiển thị toast
-        throw error;
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+        };
       }
     },
     [fetchOverallCounts]

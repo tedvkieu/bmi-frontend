@@ -47,10 +47,7 @@ export default function MachineInfoSection({ dossierId, isActive }: MachineDetai
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
-        [field]:
-          field === "manufactureYear" || field === "quantity"
-            ? Number(value) || 0
-            : value,
+        [field]: value,
       };
       return updated;
     });
@@ -85,9 +82,42 @@ export default function MachineInfoSection({ dossierId, isActive }: MachineDetai
 
     setSaving(true);
     try {
-      // await dossierApi.saveMachines(dossierId, machines);
+      const payload = machines.map((machine) => {
+        const numericId = Number(machine.machineId);
+        const manufactureYearValue =
+          machine.manufactureYear === null ||
+          machine.manufactureYear === undefined ||
+          machine.manufactureYear === ""
+            ? null
+            : Number(machine.manufactureYear);
+        const quantityValue =
+          machine.quantity === null ||
+          machine.quantity === undefined ||
+          machine.quantity === ""
+            ? null
+            : String(machine.quantity).trim();
+
+        return {
+          machineId: Number.isNaN(numericId) ? undefined : numericId,
+          registrationNo: machine.registrationNo ?? "",
+          itemName: machine.itemName ?? "",
+          brand: machine.brand ?? "",
+          model: machine.model ?? "",
+          serialNumber: machine.serialNumber ?? "",
+          manufactureCountry: machine.manufactureCountry ?? "",
+          manufacturerName: machine.manufacturerName ?? "",
+          manufactureYear: Number.isNaN(Number(manufactureYearValue))
+            ? null
+            : manufactureYearValue,
+          quantity: quantityValue,
+          usage: machine.usage ?? "",
+          note: machine.note ?? "",
+        };
+      });
+
+      const updated = await dossierApi.saveMachines(dossierId, payload);
+      setMachines(updated as MachineDetails[]);
       toast.success("Đã lưu thông tin máy móc!");
-      await fetchMachines(); // reload để sync dữ liệu từ server
     } catch (err) {
       console.error("Lỗi lưu máy móc:", err);
       toast.error("Lưu thất bại!");

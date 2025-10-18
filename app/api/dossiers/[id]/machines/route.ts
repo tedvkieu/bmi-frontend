@@ -7,3 +7,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   return proxyRequest(req as any, `/api/dossiers/${id}/machines`);
 }
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return proxyRequest(req as any, `/api/dossiers/${id}/machines`);
+}

@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   CheckCircle,
   Clock,
@@ -8,6 +11,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { InspectionReport } from "../../types/inspection";
+import { StatusUpdateResponse } from "../../services/dossierApi";
 
 interface StatusDropdownProps {
   currentStatus: InspectionReport["status"];
@@ -15,7 +19,7 @@ interface StatusDropdownProps {
   onStatusChange: (
     id: string,
     newStatus: InspectionReport["status"]
-  ) => Promise<void>;
+  ) => Promise<StatusUpdateResponse>;
   disabled?: boolean;
 }
 
@@ -62,27 +66,39 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const currentConfig = statusConfig[currentStatus];
   const CurrentIcon = currentConfig.icon;
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+    if (!isOpen) {
+      setMenuPosition(null);
+      return;
     }
 
+    const updatePosition = () => {
+      if (!buttonRef.current) return;
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
     };
   }, [isOpen]);
 
@@ -93,7 +109,18 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     setIsOpen(false);
 
     try {
-      await onStatusChange(receiptId, newStatus);
+      const result = await onStatusChange(receiptId, newStatus);
+
+      if (!result?.success) {
+        toast.error(
+          result?.message || "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+          {
+            duration: 4000,
+          }
+        );
+        return;
+      }
+
       toast.success(
         `Đã cập nhật trạng thái thành "${statusConfig[newStatus].label}"`,
         {
@@ -103,7 +130,11 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       );
     } catch (error) {
       console.error("Error updating status:", error);
-      toast.error("Không thể cập nhật trạng thái. Vui lòng thử lại.", {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật trạng thái. Vui lòng thử lại.";
+      toast.error(message, {
         duration: 4000,
       });
     } finally {
@@ -112,8 +143,9 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   };
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         onClick={() => !disabled && !isUpdating && setIsOpen(!isOpen)}
         disabled={disabled || isUpdating}
         className={`
@@ -147,15 +179,27 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         )}
       </button>
 
-      {isOpen && !disabled && !isUpdating && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden">
-            <div className="py-1">
-              {(
+      {isOpen &&
+        !disabled &&
+        !isUpdating &&
+        menuPosition &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[1090]"
+              onClick={() => setIsOpen(false)}
+            />
+            <div
+              className="fixed z-[1100] mt-0 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
+              style={{
+                top: menuPosition.top,
+                left: menuPosition.left,
+                minWidth: Math.max(menuPosition.width, 200),
+              }}
+            >
+              <div className="py-1">
+                {(
                 Object.keys(statusConfig) as Array<keyof typeof statusConfig>
               ).map((status) => {
                 const config = statusConfig[status];
@@ -187,10 +231,11 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                   </button>
                 );
               })}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>,
+          document.body
+        )}
     </div>
   );
 };

@@ -7,11 +7,13 @@ import DossierNav from './DossierNav';
 import { DossierDetails } from "@/app/types/dossier";
 import MachineInfoSection from "./MachineInfoSection";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 export default function DossierDetail() {
     const { id } = useParams();
     const [dossier, setDossier] = useState<DossierDetails | null>(null);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('generalInfo');
 
     const fetchDossier = useCallback(async () => {
@@ -80,6 +82,75 @@ export default function DossierDetail() {
         });
     };
 
+    const handleSave = async () => {
+        if (!dossier) return;
+
+        const dossierId = Array.isArray(id) ? id[0] : typeof id === "string" ? id : dossier.dossierId?.toString();
+
+        if (!dossierId) {
+            toast.error("Không xác định được hồ sơ cần cập nhật");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const submitId = dossier.customerSubmit?.id ? Number(dossier.customerSubmit.id) : NaN;
+            const relatedId = dossier.customerRelated?.id ? Number(dossier.customerRelated.id) : NaN;
+
+            const payload = {
+                registrationNo: dossier.registrationNo ?? "",
+                registrationDate: dossier.registrationDate ?? "",
+                dailySeqNo: dossier.dailySeqNo ?? null,
+                declarationNo: dossier.declarationNo ?? "",
+                declarationDate: dossier.declarationDate ?? "",
+                invoiceNo: dossier.invoiceNo ?? "",
+                invoiceDate: dossier.invoiceDate ?? "",
+                billOfLading: dossier.billOfLading ?? "",
+                billOfLadingDate: dossier.billOfLadingDate ?? "",
+                shipName: dossier.shipName ?? "",
+                cout10: dossier.cout10 ?? null,
+                cout20: dossier.cout20 ?? null,
+                bulkShip: dossier.bulkShip ?? false,
+                declarationDoc: dossier.declarationDoc ?? "",
+                declarationPlace: dossier.declarationPlace ?? "",
+                inspectionLocation: dossier.inspectionLocation ?? "",
+                inspectionDate: dossier.inspectionDate ?? "",
+                certificateDate: dossier.certificateDate ?? "",
+                contact: dossier.contact ?? "",
+                certificateStatus: dossier.certificateStatus,
+                customerSubmit: !Number.isNaN(submitId)
+                    ? {
+                        id: submitId,
+                        name: dossier.customerSubmit.name ?? "",
+                        address: dossier.customerSubmit.address ?? "",
+                        taxCode: dossier.customerSubmit.taxCode ?? "",
+                        email: dossier.customerSubmit.email ?? "",
+                        phone: dossier.customerSubmit.phone ?? "",
+                    }
+                    : undefined,
+                customerRelated: !Number.isNaN(relatedId)
+                    ? {
+                        id: relatedId,
+                        name: dossier.customerRelated.name ?? "",
+                        address: dossier.customerRelated.address ?? "",
+                        taxCode: dossier.customerRelated.taxCode ?? "",
+                        email: dossier.customerRelated.email ?? "",
+                        phone: dossier.customerRelated.phone ?? "",
+                    }
+                    : undefined,
+            };
+
+            const updated = await dossierApi.updateDossierDetails(dossierId, payload);
+            setDossier(updated as DossierDetails);
+            toast.success("Đã lưu thông tin hồ sơ");
+        } catch (error: any) {
+            const message = error?.message || "Lưu thông tin hồ sơ thất bại";
+            toast.error(message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const editableInputClass = "w-full border-b border-gray-500 text-[#1e3a8a] outline-none px-1 text-sm";
     const tableHeaderClass = "w-1/3 p-2 text-[#1e3a8a] bg-gray-50 border-r border-gray-300 text-sm";
     const tableDataClass = "w-2/3 p-2 text-sm";
@@ -130,7 +201,17 @@ export default function DossierDetail() {
                                     />
                                 </div>
                             </div>
-                        </div>;
+                        </div>
+
+                        <div className="flex justify-end mb-4">
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="px-4 py-2 bg-[#1e3a8a] text-white text-sm rounded-md hover:bg-[#324cb0] disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                            </button>
+                        </div>
 
 
                         <div className="flex flex-col items-center mb-3">

@@ -17,7 +17,6 @@ import {
   GanttChart,
   TextSearch,
   Handshake,
-  ShieldCheck,
   ClipboardCheck,
 } from "lucide-react";
 import { authApi } from "../../services/authApi";
@@ -212,7 +211,11 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const isActive = (item: NavItem) => {
     if (item.href && pathname === item.href) return true;
-    if (item.href && item.href !== "/admin" && pathname?.startsWith(item.href + "/"))
+    if (
+      item.href &&
+      item.href !== "/admin" &&
+      pathname?.startsWith(item.href + "/")
+    )
       return true;
     if (item.key === currentPageKey) return true;
     if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
@@ -224,13 +227,16 @@ const Navbar: React.FC<NavbarProps> = ({
 
     navSections.forEach((sec) => {
       sec.items.forEach((it: NavItem) => {
-        if (Array.isArray(it.subItems) && it.subItems.some((s) => isActive(s))) {
+        if (
+          Array.isArray(it.subItems) &&
+          it.subItems.some((s) => isActive(s))
+        ) {
           autoOpen = it.key;
         }
       });
     });
 
-    setOpenDropdown((prev) => (prev ?? autoOpen));
+    setOpenDropdown((prev) => prev ?? autoOpen);
   }, [pathname, role, navSections]);
 
   const handleItemClick = (item: NavItem) => {
@@ -325,7 +331,13 @@ const Navbar: React.FC<NavbarProps> = ({
           className="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
           aria-label={collapsed ? "Mở sidebar" : "Thu nhỏ sidebar"}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
             <path
               d={collapsed ? "M8 5v14l11-7L8 5z" : "M16 19V5l-11 7 11 7z"}
               fill="currentColor"
@@ -342,7 +354,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 {sec.title}
               </div>
             )}
-            <div className="space-y-2">{sec.items.map((item) => renderItem(item))}</div>
+            <div className="space-y-2">
+              {sec.items.map((item) => renderItem(item))}
+            </div>
           </div>
         ))}
 

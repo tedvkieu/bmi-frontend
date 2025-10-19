@@ -14,6 +14,7 @@ export interface DossierInfo {
   declarationDoc: string;
   declarationPlace: string;
   inspectionDate: string;
+  scheduledInspectionDate?: string;
   certificateDate: string;
   inspectionLocation: string;
   files: string;
@@ -80,4 +81,14 @@ export interface DocumentCheckData {
 export interface InspectorUser {
   userId: number;
   fullName: string;
+}
+
+export interface InspectionPlan {
+  planId?: number;
+  tempId?: string;
+  planOrder: number;
+  taskTitle: string;
+  taskDescription: string;
+  location?: string;
+  executionDate?: string;
 }

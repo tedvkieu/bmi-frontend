@@ -303,8 +303,8 @@ const CustomersContent = () => {
     router.push(`/admin/khachhang/${customerId}`);
   };
 
-  const handleClickPageForProfile = (id: number) => {
-    router.push(`/admin/hoso/tao-ho-so/${id}`);
+  const handleCreateDossierForCustomer = (customerId: number) => {
+    router.push(`/admin/hoso/tao-ho-so/${customerId}`);
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -397,6 +397,7 @@ const CustomersContent = () => {
           selectedCustomersCount={selectedCustomers.length}
           onDeleteSelected={() => openConfirm(null)}
           loading={isLoadingCustomers}
+          onCreateDossier={handleCreateDossierForCustomer}
         />
         {/* Phân trang cho desktop */}
         {totalPages > 0 && ( // totalPages > 0 để hiển thị phân trang
@@ -492,7 +493,7 @@ const CustomersContent = () => {
                     <Eye size={16} />
                   </button>
                   <button
-                    onClick={() => handleClickPageForProfile(customer.customerId)}
+                    onClick={() => handleCreateDossierForCustomer(customer.customerId)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
                     title="Lên hồ sơ"
                   >

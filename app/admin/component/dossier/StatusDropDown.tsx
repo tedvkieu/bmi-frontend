@@ -58,6 +58,16 @@ const statusConfig = {
   },
 };
 
+const statusTransitions: Record<
+  InspectionReport["status"],
+  Array<InspectionReport["status"]>
+> = {
+  obtained: ["obtained", "pending"],
+  pending: ["pending", "obtained", "not_obtained", "not_within_scope"],
+  not_obtained: ["not_obtained", "pending"],
+  not_within_scope: ["not_within_scope", "pending"],
+};
+
 const StatusDropdown: React.FC<StatusDropdownProps> = ({
   currentStatus,
   receiptId,
@@ -75,6 +85,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   const currentConfig = statusConfig[currentStatus];
   const CurrentIcon = currentConfig.icon;
+  const allowedStatuses = statusTransitions[currentStatus] ?? [currentStatus];
 
   useEffect(() => {
     if (!isOpen) {
@@ -103,7 +114,13 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   }, [isOpen]);
 
   const handleStatusClick = async (newStatus: InspectionReport["status"]) => {
-    if (newStatus === currentStatus || disabled || isUpdating) return;
+    if (
+      newStatus === currentStatus ||
+      disabled ||
+      isUpdating ||
+      !allowedStatuses.includes(newStatus)
+    )
+      return;
 
     setIsUpdating(true);
     setIsOpen(false);
@@ -201,7 +218,11 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
               <div className="py-1">
                 {(
                 Object.keys(statusConfig) as Array<keyof typeof statusConfig>
-              ).map((status) => {
+              )
+                .filter((status) =>
+                  allowedStatuses.includes(status as InspectionReport["status"])
+                )
+                .map((status) => {
                 const config = statusConfig[status];
                 const Icon = config.icon;
                 const isActive = status === currentStatus;

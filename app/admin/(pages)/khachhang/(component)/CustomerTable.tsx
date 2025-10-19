@@ -2,7 +2,6 @@
 import React from 'react';
 import { Edit2, Trash2, Eye, FileText, RefreshCw } from 'lucide-react';
 import { Customer } from '@/app/admin/services/customerApi';
-import { useRouter } from 'next/navigation';
 import CustomTooltip from '@/app/admin/component/document/CustomTooltip';
 
 interface CustomersTableProps {
@@ -19,6 +18,7 @@ interface CustomersTableProps {
     selectedCustomersCount: number;
     onDeleteSelected: () => void;
     loading: boolean; // Thêm prop loading
+    onCreateDossier: (customerId: number) => void;
 }
 
 const CustomersTable: React.FC<CustomersTableProps> = ({
@@ -35,9 +35,8 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
     selectedCustomersCount,
     onDeleteSelected,
     loading, // Destructure loading
+    onCreateDossier,
 }) => {
-    const router = useRouter();
-
     const getCustomerTypeText = (type: string) => {
         switch (type) {
             case "IMPORTER":
@@ -58,10 +57,6 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
             default:
                 return "bg-gray-100 text-black";
         }
-    };
-
-    const handleClickPage = (id: number) => {
-        router.push(`/admin/hoso/tao-ho-so/${id}`);
     };
 
     return (
@@ -202,7 +197,7 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
 
                                             <CustomTooltip content="Lên hồ sơ">
                                                 <button
-                                                    onClick={() => handleClickPage(customer.customerId)}
+                                                    onClick={() => onCreateDossier(customer.customerId)}
                                                     className="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
                                                     title="Lên hồ sơ"
                                                 >

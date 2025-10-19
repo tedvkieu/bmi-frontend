@@ -274,6 +274,14 @@ export const dossierApi = {
     // Delete document by ID
 
 
+    async createDraftDossierForCustomer(customerId: number): Promise<Receipt> {
+        const res = await fetch(`/api/dossiers/customer/${customerId}/draft`, {
+            method: "POST",
+            headers: authHeaders(),
+        });
+        return handleResponse<Receipt>(res);
+    },
+
     async updateDocumentStatus(
         id: string,
         status: "obtained" | "pending" | "not_obtained" | "not_within_scope"

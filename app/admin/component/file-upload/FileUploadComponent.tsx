@@ -1,4 +1,6 @@
+import { Settings } from "lucide-react";
 import React, { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 interface Machine {
   machineId: number;
   dossierId: number;
@@ -61,6 +63,13 @@ const UploadResultDisplay: React.FC<{
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
+
+  const router = useRouter();
+  const handleClick = () => {
+    router.push(`/admin/phancong?registerNo=${encodeURIComponent(data.registrationNo)}`);
+  };
+
+
   const getCustomerTypeLabel = (type: string) => {
     switch (type) {
       case "IMPORTER":
@@ -78,9 +87,9 @@ const UploadResultDisplay: React.FC<{
         {/* Success Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 rounded-full animate-pulse">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-2 rounded-full animate-pulse">
               <svg
-                className="w-12 h-12 text-white"
+                className="w-10 h-10 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -94,140 +103,20 @@ const UploadResultDisplay: React.FC<{
               </svg>
             </div>
           </div>
-          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent mb-3">
-            Upload Thành Công!
+          <h1 className="text-2xl lg:text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent mb-3">
+            Upload hồ sơ thành công!
           </h1>
           <p className="text-gray-700 text-base max-w-2xl mx-auto">
-            Dữ liệu đã được xử lý và lưu trữ thành công vào hệ thống
+            Thông tin hồ sơ đã được xử lý và lưu trữ trên hệ thống. Dưới đây là thông tin chi tiết.
           </p>
-        </div>
-
-        {/* Receipt Summary */}
-        <div className="bg-gradient-to-r from-white via-green-50 to-emerald-50 rounded-2xl shadow-xl border border-green-200 p-6 lg:p-8 mb-8">
-          <div className="flex items-center mb-6">
-            <div className="bg-green-100 p-3 rounded-full mr-4">
-              <svg
-                className="w-8 h-8 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Thông Tin Biên Nhận
-              </h2>
-              <p className="text-gray-600 font-medium">
-                Chi tiết về biên nhận và khai báo
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Mã Biên Nhận
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                #{data.receiptId}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Số Đăng Ký
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.registrationNo}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày Đăng Ký
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {formatDate(data.registrationDate)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Số Vận Đơn
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.billOfLading || "Chưa có"}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày Vận Đơn
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {formatDate(data.billOfLadingDate)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Số Tờ Khai
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.declarationNo || "Chưa có"}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày cấp Tờ Khai
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {formatDate(data.declarationDate)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Số Hóa Đơn
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.invoiceNo || "Chưa có"}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Ngày cấp Hóa Đơn
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.invoiceDate ?? null}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Dự Kiến Thời Gian Giám Định
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.inspectionDate ?? null}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Dự Kiến Địa Điểm Giám Định
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.inspectionLocation || "Chưa có"}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Customer Information */}
         <div className="bg-gradient-to-r from-white via-blue-50 to-indigo-50 rounded-2xl shadow-xl border border-blue-200 p-6 lg:p-8 mb-8">
           <div className="flex items-center mb-6">
-            <div className="bg-blue-100 p-3 rounded-full mr-4">
+            <div className="bg-blue-100 p-2 rounded-full mr-4">
               <svg
-                className="w-8 h-8 text-blue-600"
+                className="w-6 h-6 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -241,250 +130,241 @@ const UploadResultDisplay: React.FC<{
               </svg>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Thông Tin Khách Hàng
+              <h2 className="text-xl font-bold text-gray-900">
+                Khách hàng
               </h2>
-              <p className="text-gray-600 font-medium">
-                ID: {data.customer.customerId}
-              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Tên Công Ty
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Đơn vị nhập khẩu
               </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
+              <span className="text-sm text-gray-900 whitespace-normal">
                 {data.customer.name}
               </span>
             </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Loại Khách Hàng
-              </label>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {getCustomerTypeLabel(data.customer.customerType)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
-                Số Điện Thoại
-              </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
-                {data.customer.phone}
-              </span>
-            </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 md:col-span-2">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
                 Địa Chỉ
               </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
+              <span className="text-sm text-gray-900 whitespace-normal">
                 {data.customer.address}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-xs font-bold text-gray-600 mb-1">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Khách hàng
+              </label>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                {getCustomerTypeLabel(data.customer.customerType)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Số Điện Thoại
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.customer.phone}
+              </span>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
                 Email
               </label>
-              <span className="text-sm text-gray-900 break-words whitespace-normal">
+              <span className="text-sm text-gray-900 whitespace-normal">
                 {data.customer.email}
               </span>
             </div>
           </div>
         </div>
 
+
+        {/* Receipt Summary */}
+        <div className="bg-gradient-to-r from-white via-green-50 to-emerald-50 rounded-2xl shadow-xl border border-green-200 p-6 lg:p-8 mb-8">
+          <div className="flex items-center mb-6">
+            <div className="bg-green-100 p-2 rounded-full mr-4">
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Thông tin chung
+              </h2>
+            </div>
+          </div>
+
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Đăng ký số
+              </label>
+              <span className="text-sm text-red-500 font-bold whitespace-normal">
+                {data.registrationNo}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Ngày Đăng Ký
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {formatDate(data.registrationDate)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Thuộc vận đơn số
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.billOfLading || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Ngày vận đơn
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {formatDate(data.billOfLadingDate)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Thuộc số tờ khai
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.declarationNo || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Ngày cấp số tờ khai
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {formatDate(data.declarationDate)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Thuộc hóa đơn số
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.invoiceNo || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Ngày cấp hóa đơn
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.invoiceDate ?? null}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Dự kiến thời gian giám định
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.inspectionDate ?? null}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Dự kiến địa điểm giám định
+              </label>
+              <span className="text-sm text-gray-900 whitespace-normal">
+                {data.inspectionLocation || "Chưa có"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+
         {/* Machines Information */}
         <div className="bg-gradient-to-r from-white via-purple-50 to-pink-50 rounded-2xl shadow-xl border border-purple-200 p-6 lg:p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <div className="bg-purple-100 p-3 rounded-full mr-4">
-                <svg
-                  className="w-8 h-8 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                  />
-                </svg>
+              <div className="bg-gray-100 p-2 rounded-full mr-4">
+                <Settings color="gray" size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Danh Sách Máy Móc
+                <h2 className="text-xl font-bold text-gray-900">
+                  Máy móc yêu cầu giám định
                 </h2>
-                <p className="text-gray-600 font-medium">
-                  Tổng cộng: {data.machines.length} máy móc
+                <p className="text-gray-800 text-sm font-medium">
+                  {data.machines.length} máy
                 </p>
               </div>
             </div>
           </div>
+          <div className="overflow-x-auto">
+            <table className="border border-gray-400 bg-white text-[#1e3a8a] font-semibold text-center text-sm px-2 py-2">
+              <thead className="bg-blue-100">
+                <tr>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[4%]">STT</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[18%]">Tên thiết bị</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Thương hiệu</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Model</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Số serial</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Nước sản xuất</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[12%]">Nhà sản xuất</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">Năm SX</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">Số lượng</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[14%]">Ghi chú</th>
+                </tr>
+              </thead>
 
-          <div className="space-y-6">
-            {data.machines.map((machine, index) => (
-              <div
-                key={machine.machineId}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Máy móc #{index + 1}
-                  </h3>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                    ID: {machine.machineId}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="col-span-full">
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Tên Thiết Bị
-                    </label>
-                    <p className="text-sm text-gray-900 leading-relaxed break-words whitespace-normal">
-                      {machine.itemName}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Thương Hiệu
-                    </label>
-                    <span className="text-sm text-gray-800 break-words whitespace-normal">
-                      {machine.brand || "Chưa có"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Model
-                    </label>
-                    <span className="text-sm text-gray-800 break-words whitespace-normal">
-                      {machine.model || "Chưa có"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Số Serial
-                    </label>
-                    <span className="text-sm text-gray-800 break-all whitespace-normal">
-                      {machine.serialNumber || "Chưa có"}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Nước Sản Xuất
-                    </label>
-                    <span className="text-sm text-gray-800 break-words whitespace-normal">
-                      {machine.manufactureCountry}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Nhà Sản Xuất
-                    </label>
-                    <span className="text-sm text-gray-800 break-words whitespace-normal">
-                      {machine.manufacturerName}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Năm Sản Xuất
-                    </label>
-                    <span className="text-sm text-gray-800">
-                      {machine.manufactureYear}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                      Số Lượng
-                    </label>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <tbody>
+                {data.machines.map((machine, index) => (
+                  <tr key={machine.machineId} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-3 py-2 text-center">{index + 1}</td>
+                    <td className="border border-gray-300 px-3 py-2">{machine.itemName}</td>
+                    <td className="border border-gray-300 px-3 py-2">{machine.brand || "Chưa có"}</td>
+                    <td className="border border-gray-300 px-3 py-2">{machine.model || "Chưa có"}</td>
+                    <td className="border border-gray-300 px-3 py-2 break-all">{machine.serialNumber || "Chưa có"}</td>
+                    <td className="border border-gray-300 px-3 py-2">{machine.manufactureCountry}</td>
+                    <td className="border border-gray-300 px-3 py-2">{machine.manufacturerName}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-center">{machine.manufactureYear}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-center">
                       {machine.quantity}
-                    </span>
-                  </div>
-
-                  {machine.note && (
-                    <div className="col-span-full">
-                      <label className="block text-xs font-bold text-gray-600 mb-1">
-                        Ghi Chú
-                      </label>
-                      <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 break-words whitespace-normal">
-                        {machine.note}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 whitespace-pre-line">{machine.note || ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 text-sm">
           <button
-            onClick={onGoHome}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-base hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
           >
-            Về Trang Chủ
+            In hồ sơ
           </button>
-
           <button
-            onClick={onStartNew}
-            className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-2xl font-bold text-base hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
+            onClick={handleClick}
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
           >
-            Tạo Hồ Sơ Mới
-          </button>
-
-          <button
-            onClick={() => window.print()}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold text-base hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
-          >
-            In Kết Quả
+            Phân công giám định
           </button>
         </div>
 
-        {/* Success Stats */}
-        <div className="mt-12 bg-gradient-to-r from-green-100 via-emerald-100 to-teal-100 rounded-2xl p-6 border border-green-200">
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-green-800 mb-4">
-              Thống Kê Upload
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="text-2xl font-bold text-green-600 mb-1">1</div>
-                <div className="text-sm font-medium text-gray-600">
-                  Khách hàng
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="text-2xl font-bold text-purple-600 mb-1">
-                  {data.machines.length}
-                </div>
-                <div className="text-sm font-medium text-gray-600">Máy móc</div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="text-2xl font-bold text-blue-600 mb-1">
-                  {data.machines.reduce(
-                    (sum, machine) => sum + machine.quantity,
-                    0
-                  )}
-                </div>
-                <div className="text-sm font-medium text-gray-600">
-                  Tổng số lượng
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -670,6 +550,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   }
 
   return (
+    <>        
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -703,11 +584,10 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-8 mb-6">
           {!selectedFile ? (
             <div
-              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-                dragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-              }`}
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${dragActive
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -822,11 +702,10 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                   type="button"
                   onClick={handleUpload}
                   disabled={loading}
-                  className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                    loading
-                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                      : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105"
-                  }`}
+                  className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${loading
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    }`}
                 >
                   {loading ? (
                     <div className="flex items-center space-x-2">
@@ -884,7 +763,10 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
             </li>
           </ul>
         </div>
+
       </div>
     </div>
+    </>
+
   );
 };

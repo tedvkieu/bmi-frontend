@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchSection from "./SearchSection";
-import DossierInfo from "./DossierInfo";
 import EvaluationForm from "./EvaluationForm";
 import {
   DossierInfo as DossierInfoType,
@@ -15,12 +14,19 @@ import {
   DocumentCheckData,
   InspectorUser,
 } from "../types/evaluation";
+import { DossierDetails } from "@/app/types/dossier";
+import { dossierApi } from "@/app/admin/services/dossierApi";
 import toast from "react-hot-toast";
+import classNames from "classnames";
+import DossierDetailView from "./DosserInfo"; // Corrected typo in component name
 
 function EvaluationPageInner() {
   const searchParams = useSearchParams();
   const [registerNo, setRegisterNo] = useState("");
   const [dossierInfo, setDossierInfo] = useState<DossierInfoType | null>(null);
+  const [dossierDetail, setDossierDetail] = useState<DossierDetails | null>(
+    null
+  );
   const [categories, setCategories] = useState<Category[]>([]);
   const [criteria, setCriteria] = useState<Criteria[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -44,6 +50,11 @@ function EvaluationPageInner() {
   const [downloadProgress, setDownloadProgress] = useState(0); // 0-100
   const [downloadStatus, setDownloadStatus] = useState("");
 
+  // State to manage active tab
+  const [activeTab, setActiveTab] = useState<"dossier" | "evaluation">(
+    "dossier"
+  );
+
   // Fetch inspectors immediately when page loads
   const fetchInspectors = async () => {
     try {
@@ -60,6 +71,24 @@ function EvaluationPageInner() {
       console.error("Error fetching inspectors:", e);
     }
   };
+
+  // Callback to fetch dossier details
+  const fetchDossierDetails = useCallback(
+    async (dossierId: string) => {
+      if (!dossierId) {
+        setDossierDetail(null);
+        return;
+      }
+      try {
+        const response = await dossierApi.getDocumentByIdDetails(dossierId);
+        setDossierDetail(response as DossierDetails);
+      } catch (error) {
+        console.error("Failed to fetch dossier details:", error);
+        setDossierDetail(null);
+      }
+    },
+    []
+  );
 
   // Fetch initial data including inspectors
   useEffect(() => {
@@ -104,6 +133,9 @@ function EvaluationPageInner() {
 
     setLoading(true);
     setError("");
+    setDossierInfo(null); // Clear previous dossier info
+    setDossierDetail(null); // Clear previous dossier detail
+    setActiveTab("dossier"); // Reset to dossier tab on new search
 
     try {
       const response = await fetch(
@@ -115,14 +147,14 @@ function EvaluationPageInner() {
         setDossierInfo(data);
         await fetchTeamMembers(data.receiptId);
         await fetchSavedForm(data.receiptId);
+        // After fetching dossierInfo, fetch dossierDetail
+        await fetchDossierDetails(data.receiptId.toString()); // Assuming receiptId can be used as dossierId and needs to be stringified
       } else {
         setError("Không tìm thấy hồ sơ với số đăng ký này");
-        setDossierInfo(null);
       }
     } catch (error) {
       setError("Lỗi khi tìm kiếm hồ sơ");
       console.log("check error: ", error);
-      setDossierInfo(null);
     } finally {
       setLoading(false);
     }
@@ -135,8 +167,9 @@ function EvaluationPageInner() {
       setDownloadProgress(0);
       setDownloadStatus("Chuẩn bị tải...");
 
-      const url = `/api/evaluations/export/${dossierInfo.receiptId
-        }/docx?templateName=${encodeURIComponent("sample-form2.docx")}`;
+      const url = `/api/evaluations/export/${
+        dossierInfo.receiptId
+      }/docx?templateName=${encodeURIComponent("sample-form2.docx")}`;
       const res = await fetch(url);
       if (!res.ok || !res.body) {
         const txt = await res.text();
@@ -217,6 +250,9 @@ function EvaluationPageInner() {
           if (!qReg) return;
           setLoading(true);
           setError("");
+          setDossierInfo(null); // Clear previous dossier info
+          setDossierDetail(null); // Clear previous dossier detail
+          setActiveTab("dossier"); // Reset to dossier tab on auto search
           try {
             const response = await fetch(
               `/api/dossiers/search?registerNo=${encodeURIComponent(qReg)}`
@@ -226,14 +262,14 @@ function EvaluationPageInner() {
               setDossierInfo(data);
               await fetchTeamMembers(data.receiptId);
               await fetchSavedForm(data.receiptId);
+              // After fetching dossierInfo, fetch dossierDetail
+              await fetchDossierDetails(data.receiptId.toString());
             } else {
               setError("Không tìm thấy hồ sơ với số đăng ký này");
-              setDossierInfo(null);
             }
           } catch (error) {
             setError("Lỗi khi tìm kiếm hồ sơ");
             console.log("check error: ", error);
-            setDossierInfo(null);
           } finally {
             setLoading(false);
           }
@@ -241,7 +277,7 @@ function EvaluationPageInner() {
       }, 0);
       return () => clearTimeout(t);
     }
-  }, [searchParams, autoSearched]);
+  }, [searchParams, autoSearched, fetchDossierDetails]); // Add fetchDossierDetails to dependency array
 
   const fetchTeamMembers = async (dossierId: number) => {
     try {
@@ -466,7 +502,7 @@ function EvaluationPageInner() {
 
   return (
     <>
-      <div className="min-h-screen  bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 py-8">
         {downloading && (
           <div className="fixed top-0 left-0 right-0 z-50">
             <div className="bg-white/90 backdrop-blur border-b border-gray-200">
@@ -484,7 +520,7 @@ function EvaluationPageInner() {
             </div>
           </div>
         )}
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="w-full mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8">
             {/* Tiêu đề */}
             <h1 className="text-2xl font-bold text-gray-900 text-center sm:text-left mb-3 sm:mb-0">
@@ -513,124 +549,166 @@ function EvaluationPageInner() {
             loading={loading}
             error={error}
           />
-          {dossierInfo && (
-            <div className="mb-3">
-              <DossierInfo dossierInfo={dossierInfo} />
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleDownloadDocx}
-                  disabled={downloading}
-                  className={`px-4 py-2 rounded text-white ${downloading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                    }`}
-                >
-                  {downloading ? "Đang xuất..." : "Tải xuống hồ sơ đánh giá"}
-                </button>
+
+          {dossierInfo && ( // Only show tabs if dossierInfo is available
+            <div className="mt-8">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                  <button
+                    onClick={() => setActiveTab("dossier")}
+                    className={classNames(
+                      activeTab === "dossier"
+                        ? "border-indigo-500 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300",
+                      "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                    )}
+                  >
+                    Thông tin hồ sơ
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("evaluation")}
+                    className={classNames(
+                      activeTab === "evaluation"
+                        ? "border-indigo-500 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300",
+                      "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200"
+                    )}
+                  >
+                    Biểu mẫu đánh giá
+                  </button>
+                </nav>
+              </div>
+
+              <div className="mt-6">
+                {activeTab === "dossier" && dossierDetail && (
+                  <div className="mb-3">
+                    <DossierDetailView dossierDetail={dossierDetail} />
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleDownloadDocx}
+                        disabled={downloading}
+                        className={`px-4 py-2 rounded text-white ${
+                          downloading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-indigo-600 hover:bg-indigo-700"
+                        }`}
+                      >
+                        {downloading
+                          ? "Đang xuất..."
+                          : "Tải xuống hồ sơ đánh giá"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "evaluation" &&
+                  dossierInfo &&
+                  categories.length > 0 &&
+                  criteria.length > 0 && (
+                    <EvaluationForm
+                      dossierInfo={dossierInfo}
+                      categories={categories}
+                      criteria={criteria}
+                      teamMembers={teamMembers}
+                      documentTypes={documentTypes}
+                      evaluationData={evaluationData}
+                      documentCheckData={documentCheckData}
+                      inspectors={inspectors}
+                      showBSelector={showBSelector}
+                      selectedBUsers={selectedBUsers}
+                      saving={saving}
+                      criteriaAnswered={criteriaAnswered}
+                      totalCriteria={totalCriteria}
+                      documentsCompleted={documentsCompleted}
+                      totalDocuments={totalDocuments}
+                      lastSavedAt={lastSavedAt}
+                      onEvaluationChange={handleEvaluationChange}
+                      onDocumentCheckChange={handleDocumentCheckChange}
+                      onToggleBSelector={() => {
+                        setShowBSelector((v) => !v);
+                      }}
+                      onSelectBUsers={setSelectedBUsers}
+                      onAssignB={async (members) => {
+                        if (!dossierInfo) return;
+                        try {
+                          const res = await fetch(
+                            `/api/evaluations/teams/assign-b-with-roles/${dossierInfo.receiptId}`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ members }),
+                            }
+                          );
+                          if (!res.ok) {
+                            const txt = await res.text();
+                            console.error("Assign B failed:", txt);
+                            toast.error("Lưu phân công B thất bại: " + txt);
+                          } else {
+                            fetchTeamMembers(dossierInfo.receiptId);
+                            setLastSavedAt(new Date());
+                            toast.success("Đã lưu phân công mục B");
+                          }
+                        } catch (e) {
+                          console.error(e);
+                          alert("Lỗi khi lưu phân công B");
+                        }
+                      }}
+                      onAssignTaskLetter={async (task, userId) => {
+                        if (!dossierInfo) return;
+                        try {
+                          // Only one assignee allowed: backend will remove others
+                          const res = await fetch(
+                            `/api/evaluations/teams/assign-task/${dossierInfo.receiptId}`,
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                task,
+                                userIds: userId ? [userId] : [],
+                              }),
+                            }
+                          );
+                          if (!res.ok) {
+                            const txt = await res.text();
+                            console.error("Assign", task, "failed:", txt);
+                            alert(`Lưu phân công mục ${task} thất bại`);
+                          } else {
+                            setSelectedAssigneesByTask((prev) => ({
+                              ...prev,
+                              [task]: userId || undefined,
+                            }));
+                            fetchTeamMembers(dossierInfo.receiptId);
+                            setLastSavedAt(new Date());
+                          }
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }}
+                      selectedAssigneesByTask={selectedAssigneesByTask}
+                      teamReadyForACD={teamReadyForACD}
+                      onSave={handleSaveEvaluation}
+                      onBack={() => {
+                        setDossierInfo(null);
+                        setDossierDetail(null);
+                        setRegisterNo("");
+                        setTeamMembers([]);
+                        setEvaluationData({});
+                        setDocumentCheckData({});
+                        setSelectedBUsers([]);
+                        setSelectedAssigneesByTask({
+                          A: undefined,
+                          C: undefined,
+                          D: undefined,
+                        });
+                        setLastSavedAt(null);
+                        setActiveTab("dossier"); // Reset tab on back
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    />
+                  )}
               </div>
             </div>
-          )}
-
-          {dossierInfo && categories.length > 0 && criteria.length > 0 && (
-            <EvaluationForm
-              dossierInfo={dossierInfo}
-              categories={categories}
-              criteria={criteria}
-              teamMembers={teamMembers}
-              documentTypes={documentTypes}
-              evaluationData={evaluationData}
-              documentCheckData={documentCheckData}
-              inspectors={inspectors}
-              showBSelector={showBSelector}
-              selectedBUsers={selectedBUsers}
-              saving={saving}
-              criteriaAnswered={criteriaAnswered}
-              totalCriteria={totalCriteria}
-              documentsCompleted={documentsCompleted}
-              totalDocuments={totalDocuments}
-              lastSavedAt={lastSavedAt}
-              onEvaluationChange={handleEvaluationChange}
-              onDocumentCheckChange={handleDocumentCheckChange}
-              onToggleBSelector={() => {
-                setShowBSelector((v) => !v);
-              }}
-              onSelectBUsers={setSelectedBUsers}
-              onAssignB={async (members) => {
-                if (!dossierInfo) return;
-                try {
-                  const res = await fetch(
-                    `/api/evaluations/teams/assign-b-with-roles/${dossierInfo.receiptId}`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ members }),
-                    }
-                  );
-                  if (!res.ok) {
-                    const txt = await res.text();
-                    console.error("Assign B failed:", txt);
-                    toast.error("Lưu phân công B thất bại: " + txt);
-                  } else {
-                    fetchTeamMembers(dossierInfo.receiptId);
-                    setLastSavedAt(new Date());
-                    toast.success("Đã lưu phân công mục B");
-                  }
-                } catch (e) {
-                  console.error(e);
-                  alert("Lỗi khi lưu phân công B");
-                }
-              }}
-              onAssignTaskLetter={async (task, userId) => {
-                if (!dossierInfo) return;
-                try {
-                  // Only one assignee allowed: backend will remove others
-                  const res = await fetch(
-                    `/api/evaluations/teams/assign-task/${dossierInfo.receiptId}`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        task,
-                        userIds: userId ? [userId] : [],
-                      }),
-                    }
-                  );
-                  if (!res.ok) {
-                    const txt = await res.text();
-                    console.error("Assign", task, "failed:", txt);
-                    alert(`Lưu phân công mục ${task} thất bại`);
-                  } else {
-                    setSelectedAssigneesByTask((prev) => ({
-                      ...prev,
-                      [task]: userId || undefined,
-                    }));
-                    fetchTeamMembers(dossierInfo.receiptId);
-                    setLastSavedAt(new Date());
-                  }
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-              selectedAssigneesByTask={selectedAssigneesByTask}
-              teamReadyForACD={teamReadyForACD}
-              onSave={handleSaveEvaluation}
-              onBack={() => {
-                setDossierInfo(null);
-                setRegisterNo("");
-                setTeamMembers([]);
-                setEvaluationData({});
-                setDocumentCheckData({});
-                setSelectedBUsers([]);
-                setSelectedAssigneesByTask({
-                  A: undefined,
-                  C: undefined,
-                  D: undefined,
-                });
-                setLastSavedAt(null);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
           )}
 
           {!dossierInfo && !loading && registerNo && (
@@ -645,6 +723,5 @@ function EvaluationPageInner() {
     </>
   );
 }
-
 
 export default EvaluationPageInner;

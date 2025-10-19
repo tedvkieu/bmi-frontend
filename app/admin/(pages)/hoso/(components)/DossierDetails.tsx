@@ -9,6 +9,7 @@ import MachineInfoSection from "./MachineInfoSection";
 import Image from "next/image";
 import toast from "react-hot-toast";
 
+
 export default function DossierDetail() {
     const { id } = useParams();
     const [dossier, setDossier] = useState<DossierDetails | null>(null);
@@ -509,8 +510,6 @@ export default function DossierDetail() {
                                         />
                                     </td>
                                 </tr>
-
-
                             </tbody>
                         </table>
 

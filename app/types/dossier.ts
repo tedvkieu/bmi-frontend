@@ -37,6 +37,7 @@ export interface DossierDetails {
   declarationPlace: string;
   inspectionLocation: string;
   inspectionDate: string;
+  scheduledInspectionDate?: string | null;
   certificateDate: string;
   certificateStatus: "PENDING" | "APPROVED" | "REJECTED" | string;
   files: string;

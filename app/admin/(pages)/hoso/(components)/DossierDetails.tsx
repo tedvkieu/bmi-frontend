@@ -47,29 +47,39 @@ export default function DossierDetail() {
         fetchDossier();
     }, [fetchDossier]);
 
+
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+        const { name, type, value } = e.target;
+
         setDossier(prevDossier => {
             if (!prevDossier) return null;
 
-            // Handle nested properties for customerSubmit
+            let newValue: any = value;
+
+            // Nếu là checkbox thì lấy checked (boolean)
+            if (e.target instanceof HTMLInputElement && type === "checkbox") {
+                newValue = e.target.checked;
+            }
+
+            // Xử lý các field lồng trong customerSubmit.*
             if (name.startsWith("customerSubmit.")) {
                 const customerSubmitField = name.split('.')[1];
                 return {
                     ...prevDossier,
                     customerSubmit: {
                         ...prevDossier.customerSubmit,
-                        [customerSubmitField]: value
+                        [customerSubmitField]: newValue
                     }
                 };
             }
 
             return {
                 ...prevDossier,
-                [name]: value
+                [name]: newValue
             };
         });
     };
+
 
     const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -316,6 +326,8 @@ export default function DossierDetail() {
                                         quy định pháp luật liên quan đến việc nhập khẩu hàng hóa của Khách hàng.
                                     </td>
                                 </tr>
+
+                                {/* Dossier Info */}
                                 <tr className="border border-gray-300">
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Hàng hóa yêu cầu giám định:</td>
                                     <td className={classNames(tableDataClass, italicTextClass, "text-sm")}>Theo danh mục đính kèm</td>
@@ -404,9 +416,105 @@ export default function DossierDetail() {
                                         />
                                     </td>
                                 </tr>
+
+                                 <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold text-red-600")}>Ngày giám định chính thức:</td>
+                                    <td className={tableDataClass}>
+                                        <input
+                                            type="text"
+                                            name="scheduledInspectionDate"
+                                            value={dossier.scheduledInspectionDate || ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Tên tàu:</td>
+                                    <td className={tableDataClass}>
+                                        <input
+                                            type="text"
+                                            name="inspectionLocation"
+                                            value={dossier.shipName || ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Container 20ft:</td>
+                                    <td className={tableDataClass}>
+                                        <input
+                                            type="text"
+                                            name="cout10"
+                                            value={dossier.cout10 || ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Container 40ft:</td>
+                                    <td className={tableDataClass}>
+                                        <input
+                                            type="text"
+                                            name="cout20"
+                                            value={dossier.cout20 || ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
+                                    </td>
+                                </tr>
+                                 <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Hải quan mở tờ khai:</td>
+                                    <td className={tableDataClass}>
+                                        <input
+                                            type="text"
+                                            name="declarationPlace"
+                                            value={dossier.declarationPlace || ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Trạng thái rời cảng:</td>
+                                    <td className={tableDataClass}>
+                                        <label className="flex items-center space-x-2 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                name="bulkShip"
+                                                checked={!!dossier.bulkShip}
+                                                onChange={handleInputChange}
+                                                className="w-4 h-4 accent-blue-600"
+                                            />
+                                            <span>{dossier.bulkShip ? "Đã rời cảng" : "Chưa rời cảng"}</span>
+                                        </label>
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={classNames(tableHeaderClass, "font-bold")}>Ngày cấp chứng chỉ:</td>
+                                    <td className={classNames(tableDataClass, "flex justify-between items-center")}>
+                                        <input
+                                            type="date"
+                                            name="certificateDate"
+                                            value={dossier.certificateDate || ''}
+                                            onChange={handleDateChange}
+                                            className={classNames(editableInputClass, "text-sm w-[100px] italic")}
+                                        />
+                                    </td>
+                                </tr>
+
+
                             </tbody>
                         </table>
 
+                        {/* Triển khai sau */}
                         <div className="mt-5 mb-3 text-[#1e3a8a]">
                             <p className="font-bold text-center mb-2">Chứng từ kèm theo:</p>
                             <div className="grid grid-cols-3 gap-y-2 text-sm mx-auto">
@@ -473,6 +581,8 @@ export default function DossierDetail() {
                     <>
                         <MachineInfoSection
                             dossierId={id as string}
+                            registrationNo={dossier.registrationNo ?? null}
+                            declarationPlace={dossier.declarationPlace ?? null}
                             isActive={activeTab === 'goodsInfo'}
                         />
 

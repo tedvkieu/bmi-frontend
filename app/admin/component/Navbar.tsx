@@ -93,12 +93,6 @@ const Navbar: React.FC<NavbarProps> = ({
             icon: TextSearch,
           },
           {
-            key: "documents",
-            label: "Giám sát / Quản lý hồ sơ",
-            href: "/admin/hoso",
-            icon: FileText,
-          },
-          {
             key: "assignment",
             label: "Phân công giám định",
             href: "/admin/phancong",
@@ -109,6 +103,12 @@ const Navbar: React.FC<NavbarProps> = ({
             label: "Đánh giá hồ sơ",
             href: "/admin/evaluation",
             icon: GanttChart,
+          },
+           {
+            key: "documents",
+            label: "Giám sát / Quản lý hồ sơ",
+            href: "/admin/hoso",
+            icon: FileText,
           },
         ],
       },

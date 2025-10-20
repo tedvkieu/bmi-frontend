@@ -233,9 +233,12 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         </p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
-                      <span className="text-sm text-gray-800">
-                        {doc.customerSubmit.name || "Đang tải..."}
+                    <td className="px-6 py-4 max-w-xs">
+                      <span className="text-sm text-gray-800 break-words">
+                        {doc.customerRelatedName ||
+                          doc.customerRelated?.name ||
+                          doc.customerRelatedId ||
+                          "Đang tải..."}
                       </span>
                     </td>
 

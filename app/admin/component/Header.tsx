@@ -8,6 +8,8 @@ import {
 import NotificationBell from "./NotificationBell";
 import UserMenu from "./UserMenu";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { customerApi } from "@/app/admin/services/customerApi";
 
 // Định nghĩa kiểu dữ liệu cho kết quả tìm kiếm
 type DossierResult = {
@@ -71,6 +73,25 @@ const RenderSearchResults = ({
     PENDING: "bg-yellow-100 text-yellow-800",
     NOT_OBTAINED: "bg-red-100 text-red-800",
     NOT_WITHIN_SCOPE: "bg-gray-200 text-gray-800",
+  };
+
+  const handleCreateDraft = async (customerId: number) => {
+    if (!Number.isFinite(customerId)) {
+      toast.error("Không xác định được khách hàng cần tạo hồ sơ");
+      return;
+    }
+    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
+    try {
+      const draft = await customerApi.createDraftDossier(customerId);
+      toast.success("Đã tạo hồ sơ nháp cho khách hàng", { id: toastId });
+      router.push(`/admin/hoso/tao-ho-so/${draft.receiptId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể khởi tạo hồ sơ cho khách hàng";
+      toast.error(message, { id: toastId });
+    }
   };
 
   if (loading) {
@@ -165,7 +186,13 @@ const RenderSearchResults = ({
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end space-x-1">
                         <button onClick={() => router.push(`/admin/khachhang/${item.id}`)} className="p-2 rounded-full text-gray-500 hover:bg-blue-100 hover:text-blue-700" title="Xem chi tiết"><Eye size={18} /></button>
-                        <button onClick={() => router.push(`/admin/hoso/tao-ho-so/${item.id}`)} className="p-2 rounded-full text-gray-500 hover:bg-green-100 hover:text-green-700" title="Lên hồ sơ"><FileText size={18} /></button>
+                        <button
+                          onClick={() => handleCreateDraft(Number(item.id))}
+                          className="p-2 rounded-full text-gray-500 hover:bg-green-100 hover:text-green-700"
+                          title="Lên hồ sơ"
+                        >
+                          <FileText size={18} />
+                        </button>
                         <button onClick={() => router.push(`/admin/khachhang/${item.id}`)} className="p-2 rounded-full text-gray-500 hover:bg-purple-100 hover:text-purple-700" title="Chỉnh sửa"><Edit2 size={18} /></button>
                       </div>
                     </td>

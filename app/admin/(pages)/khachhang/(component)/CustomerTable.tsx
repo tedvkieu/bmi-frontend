@@ -154,11 +154,8 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                                     </td> */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center space-x-3">
-                                            <div className="max-w-[150px]">
-                                                <p
-                                                    className="text-sm font-medium text-gray-900 truncate"
-                                                    title={customer.name}
-                                                >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 leading-tight break-words whitespace-normal">
                                                     {customer.name}
                                                 </p>
                                             </div>

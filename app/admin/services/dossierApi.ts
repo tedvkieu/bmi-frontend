@@ -10,6 +10,11 @@ export interface Receipt {
     customerSubmit?: {
         name: string;
     };
+    customerSubmitName?: string | null;
+    customerRelatedName?: string | null;
+    customerRelated?: {
+        name: string;
+    };
     createdByUserName?: string;
     createdAt: string;
     inspectionTypeName?: string;

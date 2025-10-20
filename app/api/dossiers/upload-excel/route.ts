@@ -12,13 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
     if (
-      !dossierId ||
+      dossierId === null ||
       (typeof dossierId === "string" && dossierId.trim().length === 0)
     ) {
-      return NextResponse.json(
-        { error: "dossierId is required" },
-        { status: 400 }
-      );
+      formData.delete("dossierId");
     }
 
     const headers = new Headers();

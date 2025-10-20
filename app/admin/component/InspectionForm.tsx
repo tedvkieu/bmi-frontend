@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import "../styles/InspectionForm.css";
 import { InspectionFormData } from "../types/inspection";
 import { Customer } from "../types/customer";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { CustomerProfileSection } from "./CustomerProfileSection";
 import LoadingSpinner from "./document/LoadingSpinner";
 import toast from "react-hot-toast";
@@ -26,7 +26,6 @@ interface DossierDetails {
 
 const InspectionForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
 
   const [dossierId, setDossierId] = useState<number | null>(null);
 
@@ -55,60 +54,23 @@ const InspectionForm: React.FC = () => {
         throw new Error("Đường dẫn không hợp lệ");
       }
 
-      let resolvedDossierId = numericId;
-      let dossierData: DossierDetails | null = null;
-
       const dossierResponse = await fetch(
         `/api/dossiers/${numericId}/details`
       );
 
-      if (dossierResponse.ok) {
-        dossierData = await dossierResponse.json();
-      } else if (dossierResponse.status === 404) {
-        const draftResponse = await fetch(
-          `/api/dossiers/customer/${numericId}/draft`,
-          { method: "POST" }
-        );
-
-        if (!draftResponse.ok) {
-          throw new Error("Không thể khởi tạo hồ sơ mới từ khách hàng");
-        }
-
-        const draftData: { receiptId?: number } = await draftResponse.json();
-        if (!draftData?.receiptId) {
-          throw new Error("Dữ liệu trả về không hợp lệ khi tạo hồ sơ");
-        }
-
-        resolvedDossierId = draftData.receiptId;
-
-        const createdDossierResponse = await fetch(
-          `/api/dossiers/${resolvedDossierId}/details`
-        );
-
-        if (!createdDossierResponse.ok) {
-          throw new Error("Không thể tải thông tin hồ sơ vừa tạo");
-        }
-
-        dossierData = await createdDossierResponse.json();
-        toast.success("Đã khởi tạo hồ sơ nháp cho khách hàng");
-
-        if (String(resolvedDossierId) !== id) {
-          router.replace(`/admin/hoso/tao-ho-so/${resolvedDossierId}`);
-        }
-      } else {
+      if (!dossierResponse.ok) {
         const errorPayload = await dossierResponse
           .json()
           .catch(() => ({ message: "" }));
         const message =
-          errorPayload?.message || "Không thể tải thông tin hồ sơ";
+          (errorPayload && (errorPayload as { message?: string }).message) ||
+          "Không thể tải thông tin hồ sơ. Vui lòng tạo hồ sơ trước.";
         throw new Error(message);
       }
 
-      setDossierId(resolvedDossierId);
+      const dossierData: DossierDetails = await dossierResponse.json();
 
-      if (!dossierData) {
-        throw new Error("Không thể xác định thông tin hồ sơ");
-      }
+      setDossierId(numericId);
 
       const customerIdStr = dossierData.customerSubmit?.id;
       const parsedCustomerId = customerIdStr ? Number(customerIdStr) : NaN;
@@ -146,7 +108,7 @@ const InspectionForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, router]);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -195,6 +157,7 @@ const InspectionForm: React.FC = () => {
             setFormData={setCustomerProfileData}
             onSubmit={handleCustomerProfileSubmit}
             loading={loading}
+            uploadMode="update"
           />
         )}
       </div>

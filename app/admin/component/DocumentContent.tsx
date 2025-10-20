@@ -121,7 +121,11 @@ const DocumentsContent: React.FC = () => {
             doc.registrationNo ||
             doc.billOfLading ||
             `Document ${doc.receiptId}`,
-          client: doc.customerSubmit?.name || "",
+          client:
+            doc.customerRelatedName ||
+            doc.customerRelated?.name ||
+            doc.customerSubmit?.name ||
+            "",
           inspector: doc.createdByUserName || "N/A",
           date: new Date(doc.createdAt).toLocaleDateString("vi-VN"),
           type: doc.inspectionTypeName || doc.inspectionTypeId,

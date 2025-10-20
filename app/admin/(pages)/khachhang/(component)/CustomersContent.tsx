@@ -303,8 +303,19 @@ const CustomersContent = () => {
     router.push(`/admin/khachhang/${customerId}`);
   };
 
-  const handleCreateDossierForCustomer = (customerId: number) => {
-    router.push(`/admin/hoso/tao-ho-so/${customerId}`);
+  const handleCreateDossierForCustomer = async (customerId: number) => {
+    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
+    try {
+      const draft = await customerApi.createDraftDossier(customerId);
+      toast.success("Đã tạo hồ sơ nháp cho khách hàng", { id: toastId });
+      router.push(`/admin/hoso/tao-ho-so/${draft.receiptId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể khởi tạo hồ sơ cho khách hàng";
+      toast.error(message, { id: toastId });
+    }
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -434,16 +445,18 @@ const CustomersContent = () => {
               key={customer.customerId}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <Users size={16} className="text-gray-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 ">
-                      {customer.name}
-                    </p>
-                    <p className="text-xs text-black">
-                      ID: {customer.customerId}
-                    </p>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 pr-3">
+                  <div className="flex items-start gap-3">
+                    <Users size={18} className="text-gray-400 flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <p className="text-base font-semibold text-gray-900 leading-tight break-words whitespace-normal">
+                        {customer.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        ID: {customer.customerId}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="relative flex-shrink-0">
@@ -454,21 +467,21 @@ const CustomersContent = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 mb-3">
-                <div className="flex items-center space-x-2">
-                  <Mail size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-900 ">
+              <div className="grid grid-cols-1 gap-2 mb-4">
+                <div className="flex items-start gap-2">
+                  <Mail size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-900 break-words">
                     {customer.email}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Phone size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-900 ">
+                <div className="flex items-start gap-2">
+                  <Phone size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-900 break-words">
                     {customer.phone}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <Calendar size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-gray-900">
                     {formatDate(customer.createdAt)}
                   </span>

@@ -176,6 +176,56 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                             </span>
                                         </td>
                                     </tr>
+                                    <tr className="border border-gray-300 bg-gray-50">
+                                        <td
+                                            colSpan={2}
+                                            className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
+                                        >
+                                            Thông tin khách hàng nhập khẩu
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>
+                                            Đơn vị nhập khẩu
+                                        </td>
+                                        <td className={classNames(tableDataClass, "font-semibold")}>
+                                            <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
+                                                {document.customerRelated?.name || ''}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Địa chỉ</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerRelated?.address || ''}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Mã số thuế</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerRelated?.taxCode || ''}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Điện thoại</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerRelated?.phone || ''}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Email</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-blue-700 underline text-sm")}>
+                                                {document.customerRelated?.email || ''}
+                                            </span>
+                                        </td>
+                                    </tr>
                                     <tr className="border border-gray-300">
                                         <td className={classNames(tableHeaderClass, "font-bold align-top")}>Phạm vi yêu cầu giám định:</td>
                                         <td className={classNames(tableDataClass, "text-[#1e3a8a] text-sm")}>

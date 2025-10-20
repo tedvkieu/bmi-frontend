@@ -34,10 +34,11 @@ const InspectionFormClient: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [receiptId, setReceiptId] = useState<number | null>(null);
+  const [dossierId, setDossierId] = useState<number | null>(null);
 
   const [customerProfileData, setCustomerProfileData] =
     useState<InspectionFormData>({
-      customerId: Number(id),
+      customerId: 0,
       serviceAddress: "",
       taxCode: "",
       email: "",
@@ -47,7 +48,7 @@ const InspectionFormClient: React.FC = () => {
 
   const [receiptData, setReceiptData] = useState<ReceiptFormData>({
     registrationNo: "",
-    customerSubmitId: Number(id) || 0,
+    customerSubmitId: 0,
     customerRelatedId: 0,
     inspectionTypeId: "",
     declarationNo: "",
@@ -68,35 +69,86 @@ const InspectionFormClient: React.FC = () => {
     null
   );
 
-  const fetchCustomer = useCallback(async () => {
+  const fetchDossierAndCustomer = useCallback(async () => {
+    if (!id) return;
+
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+      setError("Đường dẫn không hợp lệ");
+      return;
+    }
+
     try {
       setLoading(true);
+      setError(null);
+      setDossierId(numericId);
 
-      const res = await fetch(`/api/customers/${id}`);
-      if (!res.ok) {
-        throw new Error("Lỗi khi gọi API");
+      const dossierRes = await fetch(`/api/dossiers/${numericId}/details`);
+      if (!dossierRes.ok) {
+        const payload = await dossierRes.json().catch(() => ({}));
+        const message =
+          (payload && typeof payload === "object" && "message" in payload
+            ? (payload as Record<string, string>).message
+            : null) || "Không thể tải thông tin hồ sơ";
+        throw new Error(message);
       }
 
-      const customer: Customer = await res.json();
+      const dossierData = await dossierRes.json();
 
-      setCustomer(customer);
-      setCustomerProfileData((prev) => ({
-        ...prev,
-        email: customer.email,
-      }));
+      const customerIdStr = dossierData?.customerSubmit?.id;
+      const customerId =
+        customerIdStr && !Number.isNaN(Number(customerIdStr))
+          ? Number(customerIdStr)
+          : null;
+
+      if (customerId) {
+        const customerRes = await fetch(`/api/customers/${customerId}`);
+        if (!customerRes.ok) {
+          throw new Error("Không thể tải thông tin khách hàng");
+        }
+        const customerInfo: Customer = await customerRes.json();
+        setCustomer(customerInfo);
+        setCustomerProfileData((prev) => ({
+          ...prev,
+          customerId,
+          email: customerInfo.email,
+        }));
+        setReceiptData((prev) => ({
+          ...prev,
+          customerSubmitId: customerId,
+          customerRelatedId:
+            prev.customerRelatedId && prev.customerRelatedId !== 0
+              ? prev.customerRelatedId
+              : customerId,
+        }));
+      } else {
+        setCustomer(null);
+        setCustomerProfileData((prev) => ({
+          ...prev,
+          customerId: 0,
+          email: "",
+        }));
+        setReceiptData((prev) => ({
+          ...prev,
+          customerSubmitId: 0,
+          customerRelatedId: 0,
+        }));
+      }
     } catch (err) {
       console.error(err);
-      setError("Không thể tải thông tin khách hàng");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Không thể tải thông tin hồ sơ khách hàng"
+      );
     } finally {
       setLoading(false);
     }
-  }, [id]); // 👈 dependency
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      fetchCustomer();
-    }
-  }, [id, fetchCustomer]);
+    fetchDossierAndCustomer();
+  }, [fetchDossierAndCustomer]);
 
   const handleCustomerProfileSubmit = async () => {
     try {
@@ -198,11 +250,12 @@ const InspectionFormClient: React.FC = () => {
         {currentSection === 1 && (
           <CustomerProfileSection
             customer={customer}
-            dossierId={null}
+            dossierId={dossierId}
             formData={customerProfileData}
             setFormData={setCustomerProfileData}
             onSubmit={handleCustomerProfileSubmit}
             loading={loading}
+            uploadMode="update"
           />
         )}
 

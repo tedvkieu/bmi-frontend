@@ -16,6 +16,7 @@ interface CustomerProfileSectionProps {
   loading: boolean;
   onUploadSuccess?: (data: any) => void;
   onRelatedCustomerCreated?: (customerId: number) => void;
+  uploadMode?: "create" | "update";
 }
 
 interface CustomerUpdateData {
@@ -39,6 +40,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   dossierId,
   onUploadSuccess,
   onRelatedCustomerCreated,
+  uploadMode = "update",
 }) => {
   // Inspection type selection removed from Section 1
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
     null
   );
   const [relatedLoading, setRelatedLoading] = useState(false);
+  const isCreateUpload = uploadMode === "create";
 
   // Initialize customer data when customer prop changes
   useEffect(() => {
@@ -162,6 +165,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
         onCancel={() => setShowUploadForm(false)}
         loading={uploadLoading}
         setLoading={setUploadLoading}
+        mode={uploadMode}
       />
     );
   }
@@ -639,15 +643,17 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
             </div>
             <button
               onClick={() => {
-                if (!dossierId) {
-                  toast.error("Không xác định được hồ sơ cần cập nhật từ file.");
+                if (!dossierId && !isCreateUpload) {
+                  toast.error(
+                    "Không xác định được hồ sơ cần cập nhật từ file."
+                  );
                   return;
                 }
                 setShowUploadForm(true);
               }}
               className="px-6 py-3 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Upload File
+              Tải lên file
             </button>
           </div>
           <p className="text-sm text-orange-600 bg-orange-50 rounded-lg p-3">

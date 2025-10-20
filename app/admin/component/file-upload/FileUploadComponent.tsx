@@ -43,7 +43,9 @@ interface UploadResultData {
   invoiceDate?: string | null;
   inspectionDate?: string | null;
   inspectionLocation?: string | null;
-  customer: Customer;
+  customer?: Customer | null;
+  customerSubmit?: Customer | null;
+  customerRelated?: Customer | null;
   machines: Machine[];
 }
 interface FileUploadProps {
@@ -52,6 +54,7 @@ interface FileUploadProps {
   onCancel: () => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  mode?: "create" | "update";
 }
 const UploadResultDisplay: React.FC<{
   data: UploadResultData;
@@ -70,15 +73,89 @@ const UploadResultDisplay: React.FC<{
   };
 
 
-  const getCustomerTypeLabel = (type: string) => {
+  const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
       case "IMPORTER":
         return "Nhà nhập khẩu";
       case "SERVICE_MANAGER":
         return "Quản lý dịch vụ";
+      case "":
+      case undefined:
+      case null:
+        return "Không xác định";
       default:
         return type;
     }
+  };
+
+  const customerSubmit = data.customerSubmit ?? data.customer ?? null;
+  const customerRelated = data.customerRelated ?? null;
+
+  const renderCustomerCard = (title: string, customer: Customer | null) => {
+    if (!customer) return null;
+    return (
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Mã khách hàng
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              ID: {customer.customerId ?? "—"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Tên đơn vị
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              {customer.name || "—"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Địa chỉ
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              {customer.address || "—"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Loại khách hàng
+            </label>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              {getCustomerTypeLabel(customer.customerType)}
+            </span>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Số điện thoại
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              {customer.phone || "—"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Email
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              {customer.email || "—"}
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Mã số thuế
+            </label>
+            <p className="text-sm text-gray-900 whitespace-normal">
+              {customer.taxCode || "—"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -133,51 +210,15 @@ const UploadResultDisplay: React.FC<{
               <h2 className="text-xl font-bold text-gray-900">
                 Khách hàng
               </h2>
+              <p className="text-sm text-gray-600">
+                Hiển thị thông tin khách hàng yêu cầu giám định và khách hàng nhập khẩu
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-bold text-gray-800 mb-1">
-                Đơn vị nhập khẩu
-              </label>
-              <span className="text-sm text-gray-900 whitespace-normal">
-                {data.customer.name}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 md:col-span-2">
-              <label className="block text-sm font-bold text-gray-800 mb-1">
-                Địa Chỉ
-              </label>
-              <span className="text-sm text-gray-900 whitespace-normal">
-                {data.customer.address}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-bold text-gray-800 mb-1">
-                Khách hàng
-              </label>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                {getCustomerTypeLabel(data.customer.customerType)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-bold text-gray-800 mb-1">
-                Số Điện Thoại
-              </label>
-              <span className="text-sm text-gray-900 whitespace-normal">
-                {data.customer.phone}
-              </span>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-bold text-gray-800 mb-1">
-                Email
-              </label>
-              <span className="text-sm text-gray-900 whitespace-normal">
-                {data.customer.email}
-              </span>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {renderCustomerCard("Khách hàng yêu cầu giám định", customerSubmit)}
+            {renderCustomerCard("Khách hàng nhập khẩu", customerRelated)}
           </div>
         </div>
 
@@ -376,6 +417,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   onCancel,
   loading,
   setLoading,
+  mode = "update",
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -384,6 +426,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   const [uploadResult, setUploadResult] = useState<UploadResultData | null>(
     null
   );
+  const isCreateMode = mode === "create";
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -446,7 +489,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   const handleUpload = async () => {
     if (!selectedFile) return;
 
-    if (!dossierId) {
+    if (!isCreateMode && !dossierId) {
       setError("Không xác định được hồ sơ cần cập nhật.");
       return;
     }
@@ -456,7 +499,9 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
 
     const formData = new FormData();
     formData.append("file", selectedFile);
-    formData.append("dossierId", dossierId.toString());
+    if (!isCreateMode && dossierId) {
+      formData.append("dossierId", dossierId.toString());
+    }
 
     try {
       const res = await fetch("/api/dossiers/upload-excel", {
@@ -495,16 +540,30 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
         throw new Error(errorMessage);
       }
 
-      const data = await res.json();
-      console.log("Parsed JSON:", data);
+      const rawData: any = await res.json();
+      console.log("Parsed JSON:", rawData);
+
+      const hasCustomerInfo =
+        !!(
+          rawData?.customerSubmit ||
+          rawData?.customerRelated ||
+          rawData?.customer
+        );
 
       // Check if the response has the complete structure
-      if (data && data.receiptId && data.customer && data.machines) {
+      if (rawData && rawData.receiptId && rawData.machines && hasCustomerInfo) {
+        const normalizedData: UploadResultData = {
+          ...rawData,
+          customer: rawData.customer ?? rawData.customerSubmit ?? null,
+          customerSubmit: rawData.customerSubmit ?? rawData.customer ?? null,
+          customerRelated: rawData.customerRelated ?? null,
+        };
+
         // Show result display
-        setUploadResult(data);
+        setUploadResult(normalizedData);
       } else {
         // Fallback to original success handler
-        onUploadSuccess(data);
+        onUploadSuccess(rawData);
       }
     } catch (err) {
       setError(

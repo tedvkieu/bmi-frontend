@@ -849,6 +849,25 @@ const UsersClient: React.FC = () => {
                     </select>
                   </div>
 
+                  {/* Manager Info - only show in view mode */}
+                  {formMode === "view" && users.find(u => u.userId === editingId)?.managerInfo && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Được tạo bởi
+                      </label>
+                      <div className="w-full h-12 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 flex items-center">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+                          <span className="font-medium">
+                            {users.find(u => u.userId === editingId)?.managerInfo?.fullName}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {users.find(u => u.userId === editingId)?.managerInfo?.email}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Inspector specific fields - only show for INSPECTOR role */}
                   {form.role === "INSPECTOR" && (
                     <>

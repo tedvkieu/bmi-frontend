@@ -140,7 +140,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
                                         <td className={classNames(tableDataClass, "font-semibold")}>
                                             <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
-                                                {document.customerSubmit?.name || ''}
+                                                {document.customerSubmit?.name || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -148,7 +148,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={tableHeaderClass}>Địa chỉ</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-sm")}>
-                                                {document.customerSubmit?.address || ''}
+                                                {document.customerSubmit?.address || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -156,7 +156,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={tableHeaderClass}>Mã số thuế</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-sm")}>
-                                                {document.customerSubmit?.taxCode || ''}
+                                                {document.customerSubmit?.taxCode || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -164,7 +164,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={tableHeaderClass}>Người liên hệ/ Điện thoại</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-sm")}>
-                                                {document.contact || ''}
+                                                {document.contact || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -172,7 +172,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={tableHeaderClass}>Email nhận hóa đơn:</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-blue-700 underline text-sm")}>
-                                                {document.customerSubmit?.email || ''}
+                                                {document.customerSubmit?.email || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -200,11 +200,11 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={classNames(tableHeaderClass, "font-bold")}>Thuộc vận đơn số:</td>
                                         <td className={classNames(tableDataClass, "flex justify-between items-center")}>
                                             <span className={classNames(inputClass, "flex-grow mr-2 text-sm")}>
-                                                {document.billOfLading || ''}
+                                                {document.billOfLading || '<Chưa cập nhập>'}
                                             </span>
                                             <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                             <span className={classNames(inputClass, "text-sm w-[100px] italic")}>
-                                                {document.billOfLadingDate || ''}
+                                                {document.billOfLadingDate || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -212,11 +212,11 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={classNames(tableHeaderClass, "font-bold")}>Thuộc tờ khai số:</td>
                                         <td className={classNames(tableDataClass, "flex justify-between items-center")}>
                                             <span className={classNames(inputClass, "flex-grow mr-2 text-sm")}>
-                                                {document.declarationNo || ''}
+                                                {document.declarationNo || '<Chưa cập nhập>'}
                                             </span>
                                             <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                             <span className={classNames(inputClass, "text-sm w-[100px] italic")}>
-                                                {document.declarationDate || ''}
+                                                {document.declarationDate || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -224,11 +224,11 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={classNames(tableHeaderClass, "font-bold")}>Thuộc hóa đơn số:</td>
                                         <td className={classNames(tableDataClass, "flex justify-between items-center")}>
                                             <span className={classNames(inputClass, "flex-grow mr-2 text-sm")}>
-                                                {document.invoiceNo || ''}
+                                                {document.invoiceNo || '<Chưa cập nhập>'}
                                             </span>
                                             <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                             <span className={classNames(inputClass, "text-sm w-[100px] italic")}>
-                                                {document.invoiceDate || ''}
+                                                {document.invoiceDate || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -236,7 +236,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={classNames(tableHeaderClass, "font-bold")}>Dự kiến thời gian giám định:</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-sm")}>
-                                                {document.inspectionDate || ''}
+                                                {document.inspectionDate || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -244,10 +244,80 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         <td className={classNames(tableHeaderClass, "font-bold")}>Dự kiến địa điểm giám định:</td>
                                         <td className={tableDataClass}>
                                             <span className={classNames(inputClass, "text-sm")}>
-                                                {document.inspectionLocation || ''}
+                                                {document.inspectionLocation || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold text-red-600")}>Ngày giám định chính thức:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.scheduledInspectionDate || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Tên tàu:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.shipName || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Container 20ft:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.cout10 || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Container 40ft:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.cout20 || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>
+                                            Trạng thái rời cảng:
+                                        </td>
+                                        <td className={tableDataClass}>
+                                            <span className="text-sm">
+                                                {document.bulkShip ? "Đã rời cảng" : "Chưa rời cảng"}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Hải quan mở tờ khai:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.declarationPlace || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Container 40ft:</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.cout20 || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr className="border border-gray-300">
+                                        <td className={classNames(tableHeaderClass, "font-bold")}>Ngày cấp chứng chỉ:</td>
+                                        <td className={classNames(tableDataClass, "flex justify-between items-center")}>
+                                            <span className={classNames(inputClass, "text-sm w-[100px] italic")}>
+                                                {document.certificateDate || '<Chưa cập nhập>'}
+                                            </span>
+                                        </td>
+                                    </tr>
+
                                 </tbody>
                             </table>
                         </>
@@ -256,6 +326,8 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                         <MachineInfoSectionView
                             dossierId={String(document.dossierId)}
                             isActive={activeTab === 'goodsInfo'}
+                            registrationNo={document.registrationNo || null}
+                            declarationPlace={document.declarationPlace || null}
                         />
                     )}
 

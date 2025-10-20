@@ -583,22 +583,6 @@ function EvaluationPageInner() {
                 {activeTab === "dossier" && dossierDetail && (
                   <div className="mb-3">
                     <DossierDetailView dossierDetail={dossierDetail} />
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleDownloadDocx}
-                        disabled={downloading}
-                        className={`px-4 py-2 rounded text-white ${
-                          downloading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-indigo-600 hover:bg-indigo-700"
-                        }`}
-                      >
-                        {downloading
-                          ? "Đang xuất..."
-                          : "Tải xuống hồ sơ đánh giá"}
-                      </button>
-                    </div>
                   </div>
                 )}
 
@@ -707,6 +691,22 @@ function EvaluationPageInner() {
                       }}
                     />
                   )}
+                   <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleDownloadDocx}
+                        disabled={downloading}
+                        className={`px-4 py-2 rounded text-white ${
+                          downloading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-indigo-600 hover:bg-indigo-700"
+                        }`}
+                      >
+                        {downloading
+                          ? "Đang xuất..."
+                          : "Tải xuống hồ sơ đánh giá"}
+                      </button>
+                    </div>
               </div>
             </div>
           )}

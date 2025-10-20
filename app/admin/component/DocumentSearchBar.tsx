@@ -24,8 +24,6 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
   localSearchTerm,
   setLocalSearchTerm,
   onSearch,
-  statusFilter,
-  setStatusFilter,
   sortBy,
   onSortChange,
   monthFilter,
@@ -92,23 +90,6 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(
-              e.target.value as InspectionReport["status"] | "all"
-            )
-          }
-          className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black"
-        >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="obtained">Hoàn thành</option>
-          <option value="pending">Đang xử lý</option>
-          <option value="not_obtained">Không hoàn thành</option>
-          <option value="not_within_scope">Ngoài phạm vi</option>
-        </select>
-
         {/* Sort By */}
         <select
           value={sortBy}

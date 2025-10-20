@@ -1,3 +1,4 @@
+// app/components/DocumentsContent.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -11,18 +12,15 @@ import LoadingSpinner from "./document/LoadingSpinner";
 import ErrorMessage from "./document/ErrorMessage";
 import ConfirmationModal from "./document/ConfirmationModal";
 import {
-  CheckCircle,
-  Clock,
   ChevronLeft,
   ChevronRight,
-  MinusCircle,
 } from "lucide-react";
-import { IoDocumentOutline } from "react-icons/io5";
+import { IoDocumentOutline } from "react-icons/io5"; // Keep for Total Documents
 import DocumentSearchBar from "./DocumentSearchBar";
 import DossierViewModal from "../(pages)/hoso/(components)/DossierViewModal";
 import { DossierDetails } from "@/app/types/dossier";
+import StatCard from "./StatCard";
 
-// Define a type for your overall status counts
 interface OverallStatusCounts {
   total: number;
   completed: number;
@@ -30,17 +28,6 @@ interface OverallStatusCounts {
   notObtained: number;
   notWithinScope: number;
 }
-
-// Skeleton component for cards
-const StatCardSkeleton: React.FC = () => (
-  <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4 animate-pulse">
-    <div className="flex-shrink-0 bg-gray-200 p-3 rounded-full h-10 w-10"></div>
-    <div>
-      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-      <div className="h-6 bg-gray-200 rounded w-16"></div>
-    </div>
-  </div>
-);
 
 const DocumentsContent: React.FC = () => {
   const router = useRouter();
@@ -54,7 +41,7 @@ const DocumentsContent: React.FC = () => {
   const [localSearchTerm, setLocalSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<
     InspectionReport["status"] | "all"
-  >("all");
+  >("all"); // Default to "all"
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
@@ -64,9 +51,7 @@ const DocumentsContent: React.FC = () => {
   const [loadingDocuments, setLoadingDocuments] = useState<boolean>(true);
   const [errorDocuments, setErrorDocuments] = useState<string | null>(null);
 
-  const [selectedDoc, setSelectedDoc] = useState<DossierDetails | null>(
-    null
-  );
+  const [selectedDoc, setSelectedDoc] = useState<DossierDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
@@ -111,7 +96,7 @@ const DocumentsContent: React.FC = () => {
         searchTerm,
         monthFilter,
         yearFilter,
-        statusFilter
+        statusFilter === "all" ? statusFilter : statusFilter
       );
 
       const mappedDocuments: InspectionReport[] = data.pageData.content.map(
@@ -159,8 +144,20 @@ const DocumentsContent: React.FC = () => {
   }, [fetchOverallCounts]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    const timer = setTimeout(() => {
+      fetchDocuments();
+    }, 500); // Debounce fetch for filters
+
+    return () => clearTimeout(timer);
+  }, [
+    searchTerm,
+    statusFilter,
+    sortBy,
+    monthFilter,
+    yearFilter,
+    currentPage, // Include currentPage to trigger fetch on page change
+    fetchDocuments, // Add fetchDocuments to dependency array
+  ]);
 
   // Debounced search term update
   useEffect(() => {
@@ -174,7 +171,7 @@ const DocumentsContent: React.FC = () => {
     };
   }, [localSearchTerm]);
 
-  const handleStatusChange = useCallback(
+const handleStatusChange = useCallback(
     async (
       id: string,
       newStatus: InspectionReport["status"]
@@ -213,7 +210,7 @@ const DocumentsContent: React.FC = () => {
   const handleStatusFilterChange = useCallback(
     (filter: InspectionReport["status"] | "all") => {
       setStatusFilter(filter);
-      setCurrentPage(0);
+      setCurrentPage(0); // Reset page on filter change
     },
     []
   );
@@ -245,7 +242,6 @@ const DocumentsContent: React.FC = () => {
       toast.error("Không thể lấy dữ liệu biên lai");
     }
   }, []);
-
 
   const handleEdit = useCallback(
     (id: string) => {
@@ -353,11 +349,10 @@ const DocumentsContent: React.FC = () => {
           <button
             key={i}
             onClick={() => setCurrentPage(i)}
-            className={`px-3 py-1 border text-sm font-medium ${
-              i === currentPage
+            className={`px-3 py-1 border text-sm font-medium ${i === currentPage
                 ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
                 : "bg-white border-gray-300 text-black hover:bg-gray-50"
-            }`}
+              }`}
           >
             {i + 1}
           </button>
@@ -431,92 +426,12 @@ const DocumentsContent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        {loadingOverallCounts ? (
-          // Show skeleton for overall counts while loading
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
-              <div className="flex-shrink-0 bg-blue-100 text-blue-600 p-3 rounded-full">
-                <IoDocumentOutline size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Tổng số tài liệu
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {overallCounts.total}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
-              <div className="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
-                <CheckCircle size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Hoàn thành</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {overallCounts.completed}
-                </p>
-              </div>
-            </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
-              <div className="flex-shrink-0 bg-yellow-100 text-yellow-600 p-3 rounded-full">
-                <Clock size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Đang xử lý</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {overallCounts.pending}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
-              <div className="flex-shrink-0 bg-gray-100 text-gray-600 p-3 rounded-full">
-                <Clock size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Không hoàn thành
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {overallCounts.notObtained}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl shadow-sm border flex items-center space-x-4">
-              <div className="flex-shrink-0 bg-red-100 text-red-600 p-3 rounded-full">
-                <MinusCircle size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Ngoài phạm vi
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {overallCounts.notWithinScope}
-                </p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
       <div className="bg-white p-4 rounded-xl shadow-sm text-black space-y-4">
         <DocumentSearchBar
-          searchTerm={searchTerm} // Pass the debounced searchTerm for display if needed elsewhere
-          localSearchTerm={localSearchTerm} // Use localSearchTerm for the input field
-          setLocalSearchTerm={setLocalSearchTerm} // Update local state directly
-          onSearch={() => setSearchTerm(localSearchTerm)} // This will be debounced by useEffect
+          searchTerm={searchTerm}
+          localSearchTerm={localSearchTerm}
+          setLocalSearchTerm={setLocalSearchTerm}
+          onSearch={() => setSearchTerm(localSearchTerm)}
           statusFilter={statusFilter}
           setStatusFilter={handleStatusFilterChange}
           sortBy={sortBy}
@@ -527,7 +442,53 @@ const DocumentsContent: React.FC = () => {
           setYearFilter={handleYearFilterChange}
           onRefresh={handleRefresh}
         />
+      </div>
 
+
+      <div className="bg-white p-4 rounded-xl shadow-sm text-black space-y-4">
+
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <StatCard
+            title="Tất cả"
+            count={overallCounts.total}
+            onClick={() => handleStatusFilterChange("all")}
+            isActive={statusFilter === "all"}
+            isLoading={loadingOverallCounts}
+          />
+
+          <StatCard
+            title="Đang xử lý"
+            count={overallCounts.pending}
+            onClick={() => handleStatusFilterChange("pending")}
+            isActive={statusFilter === "pending"}
+            isLoading={loadingOverallCounts}
+          />
+
+          <StatCard
+            title="Đã hoàn thành"
+            count={overallCounts.completed}
+            onClick={() => handleStatusFilterChange("obtained")}
+            isActive={statusFilter === "obtained"}
+            isLoading={loadingOverallCounts}
+          />
+
+          <StatCard
+            title="Không hoàn thành"
+            count={overallCounts.notObtained}
+            onClick={() => handleStatusFilterChange("not_obtained")}
+            isActive={statusFilter === "not_obtained"}
+            isLoading={loadingOverallCounts}
+          />
+
+          <StatCard
+            title="Ngoài phạm vi"
+            count={overallCounts.notWithinScope}
+            onClick={() => handleStatusFilterChange("not_within_scope")}
+            isActive={statusFilter === "not_within_scope"}
+            isLoading={loadingOverallCounts}
+          />
+        </div>
         <div className="block lg:hidden space-y-4">
           {loadingDocuments ? (
             <LoadingSpinner />
@@ -544,6 +505,7 @@ const DocumentsContent: React.FC = () => {
                 Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
               </p>
             </div>
+
           ) : (
             documents.map((doc) => (
               <DocumentMobileCard
@@ -569,7 +531,7 @@ const DocumentsContent: React.FC = () => {
               onEdit={handleEdit}
               onDelete={confirmDelete}
               onDeleteMany={handleDeleteMany}
-              onStatusChange={handleStatusChange} // Thêm prop mới
+              onStatusChange={handleStatusChange}
               onRefresh={handleRefresh}
             />
           )}

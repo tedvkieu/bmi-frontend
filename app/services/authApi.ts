@@ -3,6 +3,11 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
+}
+
 export interface LoginResponse {
     token: string;
     type: string;
@@ -132,5 +137,23 @@ export const authApi = {
     // Kiểm tra xem user đã đăng nhập chưa
     isAuthenticated(): boolean {
         return !!this.getToken();
+    },
+
+    // Đổi mật khẩu
+    async changePassword(credentials: ChangePasswordRequest): Promise<{ message: string }> {
+        const response = await fetch('/api/auth/change-password', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Đổi mật khẩu thất bại');
+        }
+
+        return response.json();
     }
 };

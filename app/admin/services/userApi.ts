@@ -56,6 +56,20 @@ export interface UserWithCompetencyRequest {
   competencyNotes?: string;
 }
 
+export interface ManagerInfo {
+  userId: number;
+  fullName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AdminChangePasswordRequest {
+  userId: number;
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface UserResponse {
   userId: number;
   fullName: string;
@@ -68,6 +82,9 @@ export interface UserResponse {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+
+  // Manager information
+  managerInfo?: ManagerInfo;
 
   // Inspector specific fields
   inspectorCode?: string;
@@ -325,5 +342,24 @@ export const userApi = {
       }
     );
     return handleResponse<PaginatedReceiptResponse>(res);
+  },
+
+  // Admin change password
+  async adminChangePassword(request: AdminChangePasswordRequest): Promise<{ message: string }> {
+    const response = await fetch('/api/users/admin/change-password', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Đổi mật khẩu thất bại');
+    }
+
+    return response.json();
   },
 };

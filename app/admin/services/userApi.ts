@@ -13,12 +13,47 @@ export interface UserRequest {
   fullName: string;
   dob: string | null;
   role: UserRole;
-  username: string;
   passwordHash?: string;
   email: string;
   phone?: string;
   note?: string;
   isActive: boolean;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
+}
+
+export interface UserWithCompetencyRequest {
+  fullName: string;
+  dob: string | null;
+  role: UserRole;
+  passwordHash?: string;
+  email: string;
+  phone?: string;
+  note?: string;
+  isActive: boolean;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
+
+  // Competency assignments
+  certificationIds?: number[];
+  productCategoryIds?: number[];
+  obtainedDate?: string;
+  expiryDate?: string;
+  certificateNumber?: string;
+  issuingOrganization?: string;
+  assignedDate?: string;
+  experienceLevel?: string;
+  competencyNotes?: string;
 }
 
 export interface UserResponse {
@@ -33,6 +68,13 @@ export interface UserResponse {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
 }
 
 export interface UserDossierStatsResponse {
@@ -203,6 +245,15 @@ export const userApi = {
 
   async create(body: UserRequest): Promise<UserResponse> {
     const res = await fetch(`/api/users`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse<UserResponse>(res);
+  },
+
+  async createWithCompetency(body: UserWithCompetencyRequest): Promise<UserResponse> {
+    const res = await fetch(`/api/users/with-competency`, {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify(body),

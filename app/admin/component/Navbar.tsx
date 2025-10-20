@@ -18,6 +18,8 @@ import {
   TextSearch,
   Handshake,
   ClipboardCheck,
+  Award,
+  Package,
 } from "lucide-react";
 import { authApi } from "../../services/authApi";
 
@@ -127,6 +129,24 @@ const Navbar: React.FC<NavbarProps> = ({
             label: "Nhân viên",
             href: "/admin/nhanvien",
             icon: UserCog,
+          },
+        ],
+      },
+      {
+        key: "competency_section",
+        title: "Quản lý năng lực",
+        items: [
+          {
+            key: "certifications",
+            icon: Award,
+            label: "Chứng chỉ ISO",
+            href: "/admin/certifications",
+          },
+          {
+            key: "product_categories",
+            icon: Package,
+            label: "Nhóm sản phẩm",
+            href: "/admin/product-categories",
           },
         ],
       },

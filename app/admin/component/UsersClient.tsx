@@ -22,13 +22,17 @@ import { authApi, User as AuthUser } from "../../services/authApi";
 import {
   userApi,
   type UserRequest,
+  type UserWithCompetencyRequest,
   type UserResponse,
   type UserRole,
   type PaginatedUserResponse,
 } from "../services/userApi";
 import ConfirmationModal from "./document/ConfirmationModal";
 import LoadingSpinner from "./document/LoadingSpinner";
+import CompetencySection from "./CompetencySection";
+import CompetencyCreateSection from "./CompetencyCreateSection";
 import toast from "react-hot-toast";
+import { Switch } from "./ui/switch";
 
 const STAFF_ROLES: UserRole[] = ["INSPECTOR", "DOCUMENT_STAFF", "ISO_STAFF"];
 const ALL_ROLES: UserRole[] = [
@@ -46,12 +50,18 @@ const initialForm: UserRequest = {
   fullName: "",
   dob: "",
   role: "INSPECTOR",
-  username: "",
   passwordHash: "",
   email: "",
   phone: "",
   note: "",
   isActive: true,
+
+  // Inspector specific fields
+  inspectorCode: "",
+  trainingSpecialization: "",
+  workExperience: 0,
+  inspectionExperience: "",
+  contractType: "",
 };
 
 const roleDisplayNames: Record<UserRole, string> = {
@@ -103,6 +113,19 @@ const UsersClient: React.FC = () => {
   const [filterRole, setFilterRole] = useState<UserRole | "all">("all");
   const [gotoPageInput, setGotoPageInput] = useState<string>("");
 
+  // Competency states for create mode
+  const [selectedCertificationIds, setSelectedCertificationIds] = useState<number[]>([]);
+  const [selectedProductCategoryIds, setSelectedProductCategoryIds] = useState<number[]>([]);
+  const [competencyFormData, setCompetencyFormData] = useState({
+    obtainedDate: '',
+    expiryDate: '',
+    certificateNumber: '',
+    issuingOrganization: '',
+    assignedDate: '',
+    experienceLevel: '',
+    notes: ''
+  });
+
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const roleFromToken = authApi.getRoleFromToken() as UserRole | null;
@@ -146,7 +169,7 @@ const UsersClient: React.FC = () => {
     try {
       const status = await userApi.getAdminStatus();
       setAdminStatus(status);
-    } catch {}
+    } catch { }
   }, [isAdmin]);
 
   const loadData = useCallback(
@@ -172,7 +195,7 @@ const UsersClient: React.FC = () => {
         setTotalElements(response.totalElements);
         const backendPage =
           typeof response.number === "number" &&
-          Number.isFinite(response.number)
+            Number.isFinite(response.number)
             ? response.number + 1
             : safePage;
         setCurrentPage(backendPage);
@@ -216,6 +239,18 @@ const UsersClient: React.FC = () => {
     setForm(initialForm);
     setEditingId(null);
     setFormMode("create");
+    // Reset competency states
+    setSelectedCertificationIds([]);
+    setSelectedProductCategoryIds([]);
+    setCompetencyFormData({
+      obtainedDate: '',
+      expiryDate: '',
+      certificateNumber: '',
+      issuingOrganization: '',
+      assignedDate: '',
+      experienceLevel: '',
+      notes: ''
+    });
   };
 
   const openCreate = () => {
@@ -227,12 +262,18 @@ const UsersClient: React.FC = () => {
     fullName: u.fullName,
     dob: u.dob || "",
     role: u.role,
-    username: u.username,
     passwordHash: "",
     email: u.email,
     phone: u.phone || "",
     note: u.note || "",
     isActive: u.isActive,
+
+    // Inspector specific fields
+    inspectorCode: u.inspectorCode || "",
+    trainingSpecialization: u.trainingSpecialization || "",
+    workExperience: u.workExperience || 0,
+    inspectionExperience: u.inspectionExperience || "",
+    contractType: u.contractType || "",
   });
 
   const openView = (u: UserResponse) => {
@@ -286,11 +327,10 @@ const UsersClient: React.FC = () => {
 
   const validateBeforeSubmit = (): string | null => {
     if (!form.fullName.trim()) return "Vui lòng nhập họ tên";
-    if (!form.username.trim()) return "Vui lòng nhập username";
     if (!form.email.trim()) return "Vui lòng nhập email";
 
     if (form.role === "ADMIN" && !canSelectAdmin && formMode === "create")
-      return "Không thể tạo thêm vai trò ADMIN";
+      return "Không thể tạo thêm vị trí ADMIN";
 
     if (
       formMode === "create" &&
@@ -327,7 +367,28 @@ const UsersClient: React.FC = () => {
 
     try {
       if (formMode === "create") {
-        await userApi.create(payload);
+        // Check if user is INSPECTOR and has competency data
+        const hasCompetencyData = form.role === "INSPECTOR" &&
+          (selectedCertificationIds.length > 0 || selectedProductCategoryIds.length > 0);
+
+        if (hasCompetencyData) {
+          // Use new API to create user with competency
+          const competencyPayload: UserWithCompetencyRequest = {
+            ...payload,
+            certificationIds: selectedCertificationIds.length > 0 ? selectedCertificationIds : undefined,
+            productCategoryIds: selectedProductCategoryIds.length > 0 ? selectedProductCategoryIds : undefined,
+            obtainedDate: competencyFormData.obtainedDate || undefined,
+            expiryDate: competencyFormData.expiryDate || undefined,
+            certificateNumber: competencyFormData.certificateNumber || undefined,
+            issuingOrganization: competencyFormData.issuingOrganization || undefined,
+            assignedDate: competencyFormData.assignedDate || undefined,
+            experienceLevel: competencyFormData.experienceLevel || undefined,
+            competencyNotes: competencyFormData.notes || undefined,
+          };
+          await userApi.createWithCompetency(competencyPayload);
+        } else {
+          await userApi.create(payload);
+        }
       } else if (editingId) {
         await userApi.update(editingId, payload);
       }
@@ -426,7 +487,7 @@ const UsersClient: React.FC = () => {
             />
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên, email, username..."
+              placeholder="Tìm kiếm theo tên, email..."
               className="pl-10 pr-4 py-2.5 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full text-sm"
               value={searchTerm}
               onChange={handleSearchChange}
@@ -444,7 +505,7 @@ const UsersClient: React.FC = () => {
                 value={filterRole}
                 onChange={handleFilterChange}
               >
-                <option value="all">Tất cả vai trò</option>
+                <option value="all">Tất cả vị trí</option>
                 {ALL_ROLES.map((roleOpt) => (
                   <option key={roleOpt} value={roleOpt}>
                     {roleDisplayNames[roleOpt]}
@@ -512,7 +573,7 @@ const UsersClient: React.FC = () => {
                     Họ tên
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-800 uppercase">
-                    Vai trò
+                    Vị trí/Chức vụ
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-gray-800 uppercase">
                     Thao tác
@@ -544,9 +605,8 @@ const UsersClient: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            roleColors[u.role].bg
-                          } ${roleColors[u.role].text}`}
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${roleColors[u.role].bg
+                            } ${roleColors[u.role].text}`}
                         >
                           {roleDisplayNames[u.role]}
                         </span>
@@ -560,6 +620,15 @@ const UsersClient: React.FC = () => {
                           >
                             <Eye size={18} />
                           </button>
+                          {/* <button
+                            onClick={() => {
+                              window.location.href = `/admin/users/${u.userId}/competency`;
+                            }}
+                            className="p-2.5 rounded-full text-gray-600 hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                            title="Quản lý năng lực"
+                          >
+                            <Award size={18} />
+                          </button> */}
                           <button
                             onClick={() => {
                               window.location.href = `/admin/nhanvien/${u.userId}/thongke`;
@@ -572,11 +641,10 @@ const UsersClient: React.FC = () => {
                           <button
                             onClick={() => canEditRow(u) && openEdit(u)}
                             disabled={!canEditRow(u)}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
-                              canEditRow(u)
-                                ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                                : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                            }`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canEditRow(u)
+                              ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                              : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                              }`}
                             title="Sửa"
                           >
                             <Edit size={18} />
@@ -584,11 +652,10 @@ const UsersClient: React.FC = () => {
                           <button
                             onClick={() => canDeleteRow(u) && requestDelete(u)}
                             disabled={!canDeleteRow(u)}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${
-                              canDeleteRow(u)
-                                ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                                : "text-gray-400 bg-gray-100 cursor-not-allowed"
-                            }`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none ${canDeleteRow(u)
+                              ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                              : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                              }`}
                             title="Xóa"
                           >
                             <Trash2 size={18} />
@@ -636,11 +703,10 @@ const UsersClient: React.FC = () => {
                     key={pageNumber}
                     onClick={() => paginate(pageNumber)}
                     disabled={loadingTableData}
-                    className={`min-w-[36px] px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      pageNumber === currentPage
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`min-w-[36px] px-3 py-1.5 rounded-md text-sm font-medium transition-all ${pageNumber === currentPage
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                      }`}
                   >
                     {pageNumber}
                   </button>
@@ -687,14 +753,14 @@ const UsersClient: React.FC = () => {
             className="absolute inset-0 bg-white/50 backdrop-blur-sm"
             onClick={closeModal}
           />
-          <div className="relative bg-white w-full max-w-4xl mx-4 rounded-lg shadow-xl">
+          <div className="relative bg-white w-full max-w-4xl mx-4 rounded-lg shadow-xl max-h-[90vh] flex flex-col">
             <div className="px-6 py-5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-t-lg flex items-center justify-between">
               <h4 className="text-lg font-semibold">
                 {formMode === "create"
                   ? "Thêm người dùng"
                   : formMode === "edit"
-                  ? "Cập nhật người dùng"
-                  : "Xem thông tin người dùng"}
+                    ? "Cập nhật người dùng"
+                    : "Xem thông tin người dùng"}
               </h4>
               <button
                 onClick={closeModal}
@@ -704,169 +770,266 @@ const UsersClient: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ tên
-                  </label>
-                  <input
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="Nhập họ tên"
-                    className={fieldReadOnlyClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày sinh
-                  </label>
-                  <input
-                    type="date"
-                    name="dob"
-                    value={form.dob || ""}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="Chọn ngày sinh"
-                    className={fieldReadOnlyClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username
-                  </label>
-                  <input
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="Tên đăng nhập"
-                    className={fieldReadOnlyClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="example@gmail.com"
-                    className={fieldReadOnlyClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Điện thoại
-                  </label>
-                  <input
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="Số điện thoại"
-                    className={fieldReadOnlyClass}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Vai trò
-                  </label>
-                  <select
-                    name="role"
-                    value={form.role}
-                    onChange={handleChange}
-                    disabled={inputDisabled}
-                    className={`${fieldClass} ${selectDisabledClass}`}
-                  >
-                    <option value="" disabled hidden>
-                      -- Chọn vai trò --
-                    </option>
-                    {filteredRoleOptions.map((r) => (
-                      <option key={r} value={r}>
-                        {roleDisplayNames[r]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {formMode !== "view" && (
+            <div className="flex-1 overflow-y-auto">
+              <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {formMode === "create"
-                        ? "Mật khẩu"
-                        : "Mật khẩu mới (để trống nếu không đổi)"}
+                      Họ tên
                     </label>
                     <input
-                      type="password"
-                      name="passwordHash"
-                      value={form.passwordHash || ""}
+                      name="fullName"
+                      value={form.fullName}
                       onChange={handleChange}
-                      placeholder="••••••••"
-                      className={fieldClass}
-                      autoComplete={
-                        formMode === "create" ? "new-password" : "off"
-                      }
+                      readOnly={inputDisabled}
+                      placeholder="Nhập họ tên"
+                      className={fieldReadOnlyClass}
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ngày sinh
+                    </label>
+                    <input
+                      type="date"
+                      name="dob"
+                      value={form.dob || ""}
+                      onChange={handleChange}
+                      readOnly={inputDisabled}
+                      placeholder="Chọn ngày sinh"
+                      className={fieldReadOnlyClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      readOnly={inputDisabled}
+                      placeholder="example@gmail.com"
+                      className={fieldReadOnlyClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Điện thoại
+                    </label>
+                    <input
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                      readOnly={inputDisabled}
+                      placeholder="Số điện thoại"
+                      className={fieldReadOnlyClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Vị trí/Chức vụ
+                    </label>
+                    <select
+                      name="role"
+                      value={form.role}
+                      onChange={handleChange}
+                      disabled={inputDisabled}
+                      className={`${fieldClass} ${selectDisabledClass}`}
+                    >
+                      <option value="" disabled hidden>
+                        -- Chọn vị trí --
+                      </option>
+                      {filteredRoleOptions.map((r) => (
+                        <option key={r} value={r}>
+                          {roleDisplayNames[r]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Inspector specific fields - only show for INSPECTOR role */}
+                  {form.role === "INSPECTOR" && (
+                    <>
+                      {/* Mã số giám định viên - hide in create mode, disable in edit mode */}
+                      {formMode !== "create" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Mã số giám định viên
+                          </label>
+                          <input
+                            type="text"
+                            name="inspectorCode"
+                            value={form.inspectorCode || ""}
+                            onChange={handleChange}
+                            readOnly={true}
+                            placeholder="Tự động tạo bởi hệ thống"
+                            className="w-full h-12 text-base bg-gray-100 text-gray-500 border-2 border-gray-300 rounded-lg cursor-not-allowed"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Chuyên môn đào tạo
+                        </label>
+                        <input
+                          type="text"
+                          name="trainingSpecialization"
+                          value={form.trainingSpecialization || ""}
+                          onChange={handleChange}
+                          readOnly={inputDisabled}
+                          placeholder="VD: Cao đẳng Cơ khí"
+                          className={fieldReadOnlyClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kinh nghiệm công tác (năm)
+                        </label>
+                        <input
+                          type="number"
+                          name="workExperience"
+                          value={form.workExperience || ""}
+                          onChange={handleChange}
+                          readOnly={inputDisabled}
+                          placeholder="VD: 7"
+                          min="0"
+                          step="0.1"
+                          className={fieldReadOnlyClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kinh nghiệm giám định chất lượng SPHH
+                        </label>
+                        <input
+                          type="text"
+                          name="inspectionExperience"
+                          value={form.inspectionExperience || ""}
+                          onChange={handleChange}
+                          readOnly={inputDisabled}
+                          placeholder="VD: trên 20"
+                          className={fieldReadOnlyClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Trạng thái
+                        </label>
+                        <div className="flex items-center space-x-3 h-12 px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                          <Switch
+                            checked={!!form.isActive}
+                            onCheckedChange={(checked) => setForm(prev => ({ ...prev, isActive: checked }))}
+                            disabled={inputDisabled}
+                          />
+                          <span className="text-sm text-gray-700">
+                            {form.isActive ? 'Hoạt động' : 'Không hoạt động'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Loại hợp đồng lao động đã ký
+                        </label>
+                        <select
+                          name="contractType"
+                          value={form.contractType || ""}
+                          onChange={handleChange}
+                          disabled={inputDisabled}
+                          className={`${fieldClass} ${selectDisabledClass}`}
+                        >
+                          <option value="">-- Chọn loại hợp đồng --</option>
+                          <option value="Không thời hạn">Không thời hạn</option>
+                          <option value="Có thời hạn">Có thời hạn</option>
+                          <option value="Hợp đồng lao động">Hợp đồng lao động</option>
+                          <option value="Thử việc">Thử việc</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {formMode !== "view" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {formMode === "create"
+                          ? "Mật khẩu"
+                          : "Mật khẩu mới (để trống nếu không đổi)"}
+                      </label>
+                      <input
+                        type="password"
+                        name="passwordHash"
+                        value={form.passwordHash || ""}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className={fieldClass}
+                        autoComplete={
+                          formMode === "create" ? "new-password" : "off"
+                        }
+                      />
+                    </div>
+                  )}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ghi chú
+                    </label>
+                    <textarea
+                      name="note"
+                      value={form.note}
+                      onChange={handleChange}
+                      readOnly={inputDisabled}
+                      placeholder="Nhập ghi chú thêm..."
+                      className={`${fieldReadOnlyClass}`}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+
+                {/* Competency Section - Only show for inspectors */}
+                {form.role === "INSPECTOR" && (
+                  formMode === "create" ? (
+                    <CompetencyCreateSection
+                      selectedCertificationIds={selectedCertificationIds}
+                      selectedProductCategoryIds={selectedProductCategoryIds}
+                      competencyFormData={competencyFormData}
+                      onCertificationChange={setSelectedCertificationIds}
+                      onProductCategoryChange={setSelectedProductCategoryIds}
+                      onFormDataChange={setCompetencyFormData}
+                    />
+                  ) : (
+                    <CompetencySection
+                      userId={editingId || 0}
+                      userRole={form.role}
+                      isEditing={formMode !== "view"}
+                    />
+                  )
                 )}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    name="note"
-                    value={form.note}
-                    onChange={handleChange}
-                    readOnly={inputDisabled}
-                    placeholder="Nhập ghi chú thêm..."
-                    className={`${fieldReadOnlyClass}`}
-                    rows={4}
-                  />
-                </div>
-                <div className="flex items-center">
-                  <label className="mr-3 text-sm font-medium text-gray-700">
-                    Kích hoạt
-                  </label>
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={!!form.isActive}
-                    onChange={handleChange}
-                    disabled={inputDisabled}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                </div>
-              </div>
 
-              {error && (
-                <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                  {error}
-                </div>
-              )}
+                {error && (
+                  <div className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                    {error}
+                  </div>
+                )}
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type={"button"}
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
-                >
-                  Đóng
-                </button>
-                {formMode !== "view" && (
+                <div className="pt-2 flex items-center justify-end gap-2">
                   <button
-                    type="submit"
-                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                    type={"button"}
+                    onClick={closeModal}
+                    className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
                   >
-                    {formMode === "create" ? "Tạo" : "Lưu"}
+                    Đóng
                   </button>
-                )}
-              </div>
-            </form>
+                  {formMode !== "view" && (
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      {formMode === "create" ? "Tạo" : "Lưu"}
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -876,9 +1039,8 @@ const UsersClient: React.FC = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={confirmDelete}
         title="Xác nhận xóa người dùng"
-        message={`Bạn có chắc chắn muốn xóa người dùng${
-          pendingDelete ? ` "${pendingDelete.fullName}"` : ""
-        }? Hành động này không thể hoàn tác.`}
+        message={`Bạn có chắc chắn muốn xóa người dùng${pendingDelete ? ` "${pendingDelete.fullName}"` : ""
+          }? Hành động này không thể hoàn tác.`}
       />
     </>
   );

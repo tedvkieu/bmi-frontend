@@ -291,6 +291,7 @@ const AssignmentManager: React.FC = () => {
     }
   }, [dossierInfo]);
 
+
   const handleOpenDatePicker = () => {
     const input = datePickerRef.current;
     if (!input) return;

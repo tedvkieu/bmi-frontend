@@ -90,7 +90,7 @@ const Navbar: React.FC<NavbarProps> = ({
         items: [
           {
             key: "documents_requests",
-            label: "Tiếp nhận yêu cầu",
+            label: "Tiếp nhận yêu cầu giám định",
             href: "/admin/yeu-cau-giam-dinh",
             icon: TextSearch,
           },
@@ -175,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({
         items: [
           {
             key: "documents_requests",
-            label: "Tiếp nhận yêu cầu",
+            label: "Tiếp nhận yêu cầu giám định",
             href: "/admin/yeu-cau-giam-dinh",
             icon: TextSearch,
           },
@@ -275,7 +275,7 @@ const Navbar: React.FC<NavbarProps> = ({
     const hoverColor = "hover:bg-gray-100";
 
     const base = `flex items-center ${isSub ? "pl-6" : "pl-3"}
-      pr-3 py-3 rounded-lg transition-all duration-150 text-base font-medium 
+      pr-3 py-3 rounded-lg transition-all duration-150 text-sm font-medium 
       ${active ? activeColor : `text-gray-700 ${hoverColor}`}`;
 
     return (
@@ -370,7 +370,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {navSections.map((sec) => (
           <div key={sec.key} className="mb-6">
             {!collapsed && (
-              <div className="px-3 mb-3 text-base font-semibold uppercase tracking-wide text-gray-600">
+              <div className="px-3 mb-3 text-sm font-semibold uppercase tracking-wide text-gray-600">
                 {sec.title}
               </div>
             )}

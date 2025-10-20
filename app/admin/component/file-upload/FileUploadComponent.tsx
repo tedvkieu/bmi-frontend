@@ -57,7 +57,7 @@ const UploadResultDisplay: React.FC<{
   data: UploadResultData;
   onStartNew: () => void;
   onGoHome: () => void;
-}> = ({ data, onStartNew, onGoHome }) => {
+}> = ({ data }) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Chưa có";
     return new Date(dateString).toLocaleDateString("vi-VN");

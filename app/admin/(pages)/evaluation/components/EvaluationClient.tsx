@@ -13,8 +13,8 @@ import {
 } from "../types/evaluation";
 import toast from "react-hot-toast";
 import SearchSection from "./SearchSection";
-import DossierInfo from "./DossierInfo";
 import EvaluationForm from "./EvaluationForm";
+import DossierInfo from "./DossierInfo";
 
 export default function EvaluationClient() { // Renamed to EvaluationClient
     const searchParams = useSearchParams();

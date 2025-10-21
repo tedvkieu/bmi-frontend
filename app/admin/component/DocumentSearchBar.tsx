@@ -24,8 +24,6 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
   localSearchTerm,
   setLocalSearchTerm,
   onSearch,
-  statusFilter,
-  setStatusFilter,
   sortBy,
   onSortChange,
   monthFilter,
@@ -34,8 +32,12 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
   setYearFilter,
   onRefresh,
 }) => {
-  const years = Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() - i));
-  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
+  const years = Array.from({ length: 10 }, (_, i) =>
+    String(new Date().getFullYear() - i)
+  );
+  const months = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, "0")
+  );
 
   const handleClearSearch = () => {
     setLocalSearchTerm("");
@@ -54,7 +56,7 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
 
           <input
             type="text"
-            placeholder="Tìm kiếm theo số đăng ký đơn hàng"
+            placeholder="Tìm kiếm theo số đăng ký"
             className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black"
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
@@ -88,21 +90,6 @@ const DocumentSearchBar: React.FC<DocumentSearchBarProps> = ({
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as InspectionReport["status"] | "all")
-          }
-          className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black"
-        >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="obtained">Hoàn thành</option>
-          <option value="pending">Đang xử lý</option>
-          <option value="not_obtained">Không hoàn thành</option>
-          <option value="not_within_scope">Ngoài phạm vi</option>
-        </select>
-
         {/* Sort By */}
         <select
           value={sortBy}

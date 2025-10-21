@@ -13,12 +13,61 @@ export interface UserRequest {
   fullName: string;
   dob: string | null;
   role: UserRole;
-  username: string;
   passwordHash?: string;
   email: string;
   phone?: string;
   note?: string;
   isActive: boolean;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
+}
+
+export interface UserWithCompetencyRequest {
+  fullName: string;
+  dob: string | null;
+  role: UserRole;
+  passwordHash?: string;
+  email: string;
+  phone?: string;
+  note?: string;
+  isActive: boolean;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
+
+  // Competency assignments
+  certificationIds?: number[];
+  productCategoryIds?: number[];
+  obtainedDate?: string;
+  expiryDate?: string;
+  certificateNumber?: string;
+  issuingOrganization?: string;
+  assignedDate?: string;
+  experienceLevel?: string;
+  competencyNotes?: string;
+}
+
+export interface ManagerInfo {
+  userId: number;
+  fullName: string;
+  email: string;
+  role: UserRole;
+}
+
+export interface AdminChangePasswordRequest {
+  userId: number;
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 export interface UserResponse {
@@ -33,6 +82,16 @@ export interface UserResponse {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+
+  // Manager information
+  managerInfo?: ManagerInfo;
+
+  // Inspector specific fields
+  inspectorCode?: string;
+  trainingSpecialization?: string;
+  workExperience?: number;
+  inspectionExperience?: string;
+  contractType?: string;
 }
 
 export interface UserDossierStatsResponse {
@@ -210,6 +269,15 @@ export const userApi = {
     return handleResponse<UserResponse>(res);
   },
 
+  async createWithCompetency(body: UserWithCompetencyRequest): Promise<UserResponse> {
+    const res = await fetch(`/api/users/with-competency`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse<UserResponse>(res);
+  },
+
   async createStaff(body: UserRequest): Promise<UserResponse> {
     const res = await fetch(`/api/users/staff`, {
       method: "POST",
@@ -274,5 +342,24 @@ export const userApi = {
       }
     );
     return handleResponse<PaginatedReceiptResponse>(res);
+  },
+
+  // Admin change password
+  async adminChangePassword(request: AdminChangePasswordRequest): Promise<{ message: string }> {
+    const response = await fetch('/api/users/admin/change-password', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Đổi mật khẩu thất bại');
+    }
+
+    return response.json();
   },
 };

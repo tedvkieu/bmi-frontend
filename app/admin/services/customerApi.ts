@@ -81,6 +81,7 @@ export type DocumentRequest = {
   customerType: string;
   createdAt: string;
   updatedAt: string;
+  draftDossierId?: number | null;
 };
 
 export interface CustPublicResponse {
@@ -110,6 +111,10 @@ export interface CustomerUser { // This seems to be for the currently logged-in 
   customerType: string;
 }
 
+export interface DraftDossierResponse {
+  receiptId: number;
+  [key: string]: any;
+}
 
 export const customerApi = {
   async getAllCustomers(
@@ -196,6 +201,34 @@ export const customerApi = {
 
     // ✅ Không parse JSON vì server luôn trả về 204
     return;
+  },
+
+  async createDraftDossier(customerId: number): Promise<DraftDossierResponse> {
+    const token = authApi.getToken();
+    if (!token) throw new Error("No authentication token found.");
+
+    const response = await fetch(`/api/customers/${customerId}/draft-dossier`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const message =
+        (data && typeof data === "object" && "message" in data && (data as any).message) ||
+        "Không thể khởi tạo hồ sơ mới cho khách hàng";
+      throw new Error(message);
+    }
+
+    if (!data || typeof (data as any).receiptId !== "number") {
+      throw new Error("Dữ liệu trả về không hợp lệ khi tạo hồ sơ");
+    }
+
+    return data as DraftDossierResponse;
   },
 
 

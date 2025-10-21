@@ -4,7 +4,7 @@ import { Users, UserX, Mail, Phone, Calendar, MoreVertical, FileText, Edit2, Tra
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { IoMdCheckmark } from "react-icons/io";
-import { customerApi, UnactiveCustomer, Customer, CustomerResponseNew } from "@/app/admin/services/customerApi";
+import { customerApi, UnactiveCustomer, Customer } from "@/app/admin/services/customerApi";
 import { authApi } from "@/app/services/authApi";
 import LoadingSpinner from "@/app/admin/component/document/LoadingSpinner";
 import ConfirmationModal from "@/app/admin/component/document/ConfirmationModal";
@@ -45,13 +45,13 @@ const CustomersContent = () => {
   const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
   // Hàm thay đổi trang (luôn nhận 0-indexed page number)
-  const handlePageChange = useCallback((page: number) => {
+  const handlePageChange = (page: number) => {
     if (page < 0 || (totalPages > 0 && page >= totalPages)) {
       console.warn("Invalid page number attempted:", page);
       return;
     }
     setCurrentPage(page);
-  }, [totalPages]);
+  };
 
   const handleGotoPageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,23 +168,23 @@ const CustomersContent = () => {
 
       const content = data.content ?? [];
       const totalElements = data.page?.totalElements ?? 0;
-      const totalPages = data.page?.totalPages ?? 0;
+      const newTotalPages = data.page?.totalPages ?? 0;
 
       setCustomers(content);
       setTotalElements(totalElements);
-      setTotalPages(totalPages);
+      setTotalPages(newTotalPages);
 
       // ✅ Nếu currentPage vượt quá totalPages (sau khi lọc hoặc xóa)
       // Điều chỉnh currentPage về trang cuối cùng có dữ liệu nếu nó vượt quá giới hạn
-      if (totalPages > 0 && currentPage >= totalPages) {
-        setCurrentPage(totalPages - 1);
-      } else if (totalPages === 0 && currentPage !== 0) {
+      if (newTotalPages > 0 && currentPage >= newTotalPages) {
+        setCurrentPage(newTotalPages - 1);
+      } else if (newTotalPages === 0 && currentPage !== 0) {
         // Nếu không có trang nào nhưng currentPage không phải 0
         setCurrentPage(0);
       }
 
       console.log(
-        `Page ${currentPage + 1}/${totalPages} (${totalElements} items)`
+        `Page ${currentPage + 1}/${newTotalPages} (${totalElements} items)`
       );
     } catch (err) {
       console.error("Error fetching customers:", err);
@@ -196,7 +196,7 @@ const CustomersContent = () => {
     } finally {
       setIsLoadingCustomers(false);
     }
-  }, [currentPage, pageSize, debouncedSearchTerm, customerTypeFilter, totalPages]);
+  }, [currentPage, pageSize, debouncedSearchTerm, customerTypeFilter]);
 
   useEffect(() => {
     fetchCustomers();
@@ -303,8 +303,19 @@ const CustomersContent = () => {
     router.push(`/admin/khachhang/${customerId}`);
   };
 
-  const handleClickPageForProfile = (id: number) => {
-    router.push(`/admin/hoso/tao-ho-so/${id}`);
+  const handleCreateDossierForCustomer = async (customerId: number) => {
+    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
+    try {
+      const draft = await customerApi.createDraftDossier(customerId);
+      toast.success("Đã tạo hồ sơ nháp cho khách hàng", { id: toastId });
+      router.push(`/admin/hoso/tao-ho-so/${draft.receiptId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể khởi tạo hồ sơ cho khách hàng";
+      toast.error(message, { id: toastId });
+    }
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -397,6 +408,7 @@ const CustomersContent = () => {
           selectedCustomersCount={selectedCustomers.length}
           onDeleteSelected={() => openConfirm(null)}
           loading={isLoadingCustomers}
+          onCreateDossier={handleCreateDossierForCustomer}
         />
         {/* Phân trang cho desktop */}
         {totalPages > 0 && ( // totalPages > 0 để hiển thị phân trang
@@ -433,16 +445,18 @@ const CustomersContent = () => {
               key={customer.customerId}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3 min-w-0 flex-1">
-                  <Users size={16} className="text-gray-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 ">
-                      {customer.name}
-                    </p>
-                    <p className="text-xs text-black">
-                      ID: {customer.customerId}
-                    </p>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 pr-3">
+                  <div className="flex items-start gap-3">
+                    <Users size={18} className="text-gray-400 flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <p className="text-base font-semibold text-gray-900 leading-tight break-words whitespace-normal">
+                        {customer.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        ID: {customer.customerId}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="relative flex-shrink-0">
@@ -453,21 +467,21 @@ const CustomersContent = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 mb-3">
-                <div className="flex items-center space-x-2">
-                  <Mail size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-900 ">
+              <div className="grid grid-cols-1 gap-2 mb-4">
+                <div className="flex items-start gap-2">
+                  <Mail size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-900 break-words">
                     {customer.email}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Phone size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-900 ">
+                <div className="flex items-start gap-2">
+                  <Phone size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-900 break-words">
                     {customer.phone}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <Calendar size={14} className="text-gray-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-gray-900">
                     {formatDate(customer.createdAt)}
                   </span>
@@ -492,7 +506,7 @@ const CustomersContent = () => {
                     <Eye size={16} />
                   </button>
                   <button
-                    onClick={() => handleClickPageForProfile(customer.customerId)}
+                    onClick={() => handleCreateDossierForCustomer(customer.customerId)}
                     className="p-2 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
                     title="Lên hồ sơ"
                   >

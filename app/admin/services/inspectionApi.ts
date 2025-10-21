@@ -121,7 +121,7 @@ class InspectionApi {
   ): Promise<SubmitMachineryResponse> {
     try {
       console.log("Submitting Machinery Data:", machineryData);
-      const response = await fetch("http://localhost:3000/api/machines", {
+      const response = await fetch("/api/machines", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(machineryData),

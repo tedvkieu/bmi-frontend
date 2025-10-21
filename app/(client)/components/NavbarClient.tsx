@@ -11,11 +11,11 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { customerApi } from "@/app/admin/services/customerApi";
+import toast from "react-hot-toast";
 
 interface NavbarClientProps {
   onScrollToContact?: (section: string) => void;
 }
-
 
 export interface Customer {
   email: string;
@@ -45,17 +45,30 @@ export default function NavbarClient({ onScrollToContact }: NavbarClientProps) {
   }, []);
 
   const handleLoginClick = () => {
-    router.push("/auth/login");
+    router.push("/auth");
     setIsOpen(false);
   };
 
-  const handleTaoHoSoClick = () => {
-    if (user) {
-      router.push(`/tao-ho-so/${user.userId}`);
-    } else {
+  const handleTaoHoSoClick = async () => {
+    if (!user || !user.userId || !Number.isFinite(user.userId)) {
       handleLoginClick();
+      return;
     }
-    setIsOpen(false);
+
+    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
+    try {
+      const draft = await customerApi.createDraftDossier(user.userId);
+      toast.success("Đã tạo hồ sơ nháp thành công", { id: toastId });
+      router.push(`/tao-ho-so/${draft.receiptId}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Không thể khởi tạo hồ sơ. Vui lòng thử lại.";
+      toast.error(message, { id: toastId });
+    } finally {
+      setIsOpen(false);
+    }
   };
 
   if (loading) {

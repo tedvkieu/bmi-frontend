@@ -3,6 +3,11 @@ import AdminLayout from "../../component/AdminLayout";
 import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
 import CustomersContent from "./(component)/CustomersContent";
 
+export const metadata = {
+  title: "BMI - KHÁCH HÀNG",
+};
+
+
 const ClientsPage = () => {
   return (
     <AdminLayout>

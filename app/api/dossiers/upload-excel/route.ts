@@ -6,9 +6,16 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get("token")?.value;
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const dossierId = formData.get("dossierId");
 
     if (!file) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
+    }
+    if (
+      dossierId === null ||
+      (typeof dossierId === "string" && dossierId.trim().length === 0)
+    ) {
+      formData.delete("dossierId");
     }
 
     const headers = new Headers();

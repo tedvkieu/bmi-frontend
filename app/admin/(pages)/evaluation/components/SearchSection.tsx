@@ -23,7 +23,7 @@ export default function SearchSection({
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-8">
       <h2 className="text-base text-gray-700 font-semibold mb-4">
-        Tìm kiếm hồ sơ
+        Tìm kiếm hồ sơ giám định
       </h2>
       <div className="flex gap-4">
         <input

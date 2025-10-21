@@ -91,7 +91,10 @@ export interface InspectionReport {
   receiptId: number;
   registrationNo: string;
   customerSubmit: CustomerSubmitResponse;
+  customerSubmitName?: string | null;
   customerRelatedId: number;
+  customerRelatedName?: string | null;
+  customerRelated?: CustomerSubmitResponse | null;
   inspectionTypeId: string;
   declarationNo: string | null;
   billOfLading: string;
@@ -104,7 +107,7 @@ export interface InspectionReport {
   inspectionDate: string | null;
   certificateDate: string | null;
   inspectionLocation: string | null;
-  certificateStatus: CertificateStatusBackend
+  certificateStatus: CertificateStatusBackend;
   createdAt: string;
   updatedAt: string;
 
@@ -196,10 +199,11 @@ export interface InspectionReportApi {
   receiptId: number;
   registrationNo: string;
   customerSubmitId?: string;
-  customerSubmit: CustomerSubmitResponse
+  customerSubmit: CustomerSubmitResponse;
   customerRelatedId: number;
   customerSubmitName?: string | null;
   customerRelatedName?: string | null;
+  customerRelated?: CustomerSubmitResponse | null;
   inspectionTypeId: string;
   inspectionTypeName?: string | null;
   declarationNo: string | null;

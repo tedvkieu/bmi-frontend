@@ -1,122 +1,84 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Navbar from "./Navbar";
-import LoginWrapper from "./LoginWrapper";
 import Header from "./Header";
+import LoginWrapper from "./LoginWrapper";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const getCurrentPage = () => {
-    if (pathname === "/admin") return "dashboard_overview";
-    if (pathname.startsWith("/admin/analytic")) return "dashboard_analytic";
-    if (pathname.startsWith("/admin/hoso")) return "documents";
-    if (pathname.startsWith("/admin/phancong")) return "assignment";
-    if (pathname.startsWith("/admin/evaluation")) return "evaluation";
-    if (pathname.startsWith("/admin/khachhang")) return "clients";
-    if (pathname.startsWith("/admin/nhanvien")) return "users";
-    if (pathname.startsWith("/admin/danhmuc")) return "categories";
-    if (pathname.startsWith("/admin/baocao")) return "reports";
-    if (pathname.startsWith("/admin/caidat")) return "settings";
-    if (pathname.startsWith("/admin/yeu-cau-giam-dinh")) return "documents_requests"; // Thêm route này
-    return "dashboard";
-  };
+  // map route -> logical page (for header title + breadcrumb)
+  const pageMap: { path: string; key: string }[] = [
+    { path: "/admin/analytic", key: "dashboard_analytic" },
+    { path: "/admin/yeu-cau-giam-dinh", key: "documents_requests" },
+    { path: "/admin/hoso", key: "documents" },
+    { path: "/admin/phancong", key: "assignment" },
+    { path: "/admin/evaluation", key: "evaluation" },
+    { path: "/admin/khachhang", key: "clients" },
+    { path: "/admin/nhanvien", key: "users" },
+    { path: "/admin/baocao", key: "reports" },
+    { path: "/admin/caidat", key: "settings" },
+    { path: "/admin", key: "dashboard_overview" },
+  ];
 
-  const currentPage = getCurrentPage();
+  const currentPage = pageMap.find((p) => pathname.startsWith(p.path))?.key ?? "dashboard";
 
   useEffect(() => {
-    const checkScreenSize = () => {
+    const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (!mobile) {
-        setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
-      }
+      // default desktop expanded, mobile collapsed
+      setSidebarCollapsed(mobile ? true : false);
     };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
-
-  const handlePageChange = (page: string) => {
-    const routes = {
-      dashboard: "/admin",
-      dashboard_overview: "/admin",
-      dashboard_analytic: "/admin/analytic",
-      documents: "/admin/hoso",
-      assignment: "/admin/phancong",
-      evaluation: "/admin/evaluation",
-      clients: "/admin/khachhang",
-      users: "/admin/nhanvien",
-      categories: "/admin/danhmuc",
-      reports: "/admin/baocao",
-      settings: "/admin/caidat",
-      documents_requests: "/admin/yeu-cau-giam-dinh",
-    };
-
-    router.push(routes[page as keyof typeof routes] || "/admin");
-
+  // helper: change route from Navbar
+  const handlePageChange = (route: string) => {
+    if (!route) return;
+    router.push(route);
     if (isMobile) {
-      setIsSidebarOpen(false);
+      // on mobile we want sidebar collapsed after routing
+      setSidebarCollapsed(true);
     }
   };
 
   return (
     <LoginWrapper>
-      <div className="min-h-screen bg-gray-50">
-        {/* Mobile Overlay */}
-        {isMobile && isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-
-        {/* Fixed Sidebar */}
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar */}
         <Navbar
-          currentPage={currentPage}
-          isSidebarOpen={isSidebarOpen}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed((s) => !s)}
+          onNavigate={handlePageChange}
           isMobile={isMobile}
-          onPageChange={handlePageChange}
+          currentPageKey={currentPage}
         />
 
-        {/* Main Content with dynamic margin */}
+        {/* Main area */}
         <div
-          className={`min-h-screen transition-all duration-300 ${
-            isMobile
-              ? isSidebarOpen
-                ? "ml-72" // Khi mở trên mobile, đẩy content sang phải
-                : "ml-0"
-              : isSidebarOpen
-              ? "ml-72"
-              : "ml-20"
+          className={`flex-1 min-h-screen transition-all duration-200 flex flex-col ${
+            sidebarCollapsed ? "ml-20" : "ml-72"
           }`}
         >
-          {/* Header */}
           <Header
-            currentPage={currentPage}
-            isSidebarOpen={isSidebarOpen}
+            currentPageKey={currentPage}
+            onSidebarToggle={() => setSidebarCollapsed((s) => !s)}
             isMobile={isMobile}
-            onSidebarToggle={handleSidebarToggle}
           />
 
-          {/* Page Content */}
-          <main className="p-4 lg:p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
         </div>
       </div>
     </LoginWrapper>

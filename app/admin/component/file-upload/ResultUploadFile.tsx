@@ -2,7 +2,7 @@ import React from "react";
 
 interface Machine {
   machineId: number;
-  receiptId: number;
+  dossierId: number;
   registrationNo: string | null;
   itemName: string;
   brand: string;
@@ -40,7 +40,9 @@ interface UploadResultData {
   registrationDate: string;
   billOfLading: string;
   billOfLadingDate: string;
-  customer: Customer;
+  customer?: Customer | null;
+  customerSubmit?: Customer | null;
+  customerRelated?: Customer | null;
   machines: Machine[];
 }
 
@@ -58,15 +60,85 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  const getCustomerTypeLabel = (type: string) => {
+  const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
       case "IMPORTER":
         return "Nhà nhập khẩu";
       case "SERVICE_MANAGER":
         return "Quản lý dịch vụ";
+      case "":
+      case undefined:
+      case null:
+        return "Không xác định";
       default:
         return type;
     }
+  };
+
+  const customerSubmit = data.customerSubmit ?? data.customer ?? null;
+  const customerRelated = data.customerRelated ?? null;
+
+  const renderCustomerCard = (title: string, customer: Customer | null) => {
+    if (!customer) return null;
+    return (
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
+        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+        <div className="space-y-3 text-sm text-gray-800">
+          <div>
+            <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Mã khách hàng
+            </span>
+            <span className="text-sm text-gray-900">ID: {customer.customerId ?? "—"}</span>
+          </div>
+          <div>
+            <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Tên đơn vị
+            </span>
+            <span className="text-sm text-gray-900">{customer.name || "—"}</span>
+          </div>
+          <div>
+            <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Địa chỉ
+            </span>
+            <span className="text-sm text-gray-900">{customer.address || "—"}</span>
+          </div>
+          <div>
+            <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Loại khách hàng
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              {getCustomerTypeLabel(customer.customerType)}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Điện thoại
+              </span>
+              <span className="text-sm text-gray-900">
+                {customer.phone || "—"}
+              </span>
+            </div>
+            <div>
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Email
+              </span>
+              <span className="text-sm text-gray-900">
+                {customer.email || "—"}
+              </span>
+            </div>
+          </div>
+          <div>
+            <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Mã số thuế
+            </span>
+            <span className="text-sm text-gray-900">
+              {customer.taxCode || "—"}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -202,52 +274,14 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
                 Thông Tin Khách Hàng
               </h2>
               <p className="text-gray-600 font-medium">
-                ID: {data.customer.customerId}
+                Chi tiết khách hàng yêu cầu giám định và khách hàng nhập khẩu
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
-                Tên Công Ty
-              </label>
-              <span className="text-lg font-semibold text-gray-900">
-                {data.customer.name}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
-                Loại Khách Hàng
-              </label>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                {getCustomerTypeLabel(data.customer.customerType)}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
-                Số Điện Thoại
-              </label>
-              <span className="text-lg font-semibold text-gray-900">
-                {data.customer.phone}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
-                Địa Chỉ
-              </label>
-              <span className="text-lg font-semibold text-gray-900">
-                {data.customer.address}
-              </span>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <label className="block text-sm font-medium text-gray-500 mb-2">
-                Email
-              </label>
-              <span className="text-lg font-semibold text-gray-900">
-                {data.customer.email}
-              </span>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {renderCustomerCard("Khách hàng yêu cầu giám định", customerSubmit)}
+            {renderCustomerCard("Khách hàng nhập khẩu", customerRelated)}
           </div>
         </div>
 
@@ -365,7 +399,7 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
                       Số Lượng
                     </label>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      {machine.quantity} đơn vị
+                      {machine.quantity}
                     </span>
                   </div>
 

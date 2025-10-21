@@ -48,7 +48,7 @@ export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
           <strong>Số tờ khai:</strong> {dossierInfo.declarationNo}
         </div>
         <div>
-          <strong>Bill of Lading:</strong> {dossierInfo.billOfLading}
+          <strong>Số vận đơn:</strong> {dossierInfo.billOfLading}
         </div>
         <div>
           <strong>Tên tàu:</strong> {dossierInfo.shipName}

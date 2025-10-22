@@ -101,17 +101,18 @@ const Navbar: React.FC<NavbarProps> = ({
             icon: Handshake,
           },
           {
-            key: "evaluation",
-            label: "Đánh giá hồ sơ",
-            href: "/admin/evaluation",
-            icon: GanttChart,
-          },
-           {
             key: "documents",
             label: "Giám sát / Quản lý hồ sơ",
             href: "/admin/hoso",
             icon: FileText,
           },
+          {
+            key: "evaluation",
+            label: "Đánh giá hồ sơ",
+            href: "/admin/evaluation",
+            icon: GanttChart,
+          },
+           
         ],
       },
       {

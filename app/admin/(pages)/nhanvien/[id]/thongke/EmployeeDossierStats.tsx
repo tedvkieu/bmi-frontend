@@ -162,7 +162,7 @@ export default function EmployeeDossierStats() {
           </button>
         </div>
 
-<div className="bg-white border rounded-xl shadow-sm p-6 mb-4">
+<div className="bg-white  rounded-xl shadow-sm p-6 mb-4">
   <h4 className="font-semibold text-gray-800 mb-6 flex items-center gap-2 text-lg">
     Thông tin nhân viên
   </h4>
@@ -176,7 +176,7 @@ export default function EmployeeDossierStats() {
       {[
         { label: "Họ tên", value: userInfo.fullName },
         { label: "Email", value: userInfo.email },
-        { label: "Tên đăng nhập", value: userInfo.username },
+        // { label: "Tên đăng nhập", value: userInfo.username },
         { label: "Số điện thoại", value: userInfo.phone },
         {
           label: "Ngày sinh",
@@ -213,7 +213,7 @@ export default function EmployeeDossierStats() {
 
 
         {/* Stats summary */}
-        <div className="bg-white border rounded-xl shadow-sm p-4 mb-4">
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
           <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
             📊 Tổng quan
           </h4>
@@ -231,7 +231,7 @@ export default function EmployeeDossierStats() {
               ].map((item, i) => (
                 <div
                   key={i}
-                  className="flex flex-col items-center justify-center bg-gray-50 border rounded-lg p-4 hover:bg-gray-100 transition"
+                  className="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition"
                 >
                   <div className="text-sm text-gray-500 mb-1">{item.label}</div>
                   <div className={`text-2xl font-semibold ${item.color}`}>{item.value}</div>

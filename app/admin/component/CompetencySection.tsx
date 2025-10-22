@@ -133,11 +133,10 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
     );
 
     return (
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-blue-600" />
-                    Năng lực chuyên môn/Chức danh
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    Năng lực chuyên môn / Chức danh
                 </h3>
                 {isEditing && !loading && (
                     <div className="flex gap-2">
@@ -177,7 +176,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                     <div>
                         <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center gap-2">
                             <Award className="w-4 h-4 text-blue-600" />
-                            Chứng chỉ ISO ({userCertifications.length})
+                           Các chứng chỉ ISO ({userCertifications.length})
                         </h4>
                         <div className="space-y-2">
                             {userCertifications.length === 0 ? (
@@ -189,7 +188,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                                         <div key={uc.certificationId} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
                                             <div>
                                                 <div className="font-medium text-blue-900">{cert?.name}</div>
-                                                <div className="text-xs text-blue-700">{cert?.description}</div>
+                                                <div className="text-blue-700">{cert?.description}</div>
                                             </div>
                                             {isEditing && (
                                                 <button
@@ -223,7 +222,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                                         <div key={upc.productCategoryId} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                                             <div>
                                                 <div className="font-medium text-green-900">{category?.name}</div>
-                                                <div className="text-xs text-green-700">{category?.description}</div>
+                                                <div className="text-green-700">{category?.description}</div>
                                             </div>
                                             {isEditing && (
                                                 <button
@@ -265,7 +264,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                                     </div>
                                 ) : (
                                     availableCertifications.map((cert) => (
-                                        <label key={cert.certificationId} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border border-gray-200 rounded-lg">
+                                        <label key={cert.certificationId} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer rounded-lg">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedCertificationIds.includes(cert.certificationId)}
@@ -280,7 +279,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                                             />
                                             <div className="ml-3 flex-1">
                                                 <div className="text-sm font-medium text-gray-900">{cert.name}</div>
-                                                <div className="text-xs text-gray-500">{cert.description}</div>
+                                                <div className="text-sm text-gray-500">{cert.description}</div>
                                             </div>
                                         </label>
                                     ))
@@ -351,7 +350,7 @@ const CompetencySection: React.FC<CompetencySectionProps> = ({ userId, userRole,
                                             />
                                             <div className="ml-3 flex-1">
                                                 <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                                                <div className="text-xs text-gray-500">{category.description}</div>
+                                                <div className="text-sm text-gray-500">{category.description}</div>
                                             </div>
                                         </label>
                                     ))

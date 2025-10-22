@@ -7,6 +7,7 @@ import InspectorSearch from "../../component/InspectorSearch";
 import Breadcrumb from "../../component/breadcrumb/Breadcrumb";
 import { Users } from "lucide-react";
 
+
 const UsersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'search'>('users');
 
@@ -28,16 +29,6 @@ const UsersPage: React.FC = () => {
               <Users className="w-4 h-4" />
               Danh sách nhân viên
             </button>
-            {/* <button
-              onClick={() => setActiveTab('search')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === 'search'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-            >
-              <Search className="w-4 h-4" />
-              Tìm giám định viên
-            </button> */}
           </nav>
         </div>
       </div>

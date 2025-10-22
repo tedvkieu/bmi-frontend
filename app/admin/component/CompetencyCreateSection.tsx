@@ -69,7 +69,7 @@ const CompetencyCreateSection: React.FC<CompetencyCreateSectionProps> = ({
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Năng lực chuyên môn/Chức danh</h3>
+                <h3 className="text-lg text-gray-900">Năng lực chuyên môn/Chức danh</h3>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

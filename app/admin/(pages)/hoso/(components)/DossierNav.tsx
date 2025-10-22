@@ -9,8 +9,9 @@ interface DossierNavProps {
 
 export default function DossierNav({ activeTab, onTabChange }: DossierNavProps) {
   const tabs = [
-    { id: "generalInfo", label: "THÔNG TIN CHUNG" },
-    { id: "goodsInfo", label: "THÔNG TIN HÀNG HÓA" },
+    { id: "generalInfo", label: "Thông tin chung" },
+    { id: "goodsInfo", label: "Thông tin hàng hóa" },
+    { id: "historyInfo", label: "Chi tiết hồ sơ" },
   ];
 
   return (

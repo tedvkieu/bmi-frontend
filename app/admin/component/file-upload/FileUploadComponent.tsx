@@ -24,6 +24,7 @@ interface Customer {
   address: string;
   email: string;
   dob: string | null;
+  contact: string | null;
   phone: string;
   note: string | null;
   taxCode: string | null;
@@ -88,73 +89,37 @@ const UploadResultDisplay: React.FC<{
     }
   };
 
-  const customerSubmit = data.customerSubmit ?? data.customer ?? null;
-  const customerRelated = data.customerRelated ?? null;
-
-  const renderCustomerCard = (title: string, customer: Customer | null) => {
+  const customerRelated = data.customer ?? null;
+ 
+  const renderCustomerCard = (customer: Customer | null) => {
     if (!customer) return null;
     return (
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Mã khách hàng
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              ID: {customer.customerId ?? "—"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Tên đơn vị
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              {customer.name || "—"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Địa chỉ
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              {customer.address || "—"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Loại khách hàng
-            </label>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              {getCustomerTypeLabel(customer.customerType)}
-            </span>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Số điện thoại
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              {customer.phone || "—"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Email
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              {customer.email || "—"}
-            </p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Mã số thuế
-            </label>
-            <p className="text-sm text-gray-900 whitespace-normal">
-              {customer.taxCode || "—"}
-            </p>
-          </div>
-        </div>
+ <div className="bg-white p-5 rounded-lg shadow space-y-4">
+  <div className="space-y-3">
+    {[
+      { label: "Tên đơn vị nhập khẩu", value: customer.name },
+      { label: "Địa chỉ", value: customer.address },
+      { label: "Mã số thuế", value: customer.taxCode },
+      { label: "Người liên hệ/ Số điện thoại", value: customer.contact },
+      { label: "Email nhận hóa đơn", value: customer.email },
+    ].map((field, index) => (
+      <div key={index}>
+        <label className="block text-sm font-medium text-gray-500 mb-1">
+          {field.label}
+        </label>
+        <p className="text-sm text-gray-800">{field.value || "<Chưa cập nhật>"}</p>
       </div>
+    ))}
+    <div>
+      <label className="block text-sm font-medium text-gray-500 mb-1">
+        Loại khách hàng
+      </label>
+      <span className="text-sm font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+        {getCustomerTypeLabel(customer.customerType)}
+      </span>
+    </div>
+  </div>
+</div>
     );
   };
 
@@ -211,14 +176,13 @@ const UploadResultDisplay: React.FC<{
                 Khách hàng
               </h2>
               <p className="text-sm text-gray-600">
-                Hiển thị thông tin khách hàng yêu cầu giám định và khách hàng nhập khẩu
+                Hiển thị thông tin khách hàng đơn vị nhập khẩu
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {renderCustomerCard("Khách hàng yêu cầu giám định", customerSubmit)}
-            {renderCustomerCard("Khách hàng nhập khẩu", customerRelated)}
+          <div>
+            {renderCustomerCard(customerRelated)}
           </div>
         </div>
 
@@ -486,93 +450,105 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
     handleFiles(e.target.files);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+const handleUpload = async () => {
+  if (!selectedFile) return;
 
-    if (!isCreateMode && !dossierId) {
-      setError("Không xác định được hồ sơ cần cập nhật.");
-      return;
-    }
+  if (!isCreateMode && !dossierId) {
+    setError("Không xác định được hồ sơ cần cập nhật.");
+    return;
+  }
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    if (!isCreateMode && dossierId) {
-      formData.append("dossierId", dossierId.toString());
-    }
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+  if (!isCreateMode && dossierId) {
+    formData.append("dossierId", dossierId.toString());
+  }
 
-    try {
-      const res = await fetch("/api/dossiers/upload-excel", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+  try {
+    const res = await fetch("/api/dossiers/upload-excel", {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
 
-      console.log("Raw response:", res);
+    console.log("Raw response:", res);
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        let errorMessage = "Có lỗi xảy ra khi upload file";
-        if (errorText) {
-          try {
-            const parsed = JSON.parse(errorText);
-            if (parsed?.error) {
-              if (typeof parsed.error === "string") {
-                errorMessage = parsed.error;
-              } else if (typeof parsed.error.message === "string") {
-                errorMessage = parsed.error.message;
-              } else if (typeof parsed.message === "string") {
-                errorMessage = parsed.message;
-              }
-            } else if (typeof parsed?.message === "string") {
-              errorMessage = parsed.message;
-            }
-          } catch {
-            errorMessage = errorText;
-          }
+    // 🔹 Nếu backend trả lỗi
+    if (!res.ok) {
+      const text = await res.text();
+      let errorMessage = "Có lỗi xảy ra khi upload file";
+
+      try {
+        const parsed = JSON.parse(text);
+
+        // 🧩 Nếu là lỗi validation từ backend
+        if (parsed?.errors && Array.isArray(parsed.errors)) {
+          // Gộp danh sách lỗi để hiển thị rõ ràng
+          errorMessage = [
+            parsed.error || "Lỗi xác thực dữ liệu hồ sơ",
+            ...(parsed.errors as string[]),
+          ]
+            .filter(Boolean)
+            .join("\n• ");
         }
-        if (errorMessage.includes("Số đăng ký đã tồn tại")) {
-          const idx = errorMessage.indexOf("Số đăng ký đã tồn tại");
-          errorMessage = errorMessage.slice(idx).trim();
+        // 🧩 Các lỗi khác
+        else if (parsed?.message) {
+          errorMessage = parsed.message;
+        } else if (parsed?.error) {
+          errorMessage =
+            typeof parsed.error === "string"
+              ? parsed.error
+              : JSON.stringify(parsed.error);
         }
-        throw new Error(errorMessage);
+      } catch {
+        // fallback nếu không phải JSON
+        errorMessage = text || errorMessage;
       }
 
-      const rawData: any = await res.json();
-      console.log("Parsed JSON:", rawData);
-
-      const hasCustomerInfo =
-        !!(
-          rawData?.customerSubmit ||
-          rawData?.customerRelated ||
-          rawData?.customer
-        );
-
-      // Check if the response has the complete structure
-      if (rawData && rawData.receiptId && rawData.machines && hasCustomerInfo) {
-        const normalizedData: UploadResultData = {
-          ...rawData,
-          customer: rawData.customer ?? rawData.customerSubmit ?? null,
-          customerSubmit: rawData.customerSubmit ?? rawData.customer ?? null,
-          customerRelated: rawData.customerRelated ?? null,
-        };
-
-        // Show result display
-        setUploadResult(normalizedData);
-      } else {
-        // Fallback to original success handler
-        onUploadSuccess(rawData);
+      // Xử lý lỗi trùng số đăng ký riêng (nếu cần)
+      if (errorMessage.includes("Số đăng ký đã tồn tại")) {
+        const idx = errorMessage.indexOf("Số đăng ký đã tồn tại");
+        errorMessage = errorMessage.slice(idx).trim();
       }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Có lỗi xảy ra khi upload file"
+
+      throw new Error(errorMessage);
+    }
+
+    // ✅ Nếu thành công
+    const rawData: any = await res.json();
+    console.log("Parsed JSON:", rawData);
+
+    const hasCustomerInfo =
+      !!(
+        rawData?.customerSubmit ||
+        rawData?.customerRelated ||
+        rawData?.customer
       );
-    } finally {
-      setLoading(false);
+
+    // Kiểm tra structure hợp lệ
+    if (rawData && rawData.receiptId && rawData.machines && hasCustomerInfo) {
+      const normalizedData: UploadResultData = {
+        ...rawData,
+        customer: rawData.customer ?? rawData.customerSubmit ?? null,
+        customerSubmit: rawData.customerSubmit ?? rawData.customer ?? null,
+        customerRelated: rawData.customerRelated ?? null,
+      };
+      setUploadResult(normalizedData);
+    } else {
+      onUploadSuccess(rawData);
     }
-  };
+  } catch (err) {
+    // Hiển thị lỗi từ backend ra giao diện
+    setError(
+      err instanceof Error ? err.message : "Có lỗi xảy ra khi upload file"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   const removeFile = () => {
     setSelectedFile(null);
@@ -781,26 +757,36 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
         </div>
 
         {/* Error Display */}
-        {error && (
-          <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6">
-            <div className="flex items-center">
-              <svg
-                className="w-6 h-6 text-red-500 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-              <span className="text-red-800 font-medium">{error}</span>
-            </div>
-          </div>
+{error && (
+  <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6">
+    <div className="flex items-start">
+      <svg
+        className="w-6 h-6 text-red-500 mr-3 mt-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+        />
+      </svg>
+      <div className="text-red-800 font-medium space-y-1">
+        {error.split(/\n|•/).map((line, idx) =>
+          line.trim() ? (
+            <p key={idx} className="flex items-start">
+              <span className="mr-2 text-red-600">•</span>
+              <span>{line.trim()}</span>
+            </p>
+          ) : null
         )}
+      </div>
+    </div>
+  </div>
+)}
+
 
         {/* Instructions */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">

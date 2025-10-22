@@ -250,13 +250,6 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                         disabled={!canChangeStatus}
                       />
                     </td>
-                    {/* <td className="px-6 py-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
-                      <span className="text-sm text-gray-800">
-                        GIÁM ĐỊNH MÁY MÓC, THIẾT BỊ, DÂY CHUYỀN CÔNG NGHỆ ĐÃ QUA SỬ DỤNG NHẬP KHẨU
-                      </span>
-                    </td> */}
-
-
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <CustomTooltip content="Xem chi tiết">

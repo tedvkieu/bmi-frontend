@@ -202,7 +202,7 @@ const UsersClient: React.FC = () => {
         setTotalElements(response.totalElements);
         const backendPage =
           typeof response.number === "number" &&
-          Number.isFinite(response.number)
+            Number.isFinite(response.number)
             ? response.number + 1
             : safePage;
         setCurrentPage(backendPage);
@@ -593,13 +593,13 @@ const UsersClient: React.FC = () => {
               </div>
             )}
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-100">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Email
+                    Họ tên
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Họ tên
+                    Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Vị trí/Chức vụ
@@ -626,15 +626,15 @@ const UsersClient: React.FC = () => {
                       key={u.userId}
                       className="hover:bg-blue-50 transition-colors duration-200"
                     >
-                      <td className="px-6 py-3 text-sm text-gray-700">
-                        {u.email}
-                      </td>
                       <td className="px-6 py-3 text-sm text-gray-900 font-medium">
                         {u.fullName}
                       </td>
+                      <td className="px-6 py-3 text-sm text-gray-700">
+                        {u.email}
+                      </td>
                       <td className="px-6 py-3 text-sm">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[u.role].bg
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium ${roleColors[u.role].bg
                             } ${roleColors[u.role].text}`}
                         >
                           {roleDisplayNames[u.role]}
@@ -773,9 +773,8 @@ const UsersClient: React.FC = () => {
             className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
             onClick={closeModal}
           />
-          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
-            {/* Chỉnh sửa header modal: ít màu mè hơn */}
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 text-gray-800 rounded-t-lg flex items-center justify-between">
+          <div className="relative bg-white w-full max-w-7xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 bg-gray-100 border-b border-gray-200 text-gray-800 rounded-t-lg flex items-center justify-between">
               <h4 className="text-lg font-semibold">
                 {formMode === "create"
                   ? "Thêm người dùng mới"

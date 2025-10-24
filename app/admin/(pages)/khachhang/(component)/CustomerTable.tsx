@@ -40,9 +40,9 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
     const getCustomerTypeText = (type: string) => {
         switch (type) {
             case "IMPORTER":
-                return "Nhà nhập khẩu";
+                return "Đơn vị nhập khẩu";
             case "SERVICE_MANAGER":
-                return "Nhà quản lý dịch vụ";
+                return "Quản lý dịch vụ";
             default:
                 return "Không xác định";
         }
@@ -88,10 +88,10 @@ const CustomersTable: React.FC<CustomersTableProps> = ({
                                 Khách hàng
                             </th>
                             <th className="px-6 py-3 text-left text-sm font-bold text-black tracking-wider min-w-[200px]">
-                                Liên hệ
+                              Email
                             </th>
                             <th className="px-6 py-3 text-left text-sm font-bold text-black tracking-wider min-w-[120px]">
-                                Nhóm khách hàng
+                               Vai trò
                             </th>
                             <th className="px-6 py-3 text-right text-sm font-bold text-black tracking-wider min-w-[120px]">
                                 <div className="flex items-center justify-end space-x-2">

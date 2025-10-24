@@ -111,7 +111,7 @@ const CustomersNavbar: React.FC<CustomersNavbarProps> = ({
                             className="pl-9 pr-8 py-2.5 w-full border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                         >
                             <option value="all">Tất cả khách hàng</option>
-                            <option value="IMPORTER">Nhà nhập khẩu</option>
+                            <option value="IMPORTER">Đơn vị nhập khẩu</option>
                             <option value="SERVICE_MANAGER">Nhà quản lý dịch vụ</option>
                         </select>
                         <ChevronDown

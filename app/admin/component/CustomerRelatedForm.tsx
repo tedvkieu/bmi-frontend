@@ -19,7 +19,7 @@ interface CustomerRelatedFormProps {
 
 const customerTypeOptions = [
   { value: "SERVICE_MANAGER", label: "Quản lý dịch vụ" },
-  { value: "IMPORTER", label: "Nhà nhập khẩu" },
+  { value: "IMPORTER", label: "Đơn vị nhập khẩu" },
   //{ value: "CUSTOMER", label: "Khách hàng" },
 ];
 

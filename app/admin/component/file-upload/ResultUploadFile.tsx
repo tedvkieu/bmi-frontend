@@ -63,7 +63,7 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
   const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
       case "IMPORTER":
-        return "Nhà nhập khẩu";
+        return "Đơn vị nhập khẩu";
       case "SERVICE_MANAGER":
         return "Quản lý dịch vụ";
       case "":

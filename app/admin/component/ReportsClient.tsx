@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, Eye, X } from "lucide-react";
 import { reportApi } from "../services/reportApi";
 
 type Period = "DAY" | "WEEK" | "MONTH" | "YEAR";
@@ -66,6 +66,8 @@ const ReportsClient: React.FC = () => {
     const [totalPages, setTotalPages] = React.useState<number>(1);
     const [totalRecords, setTotalRecords] = React.useState<number>(0);
     const [searchQuery, setSearchQuery] = React.useState<string>("");
+    const [selectedRow, setSelectedRow] = React.useState<InspectionReportRow | null>(null);
+    const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
     const pageSize = 10;
 
     React.useEffect(() => {
@@ -179,6 +181,16 @@ const ReportsClient: React.FC = () => {
         setCurrentPage(1);
         setTotalPages(1);
         setTotalRecords(0);
+    }
+
+    function openModal(row: InspectionReportRow) {
+        setSelectedRow(row);
+        setIsModalOpen(true);
+    }
+
+    function closeModal() {
+        setIsModalOpen(false);
+        setSelectedRow(null);
     }
 
     function clearAllFilters() {
@@ -620,56 +632,157 @@ const ReportsClient: React.FC = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             {[
-                                "STT",
-                                "Tên doanh nghiệp đăng ký giám định MMTB đã qua sử dụng",
-                                "Địa chỉ doanh nghiệp",
-                                "Tên MMTB đăng ký giám định",
-                                "Lĩnh vực sản xuất của MMTB",
-                                "Số lượng",
-                                "Thời gian giám định",
-                                "Địa điểm giám định",
-                                "Kết quả giám định (Đạt/Không đạt)",
-                                "Số hiệu Chứng thư giám định",
-                                "Ghi chú",
+                                { label: "STT", className: "w-16" },
+                                { label: "Tên doanh nghiệp đăng ký giám định", className: "" },
+                                { label: "Tên MMTB đăng ký giám định", className: "" },
+                                { label: "Số lượng", className: "w-24" },
+                                { label: "Thời gian giám định", className: "w-32" },
+                                { label: "Kết quả giám định", className: "w-40" },
+                                { label: "Số hiệu Chứng thư giám định", className: "" },
+                                { label: "Xem chi tiết", className: "w-20" },
                             ].map((h) => (
-                                <th key={h} className="px-6 py-4 text-left text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap">{h}</th>
+                                <th key={h.label} className={`px-6 py-4 text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap ${h.className} ${h.label === "Kết quả giám định (Đạt/Không đạt)" ? "text-center" : "text-left"}`}>{h.label}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         <tr className="bg-yellow-100/60 font-medium text-gray-900">
                             <td className="px-6 py-3">Tổng</td>
-                            <td className="px-6 py-3" colSpan={4}></td>
+                            <td className="px-6 py-3" colSpan={2}></td>
                             <td className="px-6 py-3">{totalQuantity}</td>
                             <td className="px-6 py-3"></td>
-                            <td className="px-6 py-3"></td>
-                            <td className="px-6 py-3">Đạt: {passCount} / Không đạt: {failCount}</td>
+                            <td className="px-3 py-3 text-center">Đạt: {passCount} / Không đạt: {failCount}</td>
                             <td className="px-6 py-3">{totals?.totalCertificates ?? data.filter((r) => r.certificateNumber).length}</td>
                             <td className="px-6 py-3"></td>
                         </tr>
-                        {data.map((r, idx) => (
-                            <tr key={r.id} className="border-t">
-                                <td className="px-6 py-3">{idx + 1}</td>
-                                <td className="px-6 py-3">{r.companyName}</td>
-                                <td className="px-6 py-3">{r.companyAddress}</td>
-                                <td className="px-6 py-3">{r.machineName}</td>
-                                <td className="px-6 py-3">{r.machineIndustry}</td>
-                                <td className="px-6 py-3">{r.quantity}</td>
-                                <td className="px-6 py-3">{r.inspectionTime ? new Date(r.inspectionTime).toLocaleDateString() : ""}</td>
-                                <td className="px-6 py-3">{r.inspectionLocation}</td>
-                                <td className="px-6 py-3">{normalizeResult(r.result)}</td>
-                                <td className="px-6 py-3">{r.certificateNumber}</td>
-                                <td className="px-6 py-3">{r.note || ""}</td>
-                            </tr>
-                        ))}
+                        {data.map((r, idx) => {
+                            const result = normalizeResult(r.result);
+                            return (
+                                <tr key={r.id} className="border-t hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-3">{idx + 1}</td>
+                                    <td className="px-6 py-3">{r.companyName}</td>
+                                    <td className="px-6 py-3 whitespace-pre-line">{r.machineName}</td>
+                                    <td className="px-6 py-3">{r.quantity}</td>
+                                    <td className="px-6 py-3">{r.inspectionTime ? new Date(r.inspectionTime).toLocaleDateString() : ""}</td>
+                                    <td className="px-3 py-3 text-center">
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${result === "Đạt"
+                                            ? "text-green-700 bg-green-100"
+                                            : result === "Không đạt"
+                                                ? "text-red-700 bg-red-100"
+                                                : "text-gray-700 bg-gray-100"
+                                            }`}>
+                                            {result}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-3">{r.certificateNumber}</td>
+                                    <td className="px-6 py-3">
+                                        <button
+                                            onClick={() => openModal(r)}
+                                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                         {data.length === 0 && (
                             <tr>
-                                <td className="px-6 py-8 text-center text-gray-500" colSpan={11}>Không có dữ liệu</td>
+                                <td className="px-6 py-8 text-center text-gray-500" colSpan={8}>Không có dữ liệu</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
             </div>
+
+            {/* Detail Modal */}
+            {isModalOpen && selectedRow && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[100] h-full"
+                        onClick={closeModal}
+                    />
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
+                        <div
+                            className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col pointer-events-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-xl px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-semibold text-white">Chi tiết giám định</h2>
+                                <button
+                                    onClick={closeModal}
+                                    className="text-white/80 hover:text-white transition-colors"
+                                    title="Đóng"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tên doanh nghiệp</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg font-medium">{selectedRow.companyName}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Địa chỉ doanh nghiệp</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg whitespace-pre-line">{selectedRow.companyAddress || "—"}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tên MMTB đăng ký giám định</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg whitespace-pre-line">{selectedRow.machineName}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Lĩnh vực sản xuất của MMTB</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg">{selectedRow.machineIndustry || "—"}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Số lượng</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg font-semibold">{selectedRow.quantity}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Thời gian giám định</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                                            {selectedRow.inspectionTime ? new Date(selectedRow.inspectionTime).toLocaleDateString() : "—"}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Địa điểm giám định</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg whitespace-pre-line">{selectedRow.inspectionLocation || "—"}</div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Kết quả giám định</label>
+                                        <div className={`text-sm font-semibold p-3 rounded-lg border ${normalizeResult(selectedRow.result) === "Đạt"
+                                            ? "bg-green-50 text-green-800 border-green-200"
+                                            : normalizeResult(selectedRow.result) === "Không đạt"
+                                                ? "bg-red-50 text-red-800 border-red-200"
+                                                : "bg-gray-50 text-gray-800 border-gray-200"
+                                            }`}>
+                                            {normalizeResult(selectedRow.result)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Số hiệu Chứng thư giám định</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg font-mono">{selectedRow.certificateNumber || "—"}</div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ghi chú</label>
+                                        <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg min-h-[60px] whitespace-pre-line">{selectedRow.note || "—"}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex-shrink-0 border-t border-gray-200 px-6 py-4 flex justify-end">
+                                <button
+                                    onClick={closeModal}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Pagination */}
             {hasData && totalPages > 1 && (

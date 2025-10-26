@@ -9,7 +9,6 @@ import NotificationBell from "./NotificationBell";
 import UserMenu from "./UserMenu";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { customerApi } from "@/app/admin/services/customerApi";
 
 // Định nghĩa kiểu dữ liệu cho kết quả tìm kiếm
 type DossierResult = {
@@ -75,23 +74,12 @@ const RenderSearchResults = ({
     NOT_WITHIN_SCOPE: "bg-gray-200 text-gray-800",
   };
 
-  const handleCreateDraft = async (customerId: number) => {
+  const handleCreateDraft = (customerId: number) => {
     if (!Number.isFinite(customerId)) {
       toast.error("Không xác định được khách hàng cần tạo hồ sơ");
       return;
     }
-    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
-    try {
-      const draft = await customerApi.createDraftDossier(customerId);
-      toast.success("Đã tạo hồ sơ nháp cho khách hàng", { id: toastId });
-      router.push(`/admin/hoso/tao-ho-so/${draft.receiptId}`);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Không thể khởi tạo hồ sơ cho khách hàng";
-      toast.error(message, { id: toastId });
-    }
+    router.push(`/admin/tao-ho-so-khach/${customerId}`);
   };
 
   if (loading) {

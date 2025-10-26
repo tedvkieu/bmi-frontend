@@ -87,7 +87,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     }
   };
 
-  const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
+  const isAdminOrManager = role === "ADMIN" || role === "MANAGER" || role === "DOCUMENT_STAFF" || role === "ISO_DOCUMENT";
 
   return (
     <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-visible">

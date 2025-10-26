@@ -22,7 +22,6 @@ interface CustomerUpdateData {
   name: string;
   address: string;
   email: string;
-  dob: string;
   phone: string;
   taxCode: string;
   note: string;
@@ -64,7 +63,6 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
         name: customer.name,
         address: customer.address,
         email: customer.email,
-        dob: customer.dob || "",
         phone: customer.phone,
         taxCode: customer.taxCode || "",
         note: customer.note || "",
@@ -138,7 +136,6 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
         name: updatedCustomer.name,
         address: updatedCustomer.address,
         email: updatedCustomer.email,
-        dob: updatedCustomer.dob || "",
         phone: updatedCustomer.phone,
         taxCode: updatedCustomer.taxCode || "",
         note: updatedCustomer.note || "",

@@ -43,7 +43,9 @@ interface UploadResultData {
   invoiceNo?: string | null;
   invoiceDate?: string | null;
   inspectionDate?: string | null;
+  scheduledInspectionDate?: string | null;
   inspectionLocation?: string | null;
+  createdAt?: string | null;
   customer?: Customer | null;
   customerSubmit?: Customer | null;
   customerRelated?: Customer | null;
@@ -67,12 +69,12 @@ const UploadResultDisplay: React.FC<{
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-
   const router = useRouter();
   const handleClick = () => {
-    router.push(`/admin/phancong?registerNo=${encodeURIComponent(data.registrationNo)}`);
+    router.push(
+      `/admin/phancong?registerNo=${encodeURIComponent(data.registrationNo)}`
+    );
   };
-
 
   const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
@@ -107,7 +109,9 @@ const UploadResultDisplay: React.FC<{
               <label className="block text-sm font-medium text-gray-500 mb-1">
                 {field.label}
               </label>
-              <p className="text-sm text-gray-800">{field.value || "<Chưa cập nhật>"}</p>
+              <p className="text-sm text-gray-800">
+                {field.value || "<Chưa cập nhật>"}
+              </p>
             </div>
           ))}
           <div>
@@ -149,7 +153,8 @@ const UploadResultDisplay: React.FC<{
             Upload hồ sơ thành công!
           </h1>
           <p className="text-gray-700 text-base max-w-2xl mx-auto">
-            Thông tin hồ sơ đã được xử lý và lưu trữ trên hệ thống. Dưới đây là thông tin chi tiết.
+            Thông tin hồ sơ đã được xử lý và lưu trữ trên hệ thống. Dưới đây là
+            thông tin chi tiết.
           </p>
         </div>
 
@@ -172,20 +177,15 @@ const UploadResultDisplay: React.FC<{
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Khách hàng
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900">Khách hàng</h2>
               <p className="text-sm text-gray-600">
                 Hiển thị thông tin khách hàng đơn vị nhập khẩu
               </p>
             </div>
           </div>
 
-          <div>
-            {renderCustomerCard(customerRelated)}
-          </div>
+          <div>{renderCustomerCard(customerRelated)}</div>
         </div>
-
 
         {/* Receipt Summary */}
         <div className="bg-gradient-to-r from-white via-green-50 to-emerald-50 rounded-2xl shadow-xl border border-green-200 p-6 lg:p-8 mb-8">
@@ -212,7 +212,6 @@ const UploadResultDisplay: React.FC<{
             </div>
           </div>
 
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <label className="block text-sm font-bold text-gray-800 mb-1">
@@ -227,7 +226,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày Đăng Ký
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.registrationDate)}
+                {formatDate(data.createdAt ?? "Chưa có")}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -243,7 +242,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày vận đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.billOfLadingDate)}
+                {data.billOfLadingDate}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -259,7 +258,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp số tờ khai
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.declarationDate)}
+                {data.declarationDate || "Chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -283,7 +282,7 @@ const UploadResultDisplay: React.FC<{
                 Dự kiến thời gian giám định
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.inspectionDate ?? null}
+                {data.scheduledInspectionDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -296,7 +295,6 @@ const UploadResultDisplay: React.FC<{
             </div>
           </div>
         </div>
-
 
         {/* Machines Information */}
         <div className="bg-gradient-to-r from-white via-purple-50 to-pink-50 rounded-2xl shadow-xl border border-purple-200 p-6 lg:p-8 mb-8">
@@ -319,47 +317,82 @@ const UploadResultDisplay: React.FC<{
             <table className="border border-gray-400 bg-white text-[#1e3a8a] font-semibold text-center text-sm px-2 py-2">
               <thead className="bg-blue-100">
                 <tr>
-                  <th className="border border-gray-300 px-3 py-2 text-center w-[4%]">STT</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[18%]">Tên thiết bị</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Thương hiệu</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Model</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Số serial</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">Nước sản xuất</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[12%]">Nhà sản xuất</th>
-                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">Năm SX</th>
-                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">Số lượng</th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[14%]">Ghi chú</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[4%]">
+                    STT
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[18%]">
+                    Tên thiết bị
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">
+                    Thương hiệu
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">
+                    Model
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">
+                    Số serial
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[10%]">
+                    Nước sản xuất
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[12%]">
+                    Nhà sản xuất
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">
+                    Năm SX
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-center w-[6%]">
+                    Số lượng
+                  </th>
+                  <th className="border border-gray-300 px-3 py-2 text-left w-[14%]">
+                    Ghi chú
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 {data.machines.map((machine, index) => (
                   <tr key={machine.machineId} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-3 py-2 text-center">{index + 1}</td>
-                    <td className="border border-gray-300 px-3 py-2">{machine.itemName}</td>
-                    <td className="border border-gray-300 px-3 py-2">{machine.brand || "Chưa có"}</td>
-                    <td className="border border-gray-300 px-3 py-2">{machine.model || "Chưa có"}</td>
-                    <td className="border border-gray-300 px-3 py-2 break-all">{machine.serialNumber || "Chưa có"}</td>
-                    <td className="border border-gray-300 px-3 py-2">{machine.manufactureCountry}</td>
-                    <td className="border border-gray-300 px-3 py-2">{machine.manufacturerName}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-center">{machine.manufactureYear}</td>
+                    <td className="border border-gray-300 px-3 py-2 text-center">
+                      {index + 1}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {machine.itemName}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {machine.brand || "Chưa có"}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {machine.model || "Chưa có"}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 break-all">
+                      {machine.serialNumber || "Chưa có"}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {machine.manufactureCountry}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {machine.manufacturerName}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-center">
+                      {machine.manufactureYear}
+                    </td>
                     <td className="border border-gray-300 px-3 py-2 text-center">
                       {machine.quantity}
                     </td>
-                    <td className="border border-gray-300 px-3 py-2 whitespace-pre-line">{machine.note || ""}</td>
+                    <td className="border border-gray-300 px-3 py-2 whitespace-pre-line">
+                      {machine.note || ""}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 text-sm">
-          <button
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]"
-          >
+          <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl min-w-[200px]">
             In hồ sơ
           </button>
           <button
@@ -369,7 +402,6 @@ const UploadResultDisplay: React.FC<{
             Phân công giám định
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -474,6 +506,9 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
         body: formData,
       });
 
+      console.log("Raw response:", res);
+
+      // 🔹 Nếu backend trả lỗi
       if (!res.ok) {
         const text = await res.text();
         let errorMessage = "Có lỗi xảy ra khi upload file";
@@ -481,9 +516,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
         try {
           const parsed = JSON.parse(text);
 
+          // 🧩 Nếu là lỗi validation từ backend
           if (parsed?.errors && Array.isArray(parsed.errors)) {
+            // Gộp danh sách lỗi để hiển thị rõ ràng
             errorMessage = [
-              parsed.error || "",
+              parsed.error || "Lỗi xác thực dữ liệu hồ sơ",
               ...(parsed.errors as string[]),
             ]
               .filter(Boolean)
@@ -516,12 +553,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
       const rawData: any = await res.json();
       console.log("Parsed JSON:", rawData);
 
-      const hasCustomerInfo =
-        !!(
-          rawData?.customerSubmit ||
-          rawData?.customerRelated ||
-          rawData?.customer
-        );
+      const hasCustomerInfo = !!(
+        rawData?.customerSubmit ||
+        rawData?.customerRelated ||
+        rawData?.customer
+      );
 
       // Kiểm tra structure hợp lệ
       if (rawData && rawData.receiptId && rawData.machines && hasCustomerInfo) {
@@ -602,7 +638,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                 </svg>
               </div>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
+            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
               Upload File Dữ Liệu
             </h1>
             <p className="text-gray-700 text-base max-w-2xl mx-auto">
@@ -614,10 +650,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-8 mb-6">
             {!selectedFile ? (
               <div
-                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${dragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                  }`}
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                  dragActive
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
@@ -674,7 +711,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                     <div className="flex items-center space-x-4">
                       <div className="bg-green-500 p-3 rounded-full">
                         <svg
-                          className="w-5 h-5 text-white"
+                          className="w-6 h-6 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -732,10 +769,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                     type="button"
                     onClick={handleUpload}
                     disabled={loading}
-                    className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${loading
-                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                      : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105"
-                      }`}
+                    className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                      loading
+                        ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    }`}
                   >
                     {loading ? (
                       <div className="flex items-center space-x-2">
@@ -753,59 +791,57 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-5 shadow-sm mb-6">
-              <div>
-                <div className="ml-4 flex-1 space-y-2">
-                  <p className="text-sm text-red-500 uppercase font-bold">
-                    Đã xảy ra lỗi khi xử lý file:
-                  </p>
-
-                  <div className="mt-2 space-y-3">
-                    {error.split(/\n|•/).map((line, idx) => {
-                      const text = line.trim();
-                      if (!text) return null;
-
-                      const isSection = /^[A-ZÀ-Ỵ\s]+$/.test(text);
-
-                      return isSection ? (
-                        <div key={idx} className="pt-2 text-sm text-red-500 uppercase border-t border-red-100">
-                          {text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()}
-                        </div>
-                      ) : (
-                        <div key={idx} className="pl-4 text-sm text-red-500 leading-relaxed italic">
-                          -  {text}
-                        </div>
-                      );
-                    })}
-                  </div>
+            <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-6">
+              <div className="flex items-start">
+                <svg
+                  className="w-6 h-6 text-red-500 mr-3 mt-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+                <div className="text-red-800 font-medium space-y-1">
+                  {error.split(/\n|•/).map((line, idx) =>
+                    line.trim() ? (
+                      <p key={idx} className="flex items-start">
+                        <span className="mr-2 text-red-600">•</span>
+                        <span>{line.trim()}</span>
+                      </p>
+                    ) : null
+                  )}
                 </div>
               </div>
             </div>
           )}
-          {/* Instructions */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200/70 rounded-2xl p-5 shadow-sm">
-            <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
-              Hướng dẫn tải lên
-            </h3>
 
-            <ul className="space-y-2 text-base text-blue-900/90 leading-relaxed">
+          {/* Instructions */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 className="text-base font-semibold text-blue-900 mb-3">
+              Hướng dẫn:
+            </h3>
+            <ul className="space-y-2 text-blue-800">
               <li className="flex items-start">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0 shadow-sm"></span>
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                 File phải có định dạng Excel (.xlsx, .xls) hoặc CSV
               </li>
               <li className="flex items-start">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0 shadow-sm"></span>
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                 Kích thước file không được vượt quá 10MB
               </li>
               <li className="flex items-start">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0 shadow-sm"></span>
-                Đảm bảo file chứa đầy đủ thông tin khách hàng, máy móc và tuân thủ các quy tắc hồ sơ của công ty.
+                <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                Đảm bảo file chứa đầy đủ thông tin khách hàng và máy móc
               </li>
             </ul>
           </div>
         </div>
       </div>
     </>
-
   );
 };

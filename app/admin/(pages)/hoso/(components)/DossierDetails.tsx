@@ -1,6 +1,6 @@
 "use client"
 import { dossierApi } from "@/app/admin/services/dossierApi";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, ChangeEvent } from "react";
 import classNames from 'classnames';
 import DossierNav from './DossierNav';
@@ -8,10 +8,12 @@ import { DossierDetails } from "@/app/types/dossier";
 import MachineInfoSection from "./MachineInfoSection";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { Edit } from "lucide-react";
 
 
 export default function DossierDetail() {
     const { id } = useParams();
+    const router = useRouter();
     const [dossier, setDossier] = useState<DossierDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -63,13 +65,13 @@ export default function DossierDetail() {
             }
 
             // Xử lý các field lồng trong customerSubmit.*
-            if (name.startsWith("customerSubmit.")) {
-                const customerSubmitField = name.split('.')[1];
+            if (name.startsWith("customerRelated.")) {
+                const customerRelatedField = name.split('.')[1];
                 return {
                     ...prevDossier,
-                    customerSubmit: {
-                        ...prevDossier.customerSubmit,
-                        [customerSubmitField]: newValue
+                    customerRelated: {
+                        ...prevDossier.customerRelated,
+                        [customerRelatedField]: newValue
                     }
                 };
             }
@@ -95,6 +97,13 @@ export default function DossierDetail() {
 
     const handleSave = async () => {
         if (!dossier) return;
+          
+        const cout10 = Number(dossier.cout10 ?? 0);
+        const cout20 = Number(dossier.cout20 ?? 0);
+        if (cout10 < 0 || cout20 < 0) {
+            toast.error("Số lượng container không được âm.");
+            return;
+        }
 
         const dossierId = Array.isArray(id) ? id[0] : typeof id === "string" ? id : dossier.dossierId?.toString();
 
@@ -128,6 +137,7 @@ export default function DossierDetail() {
                 inspectionDate: dossier.inspectionDate ?? "",
                 certificateDate: dossier.certificateDate ?? "",
                 contact: dossier.contact ?? "",
+                scheduledInspectionDate: dossier.scheduledInspectionDate ?? null,
                 certificateStatus: dossier.certificateStatus,
                 customerSubmit: !Number.isNaN(submitId)
                     ? {
@@ -151,7 +161,10 @@ export default function DossierDetail() {
                     : undefined,
             };
 
+
+
             const updated = await dossierApi.updateDossierDetails(dossierId, payload);
+            console.log("ADADADA", updated);
             setDossier(updated as DossierDetails);
             toast.success("Đã lưu thông tin hồ sơ");
         } catch (error: any) {
@@ -161,7 +174,7 @@ export default function DossierDetail() {
             setSaving(false);
         }
     };
-
+    const inputClass = "w-full  px-1 text-sm bg-gray-50 text-gray-800";
     const editableInputClass = "w-full border-b border-gray-500 text-[#1e3a8a] outline-none px-1 text-sm";
     const tableHeaderClass = "w-1/3 p-2 text-[#1e3a8a] bg-gray-50 border-r border-gray-300 text-sm";
     const tableDataClass = "w-2/3 p-2 text-sm";
@@ -208,7 +221,7 @@ export default function DossierDetail() {
                                             editableInputClass,
                                             "font-semibold text-red-600 text-center text-base"
                                         )}
-                                        style={{ width: "120px" }}
+                                        style={{ width: "200px" }}
                                     />
                                 </div>
                             </div>
@@ -251,64 +264,59 @@ export default function DossierDetail() {
 
                         <table className="w-full border-collapse">
                             <tbody>
-                                <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
-                                    <td className={classNames(tableDataClass, "font-semibold")}>
-                                        <input
-                                            type="text"
-                                            name="customerSubmit.name"
-                                            value={dossier.customerSubmit.name || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-[#1e3a8a] text-sm")}
-                                        />
+                                <tr className="flex justify-between items-center p-2">
+                                    <td>
+                                        <button
+                                            onClick={() => router.push(`/admin/khachhang/${dossier.customerRelated?.id}`)}
+                                            className="text-blue-900 hover:text-blue-800 italic underline flex items-center space-x-1 text-sm"
+                                            title="Chỉnh sửa đơn vị nhập khẩu"
+                                        >
+                                            <Edit size={18} />
+                                            <span>Chỉnh sửa thông tin đơn vị nhập khẩu</span>
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
+                                    <td className={classNames(tableDataClass, "font-semibold flex justify-between items-center")}>
+                                        <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
+                                            {dossier.customerRelated?.name || ''}
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+
+                                <tr className="border border-gray-300">
                                     <td className={tableHeaderClass}>Địa chỉ</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="customerSubmit.address"
-                                            value={dossier.customerSubmit.address || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-sm")}>
+                                            {dossier.customerRelated?.address || ''}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
                                     <td className={tableHeaderClass}>Mã số thuế</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="customerSubmit.taxCode"
-                                            value={dossier.customerSubmit.taxCode || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-sm")}>
+                                            {dossier.customerRelated?.taxCode || ''}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Người liên hệ/ Điện thoại</td>
+                                    <td className={tableHeaderClass}>Người liên hệ / Điện thoại</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="contact"
-                                            value={dossier.contact || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-blue-700 text-sm")}>
+                                            {dossier.contact || '<Chưa cập nhập>'}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Email nhận hóa đơn:</td>
+                                    <td className={tableHeaderClass}>Email nhận hóa đơn</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="email"
-                                            name="customerSubmit.email"
-                                            value={dossier.customerSubmit.email || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-blue-700 underline text-sm")}
-                                        />
+                                        <span className="text-blue-500 text-sm italic underline">
+                                            {dossier.customerRelated.email || '<Chưa cập nhập>'}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
@@ -345,7 +353,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="billOfLadingDate"
                                             value={dossier.billOfLadingDate || ''}
                                             onChange={handleDateChange}
@@ -365,7 +373,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="declarationDate"
                                             value={dossier.declarationDate || ''}
                                             onChange={handleDateChange}
@@ -385,7 +393,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="invoiceDate"
                                             value={dossier.invoiceDate || ''}
                                             onChange={handleDateChange}
@@ -398,8 +406,8 @@ export default function DossierDetail() {
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="inspectionDate"
-                                            value={dossier.inspectionDate || ''}
+                                            name="scheduledInspectionDate"
+                                            value={dossier.scheduledInspectionDate || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
                                         />
@@ -418,13 +426,13 @@ export default function DossierDetail() {
                                     </td>
                                 </tr>
 
-                                 <tr className="border border-gray-300">
+                                <tr className="border border-gray-300">
                                     <td className={classNames(tableHeaderClass, "font-bold text-red-600")}>Ngày giám định chính thức:</td>
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="scheduledInspectionDate"
-                                            value={dossier.scheduledInspectionDate || ''}
+                                            name="inspectionDate"
+                                            value={dossier.inspectionDate || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
                                         />
@@ -436,7 +444,7 @@ export default function DossierDetail() {
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="inspectionLocation"
+                                            name="shipName"
                                             value={dossier.shipName || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
@@ -463,13 +471,14 @@ export default function DossierDetail() {
                                         <input
                                             type="text"
                                             name="cout20"
-                                            value={dossier.cout20 || ''}
+                                            value={dossier.cout20 ?? ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
                                         />
+
                                     </td>
                                 </tr>
-                                 <tr className="border border-gray-300">
+                                <tr className="border border-gray-300">
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Hải quan mở tờ khai:</td>
                                     <td className={tableDataClass}>
                                         <input
@@ -502,7 +511,7 @@ export default function DossierDetail() {
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Ngày cấp chứng chỉ:</td>
                                     <td className={classNames(tableDataClass, "flex justify-between items-center")}>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="certificateDate"
                                             value={dossier.certificateDate || ''}
                                             onChange={handleDateChange}
@@ -585,6 +594,123 @@ export default function DossierDetail() {
                             isActive={activeTab === 'goodsInfo'}
                         />
 
+                    </>
+                )}
+                {activeTab === "historyInfo" && (
+                    <>
+                        <p className="text-red-500 text-sm mb-2 italic">* Read only</p>
+
+                        <table className="w-full border-collapse">
+                            <tbody>
+                                {/* --- PHẦN 1: THÔNG TIN KHÁCH HÀNG --- */}
+                                <tr className="border border-gray-300 bg-gray-100">
+                                    <td
+                                        colSpan={2}
+                                        className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
+                                    >
+                                        Thông tin khách hàng yêu cầu giám định
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Đơn vị gửi yêu cầu</td>
+                                    <td className={tableDataClass}>
+                                        <div className="bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            {dossier.customerSubmit?.name || "<Chưa cập nhật>"}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Địa chỉ</td>
+                                    <td className={tableDataClass}>
+                                        <div className="bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            {dossier.customerSubmit?.address || "<Chưa cập nhật>"}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Mã số thuế</td>
+                                    <td className={tableDataClass}>
+                                        <div className="bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            {dossier.customerSubmit?.taxCode || "<Chưa cập nhật>"}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Người liên hệ / Điện thoại</td>
+                                    <td className={tableDataClass}>
+                                        <div className="bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            {dossier.customerSubmit?.name || "<Chưa cập nhật>"}
+                                            {dossier.customerSubmit?.phone ? ` / ${dossier.customerSubmit.phone}` : ""}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Email nhận hóa đơn</td>
+                                    <td className={tableDataClass}>
+                                        <div className="bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            {dossier.customerSubmit?.email || "<Chưa cập nhật>"}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {/* --- PHẦN 2: THÔNG TIN QUẢN LÝ HỒ SƠ --- */}
+                                <tr className="border border-gray-300 bg-gray-100">
+                                    <td
+                                        colSpan={2}
+                                        className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
+                                    >
+                                        Thông tin quản lý hồ sơ
+                                    </td>
+                                </tr>
+
+                                {/* Người lên hồ sơ + Thời gian */}
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Người lên hồ sơ</td>
+                                    <td className={tableDataClass}>
+                                        <div className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            <span>{dossier.createdByUser?.name || "<Chưa cập nhật>"}</span>
+                                            <span className="text-gray-500 italic ml-3">
+                                                {dossier.createdAt
+                                                    ? new Date(dossier.createdAt).toLocaleString("vi-VN", {
+                                                        day: "2-digit",
+                                                        month: "2-digit",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })
+                                                    : "<Chưa cập nhật>"}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {/* Người cập nhật + Thời gian */}
+                                <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Người cập nhật lần cuối</td>
+                                    <td className={tableDataClass}>
+                                        <div className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
+                                            <span>{dossier.updatedByUser?.name || "<Chưa cập nhật>"}</span>
+                                            <span className="text-gray-500 italic ml-3">
+                                                {dossier.updatedAt
+                                                    ? new Date(dossier.updatedAt).toLocaleString("vi-VN", {
+                                                        day: "2-digit",
+                                                        month: "2-digit",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    })
+                                                    : "<Chưa cập nhật>"}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </>
                 )}
             </div>

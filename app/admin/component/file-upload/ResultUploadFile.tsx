@@ -40,6 +40,10 @@ interface UploadResultData {
   registrationDate: string;
   billOfLading: string;
   billOfLadingDate: string;
+  inspectionDate?: string | null;
+  scheduledInspectionDate?: string | null;
+  inspectionLocation?: string | null;
+  createdAt?: string | null;
   customer?: Customer | null;
   customerSubmit?: Customer | null;
   customerRelated?: Customer | null;
@@ -57,13 +61,15 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
 }) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Chưa có";
-    return new Date(dateString).toLocaleDateString("vi-VN");
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return "Chưa có";
+    return parsed.toLocaleDateString("vi-VN");
   };
 
   const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
       case "IMPORTER":
-        return "Nhà nhập khẩu";
+        return "Đơn vị nhập khẩu";
       case "SERVICE_MANAGER":
         return "Quản lý dịch vụ";
       case "":
@@ -88,19 +94,25 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
             <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Mã khách hàng
             </span>
-            <span className="text-sm text-gray-900">ID: {customer.customerId ?? "—"}</span>
+            <span className="text-sm text-gray-900">
+              ID: {customer.customerId ?? "—"}
+            </span>
           </div>
           <div>
             <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Tên đơn vị
             </span>
-            <span className="text-sm text-gray-900">{customer.name || "—"}</span>
+            <span className="text-sm text-gray-900">
+              {customer.name || "—"}
+            </span>
           </div>
           <div>
             <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Địa chỉ
             </span>
-            <span className="text-sm text-gray-900">{customer.address || "—"}</span>
+            <span className="text-sm text-gray-900">
+              {customer.address || "—"}
+            </span>
           </div>
           <div>
             <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
@@ -221,7 +233,7 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
                 Ngày Đăng Ký
               </label>
               <span className="text-lg font-semibold text-gray-900">
-                {formatDate(data.registrationDate)}
+                {formatDate(data.createdAt ?? data.registrationDate ?? null)}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -246,6 +258,22 @@ export const UploadResultDisplay: React.FC<UploadResultProps> = ({
               </label>
               <span className="text-lg font-semibold text-gray-900">
                 {data.declarationNo || "Chưa có"}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-medium text-gray-500 mb-2">
+                Dự kiến thời gian giám định
+              </label>
+              <span className="text-lg font-semibold text-gray-900">
+                {formatDate(data.scheduledInspectionDate ?? null)}
+              </span>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <label className="block text-sm font-medium text-gray-500 mb-2">
+                Địa điểm giám định
+              </label>
+              <span className="text-lg font-semibold text-gray-900">
+                {data.inspectionLocation || "Chưa có"}
               </span>
             </div>
           </div>

@@ -249,7 +249,7 @@ const EditCustomerPage = () => {
                                 required
                             >
                                 <option value="">Chọn loại khách hàng</option>
-                                <option value="IMPORTER">Nhà nhập khẩu</option>
+                                <option value="IMPORTER">Đơn vị nhập khẩu</option>
                                 <option value="SERVICE_MANAGER">Quản lý dịch vụ</option>
                             </select>
                         </div>

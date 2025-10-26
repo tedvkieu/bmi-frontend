@@ -59,6 +59,17 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
             >
                 Thông tin hàng hóa
             </button>
+            <button
+                className={classNames(
+                    "px-4 py-2 text-sm font-medium",
+                    activeTab === 'historyInfo'
+                        ? "border-b-2 border-[#1e3a8a] text-[#1e3a8a]"
+                        : "text-gray-500 hover:text-gray-700"
+                )}
+                onClick={() => onTabChange('historyInfo')}
+            >
+                Chi tiết hồ sơ
+            </button>
         </nav>
     );
 
@@ -67,6 +78,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
             <div className="relative bg-white w-full w-full mx-12 max-h-[90vh] rounded-lg shadow-xl overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center p-4 border-b border-gray-200">
                     <h2 className="text-xl font-bold text-[#1e3a8a]">Số đăng ký {document.registrationNo || ""}</h2>
+
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
                         <IoCloseCircle size={28} />
                     </button>
@@ -77,8 +89,6 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                 <div className="flex-grow overflow-y-auto p-4 font-sans text-base text-gray-800">
                     {activeTab === 'generalInfo' && (
                         <>
-                            ;
-
                             <div className="flex justify-between items-start mb-3 border-b pb-2">
                                 <div className="flex items-center">
                                     <Image
@@ -109,7 +119,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         </span>
                                     </div>
                                 </div>
-                            </div>;
+                            </div>
                             <div className="flex flex-col items-center mb-3">
                                 <div className="flex items-center text-base text-gray-800 space-x-1">
                                     <span className="font-bold italic underline text-[#1e3a8a]">Kính gửi:</span>
@@ -137,55 +147,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                             <table className="w-full border-collapse">
                                 <tbody>
                                     <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
-                                        <td className={classNames(tableDataClass, "font-semibold")}>
-                                            <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
-                                                {document.customerSubmit?.name || '<Chưa cập nhập>'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Địa chỉ</td>
-                                        <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-sm")}>
-                                                {document.customerSubmit?.address || '<Chưa cập nhập>'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Mã số thuế</td>
-                                        <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-sm")}>
-                                                {document.customerSubmit?.taxCode || '<Chưa cập nhập>'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Người liên hệ/ Điện thoại</td>
-                                        <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-sm")}>
-                                                {document.contact || '<Chưa cập nhập>'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Email nhận hóa đơn:</td>
-                                        <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-blue-700 underline text-sm")}>
-                                                {document.customerSubmit?.email || '<Chưa cập nhập>'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300 bg-gray-50">
-                                        <td
-                                            colSpan={2}
-                                            className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
-                                        >
-                                            Thông tin khách hàng nhập khẩu
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={classNames(tableHeaderClass, "font-bold")}>
+                                        <td className={classNames(tableHeaderClass, "")}>
                                             Đơn vị nhập khẩu
                                         </td>
                                         <td className={classNames(tableDataClass, "font-semibold")}>
@@ -211,18 +173,10 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                                         </td>
                                     </tr>
                                     <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Điện thoại</td>
+                                        <td className={tableHeaderClass}>Người liên hệ / Điện thoại</td>
                                         <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-sm")}>
-                                                {document.customerRelated?.phone || ''}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr className="border border-gray-300">
-                                        <td className={tableHeaderClass}>Email</td>
-                                        <td className={tableDataClass}>
-                                            <span className={classNames(inputClass, "text-blue-700 underline text-sm")}>
-                                                {document.customerRelated?.email || ''}
+                                            <span className={classNames(inputClass, "text-blue-700 text-sm")}>
+                                                {document.contact || '<Chưa cập nhập>'}
                                             </span>
                                         </td>
                                     </tr>
@@ -379,6 +333,125 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                             registrationNo={document.registrationNo || null}
                             declarationPlace={document.declarationPlace || null}
                         />
+                    )}
+                    {activeTab === "historyInfo" && (
+                        <>
+                            <table className="w-full border-collapse">
+                                <tbody>
+                                    {/* --- PHẦN 1: THÔNG TIN KHÁCH HÀNG --- */}
+                                    <tr className="border border-gray-300 bg-gray-50">
+                                        <td
+                                            colSpan={2}
+                                            className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
+                                        >
+                                            Thông tin khách hàng yêu cầu giám định
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Đơn vị gửi yêu cầu</td>
+                                        <td className={classNames(tableDataClass, "font-semibold")}>
+                                            <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
+                                                {document.customerSubmit?.name || "<Chưa cập nhật>"}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Địa chỉ</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerSubmit?.address || "<Chưa cập nhật>"}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Mã số thuế</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerSubmit?.taxCode || "<Chưa cập nhật>"}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Người liên hệ / Điện thoại</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-sm")}>
+                                                {document.customerSubmit?.name || "<Chưa cập nhật>"}
+                                                {document.customerSubmit?.phone ? ` / ${document.customerSubmit.phone}` : ""}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Email nhận hóa đơn</td>
+                                        <td className={tableDataClass}>
+                                            <span className={classNames(inputClass, "text-blue-700 underline text-sm")}>
+                                                {document.customerSubmit?.email || "<Chưa cập nhật>"}
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    {/* --- PHẦN 2: THÔNG TIN QUẢN LÝ HỒ SƠ --- */}
+                                    <tr className="border border-gray-300 bg-gray-50">
+                                        <td
+                                            colSpan={2}
+                                            className="px-3 py-2 text-sm font-semibold text-[#1e3a8a] uppercase tracking-wide"
+                                        >
+                                            Thông tin quản lý hồ sơ
+                                        </td>
+                                    </tr>
+
+                                    {/* Người lên hồ sơ + Thời gian */}
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Người lên hồ sơ</td>
+                                        <td className={tableDataClass}>
+                                            <div className="flex justify-between items-center text-sm text-blue-700">
+                                                <span className={inputClass}>
+                                                    {document.createdByUser?.name || "<Chưa cập nhật>"}
+                                                </span>
+                                                <span className="text-gray-600 italic ml-3">
+                                                    {document.createdAt
+                                                        ? new Date(document.createdAt).toLocaleString("vi-VN", {
+                                                            day: "2-digit",
+                                                            month: "2-digit",
+                                                            year: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        })
+                                                        : "<Chưa cập nhật>"}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* Người cập nhật + Thời gian */}
+                                    <tr className="border border-gray-300">
+                                        <td className={tableHeaderClass}>Người cập nhật</td>
+                                        <td className={tableDataClass}>
+                                            <div className="flex justify-between items-center text-sm text-blue-700">
+                                                <span className={inputClass}>
+                                                    {document.updatedByUser?.name || "<Chưa cập nhật>"}
+                                                </span>
+                                                <span className="text-gray-600 italic ml-3">
+                                                    {document.updatedAt
+                                                        ? new Date(document.updatedAt).toLocaleString("vi-VN", {
+                                                            day: "2-digit",
+                                                            month: "2-digit",
+                                                            year: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        })
+                                                        : "<Chưa cập nhật>"}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </>
                     )}
 
                 </div>

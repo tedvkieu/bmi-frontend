@@ -20,6 +20,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const pageMap: { path: string; key: string }[] = [
     { path: "/admin/analytic", key: "dashboard_analytic" },
     { path: "/admin/yeu-cau-giam-dinh", key: "documents_requests" },
+    { path: "/admin/tao-ho-so-khach", key: "documents" },
+    { path: "/admin/tao-ho-so", key: "documents" },
     { path: "/admin/hoso", key: "documents" },
     { path: "/admin/phancong", key: "assignment" },
     { path: "/admin/evaluation", key: "evaluation" },

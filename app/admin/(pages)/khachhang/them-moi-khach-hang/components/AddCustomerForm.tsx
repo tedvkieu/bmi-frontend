@@ -3,6 +3,8 @@
 import React, { useState, useRef, Fragment, useEffect } from "react";
 import { Dialog, Transition } from '@headlessui/react';
 import { FaSyncAlt } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export enum CustomerType {
     IMPORTER = "IMPORTER",
@@ -10,7 +12,7 @@ export enum CustomerType {
 }
 
 const CustomerTypeDisplay: Record<CustomerType, string> = {
-    [CustomerType.IMPORTER]: "Người nhập khẩu",
+    [CustomerType.IMPORTER]: "Đơn vị / Công ty nhập khẩu",
     [CustomerType.SERVICE_MANAGER]: "Quản lý dịch vụ",
 };
 
@@ -22,7 +24,8 @@ interface CustomerFormData {
     dob: string;
     password: string;
     confirmPassword: string;
-    taxCode: string;
+    taxCode: string; // Only required for SERVICE_MANAGER
+    note: string;
     customerType: CustomerType;
 }
 
@@ -35,7 +38,8 @@ const initialFormData: CustomerFormData = {
     password: "",
     confirmPassword: "",
     taxCode: "",
-    customerType: CustomerType.SERVICE_MANAGER,
+    note: "",
+    customerType: CustomerType.IMPORTER, // Default to SERVICE_MANAGER
 };
 
 // Function to generate a random password
@@ -53,7 +57,7 @@ export default function AddCustomerForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [useRandomPassword, setUseRandomPassword] = useState(false);
-    const [randomPasswordDisplay, setRandomPasswordDisplay] = useState<string>(""); // New state for displaying random password
+    const [randomPasswordDisplay, setRandomPasswordDisplay] = useState<string>("");
 
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     const [createdCustomerData, setCreatedCustomerData] = useState<CustomerFormData | null>(null);
@@ -70,6 +74,19 @@ export default function AddCustomerForm() {
             handleGenerateNewRandomPassword();
         }
     }, [useRandomPassword, randomPasswordDisplay]);
+
+    // Clear taxCode error when switching from SERVICE_MANAGER to IMPORTER
+    useEffect(() => {
+        if (formData.customerType === CustomerType.IMPORTER && errors.taxCode) {
+            setErrors((prevErrors) => {
+                const newErrors = { ...prevErrors };
+                delete newErrors.taxCode;
+                return newErrors;
+            });
+            setFormData(prevData => ({ ...prevData, taxCode: "" })); // Clear tax code if it's no longer relevant
+        }
+    }, [formData.customerType]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -93,8 +110,8 @@ export default function AddCustomerForm() {
             password: randomPw,
             confirmPassword: randomPw,
         }));
-        setRandomPasswordDisplay(randomPw); // Update display state
-        setErrors((prevErrors) => { // Clear password errors
+        setRandomPasswordDisplay(randomPw);
+        setErrors((prevErrors) => {
             const newErrors = { ...prevErrors };
             delete newErrors.password;
             delete newErrors.confirmPassword;
@@ -106,15 +123,15 @@ export default function AddCustomerForm() {
         const checked = e.target.checked;
         setUseRandomPassword(checked);
         if (checked) {
-            handleGenerateNewRandomPassword(); // Generate a password when checked
+            handleGenerateNewRandomPassword();
         } else {
             setFormData((prevData) => ({
                 ...prevData,
                 password: "",
                 confirmPassword: "",
             }));
-            setRandomPasswordDisplay(""); // Clear display when unchecked
-            setErrors((prevErrors) => { // Clear password errors
+            setRandomPasswordDisplay("");
+            setErrors((prevErrors) => {
                 const newErrors = { ...prevErrors };
                 delete newErrors.password;
                 delete newErrors.confirmPassword;
@@ -126,7 +143,7 @@ export default function AddCustomerForm() {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.name.trim()) newErrors.name = "Họ tên là bắt buộc.";
+        if (!formData.name.trim()) newErrors.name = formData.customerType === CustomerType.IMPORTER ? "Tên khách hàng là bắt buộc." : "Tên công ty là bắt buộc.";
         if (!formData.email.trim()) {
             newErrors.email = "Email là bắt buộc.";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -137,6 +154,11 @@ export default function AddCustomerForm() {
         } else if (!/^\d{10,11}$/.test(formData.phone)) {
             newErrors.phone = "Số điện thoại không hợp lệ (10-11 chữ số).";
         }
+
+        if (formData.customerType === CustomerType.SERVICE_MANAGER && !formData.taxCode.trim()) {
+            newErrors.taxCode = "Mã số thuế là bắt buộc cho Quản lý dịch vụ.";
+        }
+
 
         if (!useRandomPassword) {
             if (!formData.password) {
@@ -149,13 +171,9 @@ export default function AddCustomerForm() {
             } else if (formData.password !== formData.confirmPassword) {
                 newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
             }
-        } else if (!formData.password) { // If random is checked but somehow password is empty (shouldn't happen with current logic)
+        } else if (!formData.password) {
             newErrors.password = "Mật khẩu ngẫu nhiên chưa được tạo.";
         }
-
-
-        if (!formData.address.trim()) newErrors.address = "Địa chỉ là bắt buộc.";
-        if (!formData.dob) newErrors.dob = "Ngày sinh là bắt buộc.";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -182,7 +200,8 @@ export default function AddCustomerForm() {
                     password: formData.password,
                     address: formData.address,
                     dob: formData.dob,
-                    taxCode: formData.taxCode,
+                    note: formData.note,
+                    taxCode: formData.customerType === CustomerType.SERVICE_MANAGER ? formData.taxCode : null, // Only send taxCode for SERVICE_MANAGER
                     customerType: formData.customerType,
                 }),
             });
@@ -201,7 +220,7 @@ export default function AddCustomerForm() {
             setFormData(initialFormData);
             setErrors({});
             setUseRandomPassword(false);
-            setRandomPasswordDisplay(""); // Clear display after submission
+            setRandomPasswordDisplay("");
 
         } catch (error) {
             console.error("Register error:", error);
@@ -216,7 +235,7 @@ export default function AddCustomerForm() {
         setShowPassword(false);
         setShowConfirmPassword(false);
         setUseRandomPassword(false);
-        setRandomPasswordDisplay(""); // Clear display on clear
+        setRandomPasswordDisplay("");
         setErrors({});
         setCreatedCustomerData(null);
         setPasswordToDisplayInModal(null);
@@ -226,7 +245,7 @@ export default function AddCustomerForm() {
     const handleCopyInfo = () => {
         if (createdCustomerData && passwordToDisplayInModal) {
             const infoToCopy = `
-    Tên khách hàng: ${createdCustomerData.name}
+    Tên ${createdCustomerData.customerType === CustomerType.IMPORTER ? 'khách hàng' : 'công ty'}: ${createdCustomerData.name}
     Email: ${createdCustomerData.email}
     Mật khẩu: ${passwordToDisplayInModal}
     `.trim();
@@ -252,8 +271,10 @@ export default function AddCustomerForm() {
     const errorClass = "text-red-500 text-xs mt-1";
     const requiredSpan = <span className="text-red-500">*</span>;
 
+    const isImporter = formData.customerType === CustomerType.SERVICE_MANAGER;
+
     return (
-        <div className="rounded-lg border border-gray-200 bg-white shadow-lg  p-6 sm:p-8 relative">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-lg p-6 sm:p-8 relative">
             <input
                 type="file"
                 ref={fileInputRef}
@@ -272,25 +293,8 @@ export default function AddCustomerForm() {
                 )}
 
                 <div>
-                    <label htmlFor="name" className={labelClass}>
-                        Tên khách hàng {requiredSpan}
-                    </label>
-                    <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Nhập tên khách hàng"
-                        required
-                        className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
-                    />
-                    {errors.name && <p className={errorClass}>{errors.name}</p>}
-                </div>
-
-                <div>
                     <label htmlFor="customerType" className={labelClass}>
-                         Khách hàng {requiredSpan}
+                    Vai trò khách hàng {requiredSpan}
                     </label>
                     <div className="relative">
                         <select
@@ -299,7 +303,7 @@ export default function AddCustomerForm() {
                             value={formData.customerType}
                             onChange={handleChange}
                             required
-                            className={`${inputClass} pr-10 ${errors.customerType ? 'border-red-500' : ''}`}
+                            className={`${inputClass} pr-10 text-gray-700 uppercase ${errors.customerType ? 'border-red-500' : ''}`}
                         >
                             {Object.values(CustomerType).map((type) => (
                                 <option key={type} value={type} className="text-gray-800">
@@ -311,10 +315,28 @@ export default function AddCustomerForm() {
                     {errors.customerType && <p className={errorClass}>{errors.customerType}</p>}
                 </div>
 
+                <div>
+                    <label htmlFor="name" className={labelClass}>
+                        {isImporter ? 'Tên khách hàng' : 'Đơn vị nhập khẩu'} {requiredSpan}
+                    </label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder={isImporter ? "Nhập tên khách hàng" : "Nhập tên đơn vị nhập khẩu"}
+                        required
+                        className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
+                    />
+                    {errors.name && <p className={errorClass}>{errors.name}</p>}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label htmlFor="email" className={labelClass}>
-                            Email {requiredSpan}
+                        {isImporter ? 'Email' : 'Email nhận hóa đơn'} {requiredSpan}
+
                         </label>
                         <input
                             type="email"
@@ -357,8 +379,8 @@ export default function AddCustomerForm() {
                             onChange={handleUseRandomPasswordChange}
                             className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
-                        <label htmlFor="useRandomPassword" className="ml-2 italic  flex items-center text-sm text-gray-900">
-                            Random password
+                        <label htmlFor="useRandomPassword" className="ml-2 italic flex items-center text-sm text-gray-900">
+                            Tạo mật khẩu ngẫu nhiên
                         </label>
                     </div>
 
@@ -372,7 +394,7 @@ export default function AddCustomerForm() {
                                     type="text"
                                     id="randomPasswordDisplay"
                                     value={randomPasswordDisplay}
-                                    readOnly 
+                                    readOnly
                                     className={`${inputClass} pr-16 font-mono text-gray-700`}
                                     placeholder="Mật khẩu ngẫu nhiên sẽ hiển thị ở đây"
                                 />
@@ -408,14 +430,18 @@ export default function AddCustomerForm() {
                                     placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
                                     required={!useRandomPassword}
                                     minLength={6}
-                                    className={`${inputClass} ${errors.password ? 'border-red-500' : ''}`}
+                                    className={`${inputClass} ${errors.password ? "border-red-500" : ""}`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                                 >
-                                    {showPassword ? "Ẩn" : "Hiện"}
+                                    {showPassword ? (
+                                        <EyeOff size={18} strokeWidth={1.8} />
+                                    ) : (
+                                        <Eye size={18} strokeWidth={1.8} />
+                                    )}
                                 </button>
                             </div>
                             {errors.password && <p className={errorClass}>{errors.password}</p>}
@@ -423,7 +449,7 @@ export default function AddCustomerForm() {
 
                         <div>
                             <label htmlFor="confirmPassword" className={labelClass}>
-                                Xác nhận Mật khẩu {requiredSpan}
+                                Xác nhận mật khẩu {requiredSpan}
                             </label>
                             <div className="relative">
                                 <input
@@ -439,9 +465,13 @@ export default function AddCustomerForm() {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                                 >
-                                    {showConfirmPassword ? "Ẩn" : "Hiện"}
+                                    {showConfirmPassword ? (
+                                        <EyeOff size={18} strokeWidth={1.8} />
+                                    ) : (
+                                        <Eye size={18} strokeWidth={1.8} />
+                                    )}
                                 </button>
                             </div>
                             {errors.confirmPassword && <p className={errorClass}>{errors.confirmPassword}</p>}
@@ -449,10 +479,11 @@ export default function AddCustomerForm() {
                     </>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Conditional rendering for Tax Code and Date of Birth */}
+                {isImporter ? (
                     <div>
                         <label htmlFor="dob" className={labelClass}>
-                            Ngày sinh {requiredSpan}
+                            Ngày sinh
                         </label>
                         <input
                             type="date"
@@ -460,15 +491,14 @@ export default function AddCustomerForm() {
                             name="dob"
                             value={formData.dob}
                             onChange={handleChange}
-                            required
                             className={`${inputClass} ${errors.dob ? 'border-red-500' : ''}`}
                         />
                         {errors.dob && <p className={errorClass}>{errors.dob}</p>}
                     </div>
-
+                ) : (
                     <div>
                         <label htmlFor="taxCode" className={labelClass}>
-                            Mã số thuế {formData.customerType === CustomerType.SERVICE_MANAGER && requiredSpan}
+                            Mã số thuế {requiredSpan}
                         </label>
                         <input
                             type="text"
@@ -476,16 +506,19 @@ export default function AddCustomerForm() {
                             name="taxCode"
                             value={formData.taxCode}
                             onChange={handleChange}
-                            placeholder="Nhập mã số thuế (nếu có)"
+                            placeholder="Nhập mã số thuế"
+                            required={!isImporter} // Required only for SERVICE_MANAGER
                             className={`${inputClass} ${errors.taxCode ? 'border-red-500' : ''}`}
                         />
                         {errors.taxCode && <p className={errorClass}>{errors.taxCode}</p>}
                     </div>
-                </div>
+                )}
 
                 <div>
                     <label htmlFor="address" className={labelClass}>
-                        Địa chỉ {requiredSpan}
+                        
+                        {isImporter ? 'Địa chỉ' : 'Địa chỉ trụ sở đơn vị'} {requiredSpan}
+
                     </label>
                     <input
                         type="text"
@@ -494,11 +527,27 @@ export default function AddCustomerForm() {
                         value={formData.address}
                         onChange={handleChange}
                         placeholder="Nhập địa chỉ"
-                        required
                         className={`${inputClass} ${errors.address ? 'border-red-500' : ''}`}
                     />
                     {errors.address && <p className={errorClass}>{errors.address}</p>}
                 </div>
+
+                <div>
+                    <label htmlFor="note" className={labelClass}>
+                        Ghi chú
+                    </label>
+                    <textarea
+                        id="note"
+                        name="note"
+                        value={formData.note}
+                        onChange={handleChange}
+                        placeholder="Thêm ghi chú..."
+                        rows={3}
+                        className={`${inputClass} ${errors.note ? 'border-red-500' : ''}`}
+                    />
+                    {errors.note && <p className={errorClass}>{errors.note}</p>}
+                </div>
+
 
                 <div className="flex justify-center gap-4 text-sm ">
                     <button
@@ -565,7 +614,7 @@ export default function AddCustomerForm() {
                                     <div className="mt-2 text-gray-700">
                                         {createdCustomerData && (
                                             <div className="space-y-2 text-sm font-normal">
-                                                <p>Tên khách hàng: {createdCustomerData.name}</p>
+                                                <p>Tên {createdCustomerData.customerType === CustomerType.IMPORTER ? 'khách hàng' : 'công ty'}: {createdCustomerData.name}</p>
                                                 <p>Email: {createdCustomerData.email}</p>
                                                 <p className="font-semibold text-blue-600">
                                                     Mật khẩu: {passwordToDisplayInModal}

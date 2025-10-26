@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  LineChart,
   FileText,
   Briefcase,
   UserCog,
@@ -71,12 +70,6 @@ const Navbar: React.FC<NavbarProps> = ({
             icon: LayoutDashboard,
           },
           {
-            key: "dashboard_analytic",
-            label: "Phân tích dữ liệu",
-            href: "/admin/analytic",
-            icon: LineChart,
-          },
-          {
             key: "reports",
             label: "Tổng hợp / Báo cáo",
             href: "/admin/baocao",
@@ -101,17 +94,18 @@ const Navbar: React.FC<NavbarProps> = ({
             icon: Handshake,
           },
           {
-            key: "evaluation",
-            label: "Đánh giá hồ sơ",
-            href: "/admin/evaluation",
-            icon: GanttChart,
-          },
-           {
             key: "documents",
             label: "Giám sát / Quản lý hồ sơ",
             href: "/admin/hoso",
             icon: FileText,
           },
+          {
+            key: "evaluation",
+            label: "Đánh giá hồ sơ",
+            href: "/admin/evaluation",
+            icon: GanttChart,
+          },
+
         ],
       },
       {
@@ -170,6 +164,25 @@ const Navbar: React.FC<NavbarProps> = ({
   const staffNavSections = useMemo(
     () => [
       {
+        key: "dashboard",
+        title: "Dashboard",
+        items: [
+          {
+            key: "dashboard_overview",
+            label: "Tổng quan",
+            href: "/admin",
+            icon: LayoutDashboard,
+          },
+          {
+            key: "reports",
+            label: "Tổng hợp / Báo cáo",
+            href: "/admin/baocao",
+            icon: BarChart3,
+          },
+        ]
+      },
+      {
+
         key: "main",
         title: "Nghiệp vụ chính",
         items: [
@@ -199,6 +212,7 @@ const Navbar: React.FC<NavbarProps> = ({
           },
         ],
       },
+
       {
         key: "management",
         title: "Khách hàng",
@@ -211,36 +225,27 @@ const Navbar: React.FC<NavbarProps> = ({
           },
         ],
       },
-      {
-        key: "support",
-        title: "Báo cáo",
-        items: [
-          {
-            key: "reports",
-            label: "Tổng hợp / Báo cáo",
-            href: "/admin/baocao",
-            icon: BarChart3,
-          },
-        ],
-      },
     ],
     []
   );
 
   const navSections = isStaffUI ? staffNavSections : adminNavSections;
 
-  const isActive = (item: NavItem) => {
-    if (item.href && pathname === item.href) return true;
-    if (
-      item.href &&
-      item.href !== "/admin" &&
-      pathname?.startsWith(item.href + "/")
-    )
-      return true;
-    if (item.key === currentPageKey) return true;
-    if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
-    return false;
-  };
+  const isActive = useCallback(
+    (item: NavItem): boolean => {
+      if (item.href && pathname === item.href) return true;
+      if (
+        item.href &&
+        item.href !== "/admin" &&
+        pathname?.startsWith(item.href + "/")
+      )
+        return true;
+      if (item.key === currentPageKey) return true;
+      if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
+      return false;
+    },
+    [pathname, currentPageKey]
+  );
 
   useEffect(() => {
     let autoOpen: string | null = null;
@@ -257,7 +262,7 @@ const Navbar: React.FC<NavbarProps> = ({
     });
 
     setOpenDropdown((prev) => prev ?? autoOpen);
-  }, [pathname, role, navSections]);
+  }, [pathname, role, navSections, isActive]);
 
   const handleItemClick = (item: NavItem) => {
     if (item.subItems) {

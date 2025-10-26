@@ -54,6 +54,7 @@ interface UploadResultData {
 }
 interface FileUploadProps {
   dossierId: number | null;
+  customerId?: number | null;
   onUploadSuccess: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
@@ -103,11 +104,8 @@ const UploadResultDisplay: React.FC<{
             { label: "Tên đơn vị nhập khẩu", value: customer.name },
             { label: "Địa chỉ", value: customer.address },
             { label: "Mã số thuế", value: customer.taxCode },
-            {
-              label: "Người liên hệ/ Số điện thoại",
-              value: customer.contact,
-            },
-            { label: "Email nhận hóa đơn", value: data.contact },
+            { label: "Người liên hệ/ Số điện thoại", value: data.contact },
+            { label: "Email nhận hóa đơn", value: customer.email },
           ].map((field, index) => (
             <div key={index}>
               <label className="block text-sm font-medium text-gray-500 mb-1">
@@ -262,7 +260,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp số tờ khai
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.declarationDate ?? null}
+                {data.declarationDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -278,7 +276,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp hóa đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.invoiceDate ?? null}
+                {data.invoiceDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -286,7 +284,7 @@ const UploadResultDisplay: React.FC<{
                 Dự kiến thời gian giám định
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.scheduledInspectionDate ?? null}
+                {data.scheduledInspectionDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -349,9 +347,6 @@ const UploadResultDisplay: React.FC<{
                     Số lượng
                   </th>
                   <th className="border border-gray-300 px-3 py-2 text-left w-[14%]">
-                    Công dụng
-                  </th>
-                  <th className="border border-gray-300 px-3 py-2 text-left w-[14%]">
                     Ghi chú
                   </th>
                 </tr>
@@ -387,9 +382,6 @@ const UploadResultDisplay: React.FC<{
                     <td className="border border-gray-300 px-3 py-2 text-center">
                       {machine.quantity}
                     </td>
-                    <td className="border border-gray-300 px-3 py-2 text-center">
-                      {machine.usage}
-                    </td>
                     <td className="border border-gray-300 px-3 py-2 whitespace-pre-line">
                       {machine.note || ""}
                     </td>
@@ -417,8 +409,9 @@ const UploadResultDisplay: React.FC<{
   );
 };
 
-export const FileUploadComponent: React.FC<FileUploadProps> = ({
+export const FileUploadComponentFormCustomer: React.FC<FileUploadProps> = ({
   dossierId,
+  customerId,
   onUploadSuccess,
   onCancel,
   loading,
@@ -432,7 +425,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   const [uploadResult, setUploadResult] = useState<UploadResultData | null>(
     null
   );
-  const isCreateMode = mode === "create";
+  const isCreateMode = mode === "create" || dossierId == null;
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -500,6 +493,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
       return;
     }
 
+    if (isCreateMode && customerId == null) {
+      setError("Không xác định được khách hàng cần tạo hồ sơ.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -507,6 +505,8 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
     formData.append("file", selectedFile);
     if (!isCreateMode && dossierId != null) {
       formData.append("dossierId", dossierId.toString());
+    } else if (isCreateMode && customerId != null) {
+      formData.append("customerId", customerId.toString());
     }
 
     try {

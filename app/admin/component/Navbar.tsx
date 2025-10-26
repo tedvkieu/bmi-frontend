@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -230,18 +230,21 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const navSections = isStaffUI ? staffNavSections : adminNavSections;
 
-  const isActive = (item: NavItem) => {
-    if (item.href && pathname === item.href) return true;
-    if (
-      item.href &&
-      item.href !== "/admin" &&
-      pathname?.startsWith(item.href + "/")
-    )
-      return true;
-    if (item.key === currentPageKey) return true;
-    if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
-    return false;
-  };
+  const isActive = useCallback(
+    (item: NavItem): boolean => {
+      if (item.href && pathname === item.href) return true;
+      if (
+        item.href &&
+        item.href !== "/admin" &&
+        pathname?.startsWith(item.href + "/")
+      )
+        return true;
+      if (item.key === currentPageKey) return true;
+      if (item.subItems && item.subItems.some((si) => isActive(si))) return true;
+      return false;
+    },
+    [pathname, currentPageKey]
+  );
 
   useEffect(() => {
     let autoOpen: string | null = null;
@@ -258,7 +261,7 @@ const Navbar: React.FC<NavbarProps> = ({
     });
 
     setOpenDropdown((prev) => prev ?? autoOpen);
-  }, [pathname, role, navSections]);
+  }, [pathname, role, navSections, isActive]);
 
   const handleItemClick = (item: NavItem) => {
     if (item.subItems) {

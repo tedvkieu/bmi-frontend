@@ -53,6 +53,7 @@ interface UploadResultData {
 }
 interface FileUploadProps {
   dossierId: number | null;
+  customerId?: number | null;
   onUploadSuccess: (data: any) => void;
   onCancel: () => void;
   loading: boolean;
@@ -407,8 +408,9 @@ const UploadResultDisplay: React.FC<{
   );
 };
 
-export const FileUploadComponent: React.FC<FileUploadProps> = ({
+export const FileUploadComponentFormCustomer: React.FC<FileUploadProps> = ({
   dossierId,
+  customerId,
   onUploadSuccess,
   onCancel,
   loading,
@@ -422,7 +424,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
   const [uploadResult, setUploadResult] = useState<UploadResultData | null>(
     null
   );
-  const isCreateMode = mode === "create";
+  const isCreateMode = mode === "create" || dossierId == null;
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -490,6 +492,11 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
       return;
     }
 
+    if (isCreateMode && customerId == null) {
+      setError("Không xác định được khách hàng cần tạo hồ sơ.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -497,6 +504,8 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
     formData.append("file", selectedFile);
     if (!isCreateMode && dossierId != null) {
       formData.append("dossierId", dossierId.toString());
+    } else if (isCreateMode && customerId != null) {
+      formData.append("customerId", customerId.toString());
     }
 
     try {

@@ -87,7 +87,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
     }
   };
 
-  const isAdminOrManager = role === "ADMIN" || role === "MANAGER" || role === "DOCUMENT_STAFF" || role === "ISO_DOCUMENT";
+  const isAdminOrManager =
+    role === "ADMIN" ||
+    role === "MANAGER" ||
+    role === "DOCUMENT_STAFF" ||
+    role === "ISO_STAFF";
 
   return (
     <div className="hidden lg:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-visible">
@@ -160,10 +164,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                     >
                       <button
                         onClick={toggleMultiSelectMode}
-                        className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${isMultiSelectMode
-                          ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
-                          : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
-                          }`}
+                        className={`p-2 px-2 rounded-full text-white text-xs transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                          isMultiSelectMode
+                            ? "bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                            : "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500"
+                        }`}
                       >
                         {isMultiSelectMode ? "Hủy chọn" : "Chọn nhiều"}
                       </button>
@@ -210,10 +215,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                 return (
                   <tr
                     key={doc.id}
-                    className={`hover:bg-blue-50 transition-colors duration-200 ${selectedDocuments.includes(doc.id) && isMultiSelectMode
-                      ? "bg-blue-50"
-                      : ""
-                      }`}
+                    className={`hover:bg-blue-50 transition-colors duration-200 ${
+                      selectedDocuments.includes(doc.id) && isMultiSelectMode
+                        ? "bg-blue-50"
+                        : ""
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       {isMultiSelectMode && (
@@ -312,10 +318,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                               if (canEdit) onEdit(doc.id);
                             }}
                             disabled={!canEdit}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canEdit
-                              ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
-                              : "text-gray-300 cursor-not-allowed"
-                              }`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                              canEdit
+                                ? "text-gray-600 hover:bg-purple-100 hover:text-purple-700 focus:ring-purple-500"
+                                : "text-gray-300 cursor-not-allowed"
+                            }`}
                           >
                             <Edit2 size={20} />
                           </button>
@@ -329,10 +336,11 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
                               if (canDelete) onDelete(doc.id);
                             }}
                             disabled={!canDelete}
-                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${canDelete
-                              ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
-                              : "text-gray-300 cursor-not-allowed"
-                              }`}
+                            className={`p-2.5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                              canDelete
+                                ? "text-gray-600 hover:bg-red-100 hover:text-red-700 focus:ring-red-500"
+                                : "text-gray-300 cursor-not-allowed"
+                            }`}
                           >
                             <Trash2 size={20} />
                           </button>

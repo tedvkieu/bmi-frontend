@@ -244,7 +244,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày vận đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.billOfLadingDate ?? null}
+                {data.billOfLadingDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

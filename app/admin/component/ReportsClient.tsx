@@ -70,28 +70,86 @@ const ReportsClient: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
     const pageSize = 10;
 
-    React.useEffect(() => {
-        fetch("/api/reports/inspection/companies", { cache: "no-store" })
-            .then(async (res) => {
-                if (!res.ok) throw new Error("Failed to load companies");
-                const text = await res.text();
-                let json: any = {};
-                try {
-                    json = text ? JSON.parse(text) : {};
-                } catch {
-                    json = {};
-                }
-                const raw = toArray(json.data || json.details || json);
-                const items: Customer[] = raw.map((c: any) => ({
-                    id: String(c.id ?? c.companyId ?? c.code ?? c.value ?? c._id ?? c.uuid ?? ""),
-                    name: String(c.name ?? c.companyName ?? c.customerName ?? c.label ?? "Khách hàng"),
-                }));
-                setCustomers(items.filter((i) => i.id));
-            })
-            .catch(() => {
-                // ignore
-            });
+    // Company combobox pagination
+    const companyDropdownRef = React.useRef<HTMLDivElement | null>(null);
+    const [companyPage, setCompanyPage] = React.useState<number>(0);
+    const [companyTotalPages, setCompanyTotalPages] = React.useState<number>(1);
+    const [companyLoading, setCompanyLoading] = React.useState<boolean>(false);
+    const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = React.useState<boolean>(false);
+
+    const loadCompanies = React.useCallback(async (page: number = 0, searchQuery: string = "") => {
+        setCompanyLoading(true);
+        try {
+            const json = await reportApi.getCompanies(page, 10, searchQuery);
+
+            const items: Customer[] = (json.content || []).map((c: any, index: number) => ({
+                id: String(c.id ?? c.companyId ?? c.code ?? c.value ?? c._id ?? c.uuid ?? `${page}-${index}`),
+                name: String(c.name ?? c.companyName ?? c.customerName ?? c.label ?? "Khách hàng"),
+            }));
+
+            if (page === 0) {
+                const filteredItems = items.filter((i) => i.id);
+                setCustomers(filteredItems);
+            } else {
+                setCustomers(prev => {
+                    // Remove duplicates based on both id and name
+                    const existingIds = new Set(prev.map(c => c.id));
+                    const newItems = items.filter(i => i.id && !existingIds.has(i.id));
+                    return [...prev, ...newItems];
+                });
+            }
+
+            // Get pagination info from json.page
+            const totalPages = json.page?.totalPages || 1;
+
+            setCompanyTotalPages(totalPages);
+            setCompanyPage(page);
+        } catch {
+            // ignore
+        } finally {
+            setCompanyLoading(false);
+        }
     }, []);
+
+    // Load companies on mount only
+    const hasLoadedOnce = React.useRef(false);
+    React.useEffect(() => {
+        if (!hasLoadedOnce.current) {
+            hasLoadedOnce.current = true;
+            loadCompanies(0, "");
+        }
+    }, [loadCompanies]);
+
+    // Removed auto-search: companies are only loaded on mount
+
+    const handleCompanyScroll = React.useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.target as HTMLDivElement;
+        const { scrollTop, scrollHeight, clientHeight } = target;
+
+        // Check if scrolled near bottom (within 50px)
+        if (scrollHeight - scrollTop - clientHeight < 50) {
+            const nextPage = companyPage + 1;
+            // Only load if nextPage is less than totalPages (page indices are 0-based)
+            if (nextPage < companyTotalPages && !companyLoading) {
+                loadCompanies(nextPage, "");
+            }
+        }
+    }, [companyPage, companyTotalPages, companyLoading, loadCompanies]);
+
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target as Node)) {
+                setIsCompanyDropdownOpen(false);
+            }
+        };
+        if (isCompanyDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isCompanyDropdownOpen]);
 
     // Reset pagination when filters change
     React.useEffect(() => {
@@ -175,6 +233,8 @@ const ReportsClient: React.FC = () => {
 
     function handlePageChange(page: number) {
         setCurrentPage(page);
+        // Automatically trigger search when page changes
+        // This ensures data is loaded for the new page
     }
 
     function resetPagination() {
@@ -320,12 +380,23 @@ const ReportsClient: React.FC = () => {
         }
     }, [searchQuery, currentPage, pageSize, fromDate, toDate, period, selectedCustomerId, showToast, totalPages]);
 
-    // Trigger search when currentPage changes (but not on initial load)
+    // Track if this is the initial mount
+    const isInitialMount = React.useRef(true);
+
+    // Auto-search when page changes (for pagination only, not filters)
     React.useEffect(() => {
-        if (currentPage > 1 || hasData) {
+        // Skip the first render
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        // Only trigger search when page changes AND we already have data (pagination scenario)
+        if (hasData) {
             handleSearch();
         }
-    }, [currentPage, hasData, handleSearch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage]);
 
     function buildExportPayload() {
         // For search mode: export only matched rows → do not include pagination
@@ -409,18 +480,63 @@ const ReportsClient: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 {/* Bộ lọc */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div>
-                        <label className="block text-sm text-gray-800 font-medium mb-1">Công ty</label>
-                        <select
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={selectedCustomerId}
-                            onChange={(e) => setSelectedCustomerId(e.target.value)}
-                        >
-                            <option value="">Tất cả</option>
-                            {customers.map((c) => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                    {/* Công ty dropdown */}
+                    <div className="col-span-1">
+                        <label className="block text-sm text-gray-800 font-medium mb-1.5">Công ty</label>
+                        <div className="relative" ref={companyDropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                                className="w-full text-left border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                            >
+                                <span className={`truncate ${selectedCustomerId ? "text-gray-900" : "text-gray-400"}`}>
+                                    {selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.name || "Chọn công ty" : "Tất cả"}
+                                </span>
+                                <svg className="w-4 h-4 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isCompanyDropdownOpen ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+                                </svg>
+                            </button>
+
+                            {isCompanyDropdownOpen && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-72 flex flex-col">
+                                    <div
+                                        className="overflow-y-auto"
+                                        style={{ maxHeight: '288px' }}
+                                        onScroll={handleCompanyScroll}
+                                    >
+                                        <div
+                                            className="px-3 py-1.5 hover:bg-gray-100 cursor-pointer text-gray-900 text-sm"
+                                            onClick={() => {
+                                                setSelectedCustomerId("");
+                                                setIsCompanyDropdownOpen(false);
+                                            }}
+                                        >
+                                            Tất cả
+                                        </div>
+                                        {customers.map((c) => (
+                                            <div
+                                                key={c.id}
+                                                className={`px-3 py-1.5 hover:bg-gray-100 cursor-pointer text-sm ${selectedCustomerId === c.id
+                                                    ? 'bg-blue-50 text-blue-900 font-medium'
+                                                    : 'text-gray-900'
+                                                    }`}
+                                                onClick={() => {
+                                                    setSelectedCustomerId(c.id);
+                                                    setIsCompanyDropdownOpen(false);
+                                                }}
+                                            >
+                                                {c.name}
+                                            </div>
+                                        ))}
+                                        {companyLoading && (
+                                            <div className="px-3 py-1.5 text-gray-500 text-sm text-center">
+                                                Đang tải...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm text-gray-800 font-medium mb-1">Thời gian</label>

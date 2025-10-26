@@ -20,8 +20,11 @@ const getStatusLabel = (status: string) => {
 };
 
 export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN");
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "Chưa có";
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return "Chưa có";
+    return parsed.toLocaleDateString("vi-VN");
   };
 
   const getStatusColor = (status: string) => {
@@ -60,12 +63,16 @@ export default function DossierInfo({ dossierInfo }: DossierInfoProps) {
           <strong>Địa điểm giám định:</strong> {dossierInfo.inspectionLocation}
         </div>
         <div>
-          <strong>Ngày giám định:</strong>{" "}
-          {formatDate(dossierInfo.inspectionDate)}
+          <strong>Dự kiến giám định:</strong>{" "}
+          {formatDate(dossierInfo.scheduledInspectionDate ?? null)}
+        </div>
+        <div>
+          <strong>Ngày giám định thực tế:</strong>{" "}
+          {formatDate(dossierInfo.inspectionDate ?? null)}
         </div>
         <div>
           <strong>Ngày cấp chứng thư:</strong>{" "}
-          {formatDate(dossierInfo.certificateDate)}
+          {formatDate(dossierInfo.certificateDate ?? null)}
         </div>
         <div>
           <strong>Trạng thái:</strong>

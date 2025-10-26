@@ -37,7 +37,7 @@ interface DocumentRequestTableProps {
 }
 
 const customerTypeDisplayNames: Record<string, string> = {
-  IMPORTER: "Nhà nhập khẩu",
+  IMPORTER: "Đơn vị nhập khẩu",
   SERVICE_MANAGER: "Nhà quản lý dịch vụ",
 };
 
@@ -242,7 +242,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
                     }}
                   >
                     <option value="all">Tất cả loại khách hàng</option>
-                    <option value="IMPORTER">Nhà nhập khẩu</option>
+                    <option value="IMPORTER">Đơn vị nhập khẩu</option>
                     <option value="SERVICE_MANAGER">Nhà quản lý dịch vụ</option>
                   </select>
                   <ChevronDown

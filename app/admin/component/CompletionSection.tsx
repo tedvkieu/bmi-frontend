@@ -48,7 +48,7 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
   const getObjectTypeLabel = (type: string) => {
     const typeMap: Record<string, string> = {
       SERVICE_MANAGER: "Người quản lý dịch vụ",
-      IMPORTER: "Nhà nhập khẩu",
+      IMPORTER: "Đơn vị nhập khẩu",
     };
     return typeMap[type] || type;
   };

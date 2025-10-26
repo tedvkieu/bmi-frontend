@@ -332,7 +332,7 @@ const CustomersContent = () => {
   const getCustomerTypeText = (type: string) => {
     switch (type) {
       case "IMPORTER":
-        return "Nhà nhập khẩu";
+        return "Đơn vị nhập khẩu";
       case "SERVICE_MANAGER":
         return "Nhà quản lý dịch vụ";
       default:
@@ -740,10 +740,10 @@ const CustomersContent = () => {
             className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
             onClick={handleCloseViewModal}
           />
-          <div className="relative bg-white w-full max-w-4xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
-            <div className="px-6 py-5 bg-gray-600 text-white rounded-t-lg flex items-center justify-between">
+          <div className="relative bg-white w-full max-w-7xl mx-auto rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+            <div className="px-6 py-5 bg-blue-600 text-white  flex items-center justify-between">
               <h4 className="text-lg font-semibold">
-                Thông tin chi tiết khách hàng: {selectedCustomer.name}
+                Khách hàng {selectedCustomer.name}
               </h4>
               <button
                 onClick={handleCloseViewModal}
@@ -775,8 +775,10 @@ const CustomersContent = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ngày sinh
                   </label>
-                  <p className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium">
-                    {formatDate(selectedCustomer.dob)}
+                  <p className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-800">
+                    {selectedCustomer?.dob
+                      ? formatDate(selectedCustomer.dob)
+                      : <span className="text-gray-400 italic">Chưa cập nhật</span>}
                   </p>
                 </div>
                 <div>
@@ -799,13 +801,16 @@ const CustomersContent = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Địa chỉ
                   </label>
-                  <p className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium">
-                    {selectedCustomer.address || "N/A"}
+                  <p className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-800">
+                    {selectedCustomer?.address
+                      ? selectedCustomer.address
+                      : <span className="text-gray-400 italic">Chưa cập nhật</span>}
                   </p>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại khách hàng
+                    Vai trò khách hàng
                   </label>
                   <span
                     className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getCustomerTypeColor(
@@ -832,7 +837,7 @@ const CustomersContent = () => {
                 )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày tạo
+                    Ngày tạo tài khoản
                   </label>
                   <p className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium">
                     {formatDate(selectedCustomer.createdAt)}
@@ -857,22 +862,7 @@ const CustomersContent = () => {
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleCloseViewModal}
-                className="px-4 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
-              >
-                Đóng
-              </button>
-              <button
-                type="button"
-                onClick={() => handleEditCustomer(selectedCustomer.customerId)}
-                className="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600"
-              >
-                Chỉnh sửa
-              </button>
-            </div>
+
           </div>
         </div>
       )}

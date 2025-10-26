@@ -31,7 +31,7 @@ interface CustomerUpdateData {
 
 const customerTypeOptions = [
   { value: "SERVICE_MANAGER", label: "Người quản lý dịch vụ" },
-  { value: "IMPORTER", label: "Nhà nhập khẩu" },
+  { value: "IMPORTER", label: "Đơn vị nhập khẩu" },
 ];
 
 export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
@@ -168,7 +168,6 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   return (
     <div className="min-h-screen bg-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        {/* Header Section */}
         <div className="text-center mb-8 lg:mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-full">
@@ -187,10 +186,10 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
               </svg>
             </div>
           </div>
-          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
             Thông Tin Hồ Sơ Khách Hàng
           </h1>
-          <p className="text-gray-700 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+          <p className="text-gray-700 text-base font-medium max-w-2xl mx-auto leading-relaxed">
             Vui lòng kiểm tra và cập nhật thông tin khách hàng nếu cần thiết
           </p>
         </div>
@@ -278,8 +277,8 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block font-medium text-gray-700">
-                      Tên khách hàng <span className="text-red-500">*</span>
+                    <label className="block text-sm text-gray-700">
+                      Tên khách hàng yêu cầu giám định <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -287,7 +286,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       onChange={(e) =>
                         handleCustomerDataChange("name", e.target.value)
                       }
-                      className="text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      className="text-sm text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       required
                     />
                   </div>
@@ -302,7 +301,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       onChange={(e) =>
                         handleCustomerDataChange("phone", e.target.value)
                       }
-                      className="text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      className="text-sm text-gray-600 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       required
                     />
                   </div>
@@ -317,7 +316,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       onChange={(e) =>
                         handleCustomerDataChange("email", e.target.value)
                       }
-                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      className="w-full text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       required
                     />
                   </div>
@@ -346,20 +345,20 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       onChange={(e) =>
                         handleCustomerDataChange("taxCode", e.target.value)
                       }
-                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      className="w-full text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Loại khách hàng <span className="text-red-500">*</span>
+                      Vai trò khách hàng <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={customerData.customerType}
                       onChange={(e) =>
                         handleCustomerDataChange("customerType", e.target.value)
                       }
-                      className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      className="w-full text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       required
                     >
                       {customerTypeOptions.map((option) => (
@@ -381,7 +380,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       handleCustomerDataChange("address", e.target.value)
                     }
                     rows={3}
-                    className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    className="w-full text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                     required
                   />
                 </div>
@@ -396,7 +395,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       handleCustomerDataChange("note", e.target.value)
                     }
                     rows={2}
-                    className="w-full text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    className="w-full text-sm text-gray-600 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                     placeholder="Nhập ghi chú về khách hàng..."
                   />
                 </div>
@@ -405,7 +404,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                   <button
                     onClick={handleCancelEdit}
                     disabled={customerUpdateLoading}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-all duration-200 font-medium"
+                    className="px-4 py-2 bg-gray-300 text-sm text-gray-700 rounded-lg hover:bg-gray-400 transition-all duration-200 font-medium"
                   >
                     Hủy
                   </button>
@@ -418,7 +417,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                       !customerData.email ||
                       !customerData.address
                     }
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                    className="px-4 py-2 bg-green-600 text-sm text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
                   >
                     {customerUpdateLoading ? (
                       <>
@@ -449,10 +448,10 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-gradient-to-r from-white to-blue-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên khách hàng
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Tên khách hàng yêu cầu giám định
                   </label>
-                  <span className="text-gray-900 font-bold text-base">
+                  <span className="text-black text-sm">
                     {updatedCustomer.name}
                   </span>
                 </div>
@@ -461,7 +460,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số điện thoại
                   </label>
-                  <span className="text-gray-900 font-bold text-base">
+                  <span className="text-gray-900 text-sm">
                     {updatedCustomer.phone}
                   </span>
                 </div>
@@ -470,18 +469,18 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
-                  <span className="text-blue-600 text-base italic">
+                  <span className="text-gray-900 text-sm italic">
                     {updatedCustomer.email}
                   </span>
                 </div>
 
                 <div className="bg-gradient-to-r from-white to-yellow-50 rounded-lg p-4 shadow-sm border border-gray-100">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Khách hàng
+                   Vai trò khách hàng
                   </label>
-                  <span className="text-gray-900 font-semibold text-base">
+                  <span className="text-gray-900 text-sm">
                     {updatedCustomer.customerType === "IMPORTER"
-                      ? "Nhà nhập khẩu"
+                      ? "Đơn vị nhập khẩu"
                       : updatedCustomer.customerType === "SERVICE_MANAGER"
                       ? "Quản lý dịch vụ"
                       : updatedCustomer.customerType}
@@ -492,30 +491,17 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Mã số thuế
                   </label>
-                  <span className="text-gray-900 font-semibold text-base">
-                    {updatedCustomer.taxCode || "Chưa có"}
+                  <span className="text-gray-900 text-sm">
+                    {updatedCustomer.taxCode || "Thông tin chưa cập nhật"}
                   </span>
                 </div>
 
-                {/* <div className="bg-gradient-to-r from-white to-pink-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày sinh
-                  </label>
-                  <span className="text-gray-900 font-semibold text-base">
-                    {updatedCustomer.dob
-                      ? new Date(updatedCustomer.dob).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "Chưa có"}
-                  </span>
-                </div> */}
-
                 <div className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-white to-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-gray-700 mb-1">
                     Địa chỉ
                   </label>
-                  <span className="text-gray-900 font-semibold text-base">
-                    {updatedCustomer.address || "Chưa có"}
+                  <span className="text-gray-900 text-sm">
+                    {updatedCustomer.address || "Thông tin chưa cập nhật"}
                   </span>
                 </div>
 
@@ -524,8 +510,8 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Ghi chú
                     </label>
-                    <span className="text-gray-900 font-light italic text-base">
-                      {updatedCustomer.note || "Chưa có"}
+                    <span className="text-blue-600 font-light italic text-sm">
+                      {updatedCustomer.note || "Thông tin chưa cập nhật"}
                     </span>
                   </div>
                 )}

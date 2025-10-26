@@ -1,6 +1,6 @@
 "use client"
 import { dossierApi } from "@/app/admin/services/dossierApi";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, ChangeEvent } from "react";
 import classNames from 'classnames';
 import DossierNav from './DossierNav';
@@ -8,10 +8,12 @@ import { DossierDetails } from "@/app/types/dossier";
 import MachineInfoSection from "./MachineInfoSection";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { Edit } from "lucide-react";
 
 
 export default function DossierDetail() {
     const { id } = useParams();
+    const router = useRouter();
     const [dossier, setDossier] = useState<DossierDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -63,13 +65,13 @@ export default function DossierDetail() {
             }
 
             // Xử lý các field lồng trong customerSubmit.*
-            if (name.startsWith("customerSubmit.")) {
-                const customerSubmitField = name.split('.')[1];
+            if (name.startsWith("customerRelated.")) {
+                const customerRelatedField = name.split('.')[1];
                 return {
                     ...prevDossier,
-                    customerSubmit: {
-                        ...prevDossier.customerSubmit,
-                        [customerSubmitField]: newValue
+                    customerRelated: {
+                        ...prevDossier.customerRelated,
+                        [customerRelatedField]: newValue
                     }
                 };
             }
@@ -128,6 +130,7 @@ export default function DossierDetail() {
                 inspectionDate: dossier.inspectionDate ?? "",
                 certificateDate: dossier.certificateDate ?? "",
                 contact: dossier.contact ?? "",
+                scheduledInspectionDate: dossier.scheduledInspectionDate ?? null,
                 certificateStatus: dossier.certificateStatus,
                 customerSubmit: !Number.isNaN(submitId)
                     ? {
@@ -151,7 +154,10 @@ export default function DossierDetail() {
                     : undefined,
             };
 
+
+
             const updated = await dossierApi.updateDossierDetails(dossierId, payload);
+            console.log("ADADADA", updated);
             setDossier(updated as DossierDetails);
             toast.success("Đã lưu thông tin hồ sơ");
         } catch (error: any) {
@@ -161,7 +167,7 @@ export default function DossierDetail() {
             setSaving(false);
         }
     };
-
+    const inputClass = "w-full  px-1 text-sm bg-gray-50 text-gray-800";
     const editableInputClass = "w-full border-b border-gray-500 text-[#1e3a8a] outline-none px-1 text-sm";
     const tableHeaderClass = "w-1/3 p-2 text-[#1e3a8a] bg-gray-50 border-r border-gray-300 text-sm";
     const tableDataClass = "w-2/3 p-2 text-sm";
@@ -251,64 +257,59 @@ export default function DossierDetail() {
 
                         <table className="w-full border-collapse">
                             <tbody>
-                                <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
-                                    <td className={classNames(tableDataClass, "font-semibold")}>
-                                        <input
-                                            type="text"
-                                            name="customerRelated.name"
-                                            value={dossier.customerRelated.name || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-[#1e3a8a] text-sm")}
-                                        />
+                                <tr className="flex justify-between items-center p-2">
+                                    <td>
+                                    <button
+                                        onClick={() => router.push(`/admin/khachhang/${dossier.customerRelated?.id}`)}
+                                        className="text-blue-900 hover:text-blue-800 italic underline flex items-center space-x-1 text-sm"
+                                        title="Chỉnh sửa đơn vị nhập khẩu"
+                                    >
+                                        <Edit size={18} />
+                                        <span>Chỉnh sửa thông tin đơn vị nhập khẩu</span>
+                                    </button>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Đơn vị nhập khẩu</td>
+                                    <td className={classNames(tableDataClass, "font-semibold flex justify-between items-center")}>
+                                        <span className={classNames(inputClass, "text-[#1e3a8a] text-sm")}>
+                                            {dossier.customerRelated?.name || ''}
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+
+                                <tr className="border border-gray-300">
                                     <td className={tableHeaderClass}>Địa chỉ</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="customerRelated.address"
-                                            value={dossier.customerRelated.address || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-sm")}>
+                                            {dossier.customerRelated?.address || ''}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
                                     <td className={tableHeaderClass}>Mã số thuế</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="customerRelated.taxCode"
-                                            value={dossier.customerRelated.taxCode || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-sm")}>
+                                            {dossier.customerRelated?.taxCode || ''}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Người liên hệ/ Điện thoại</td>
+                                    <td className={tableHeaderClass}>Người liên hệ / Điện thoại</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="contact"
-                                            value={dossier.contact || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                        <span className={classNames(inputClass, "text-blue-700 text-sm")}>
+                                            {dossier.contact || '<Chưa cập nhập>'}
+                                        </span>
                                     </td>
                                 </tr>
-                                <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Email nhận hóa đơn:</td>
+                                 <tr className="border border-gray-300">
+                                    <td className={tableHeaderClass}>Email nhận hóa đơn</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="email"
-                                            name="customerRelated.email"
-                                            value={dossier.customerRelated.email || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-blue-700 underline text-sm")}
-                                        />
+                                        <span className="text-blue-500 text-sm italic underline">
+                                            {dossier.customerRelated.email || '<Chưa cập nhập>'}
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
@@ -436,7 +437,7 @@ export default function DossierDetail() {
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="inspectionLocation"
+                                            name="shipName"
                                             value={dossier.shipName || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
@@ -460,13 +461,14 @@ export default function DossierDetail() {
                                 <tr className="border border-gray-300">
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Container 40ft:</td>
                                     <td className={tableDataClass}>
-                                        <input
-                                            type="text"
-                                            name="cout20"
-                                            value={dossier.cout20 || ''}
-                                            onChange={handleInputChange}
-                                            className={classNames(editableInputClass, "text-sm")}
-                                        />
+                                       <input
+    type="text"
+    name="cout20"
+    value={dossier.cout20 ?? ''}
+    onChange={handleInputChange}
+    className={classNames(editableInputClass, "text-sm")}
+/>
+
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
@@ -704,7 +706,6 @@ export default function DossierDetail() {
                         </table>
                     </>
                 )}
-
             </div>
         </div>
     );

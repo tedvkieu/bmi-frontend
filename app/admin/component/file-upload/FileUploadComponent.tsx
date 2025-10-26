@@ -79,7 +79,7 @@ const UploadResultDisplay: React.FC<{
   const getCustomerTypeLabel = (type?: string | null) => {
     switch (type) {
       case "IMPORTER":
-        return "Nhà nhập khẩu";
+        return "Đơn vị nhập khẩu";
       case "SERVICE_MANAGER":
         return "Quản lý dịch vụ";
       case "":
@@ -671,7 +671,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({
                 <div className="flex flex-col items-center space-y-4">
                   <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4 rounded-full">
                     <svg
-                      className="w-12 h-12 text-white"
+                      className="w-8 h-8 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

@@ -3,6 +3,12 @@ import Breadcrumb from "@/app/admin/component/breadcrumb/Breadcrumb";
 import React from "react";
 import AddCustomerForm from "./components/AddCustomerForm";
 
+
+export const metadata = {
+  title: "BMI - TẠO KHÁCH HÀNG",
+};
+
+
 export default function AddCustomer() {
   return (
     <AdminLayout>

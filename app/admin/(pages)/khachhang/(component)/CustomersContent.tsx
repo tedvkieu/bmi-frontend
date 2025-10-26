@@ -766,16 +766,6 @@ const CustomersContent = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày sinh
-                  </label>
-                  <p className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-800">
-                    {selectedCustomer?.dob
-                      ? formatDate(selectedCustomer.dob)
-                      : <span className="text-gray-400 italic">Chưa cập nhật</span>}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
                   <p className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium">

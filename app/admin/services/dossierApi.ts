@@ -276,7 +276,6 @@ export const dossierApi = {
         return handleResponse<MachineDetails[]>(res);
     },
 
-    // Delete document by ID
 
 
     async createDraftDossierForCustomer(customerId: number): Promise<Receipt> {

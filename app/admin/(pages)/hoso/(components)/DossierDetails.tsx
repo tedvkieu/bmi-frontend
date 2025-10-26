@@ -97,6 +97,13 @@ export default function DossierDetail() {
 
     const handleSave = async () => {
         if (!dossier) return;
+          
+        const cout10 = Number(dossier.cout10 ?? 0);
+        const cout20 = Number(dossier.cout20 ?? 0);
+        if (cout10 < 0 || cout20 < 0) {
+            toast.error("Số lượng container không được âm.");
+            return;
+        }
 
         const dossierId = Array.isArray(id) ? id[0] : typeof id === "string" ? id : dossier.dossierId?.toString();
 
@@ -214,7 +221,7 @@ export default function DossierDetail() {
                                             editableInputClass,
                                             "font-semibold text-red-600 text-center text-base"
                                         )}
-                                        style={{ width: "120px" }}
+                                        style={{ width: "200px" }}
                                     />
                                 </div>
                             </div>
@@ -259,14 +266,14 @@ export default function DossierDetail() {
                             <tbody>
                                 <tr className="flex justify-between items-center p-2">
                                     <td>
-                                    <button
-                                        onClick={() => router.push(`/admin/khachhang/${dossier.customerRelated?.id}`)}
-                                        className="text-blue-900 hover:text-blue-800 italic underline flex items-center space-x-1 text-sm"
-                                        title="Chỉnh sửa đơn vị nhập khẩu"
-                                    >
-                                        <Edit size={18} />
-                                        <span>Chỉnh sửa thông tin đơn vị nhập khẩu</span>
-                                    </button>
+                                        <button
+                                            onClick={() => router.push(`/admin/khachhang/${dossier.customerRelated?.id}`)}
+                                            className="text-blue-900 hover:text-blue-800 italic underline flex items-center space-x-1 text-sm"
+                                            title="Chỉnh sửa đơn vị nhập khẩu"
+                                        >
+                                            <Edit size={18} />
+                                            <span>Chỉnh sửa thông tin đơn vị nhập khẩu</span>
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr className="border border-gray-300">
@@ -304,7 +311,7 @@ export default function DossierDetail() {
                                         </span>
                                     </td>
                                 </tr>
-                                 <tr className="border border-gray-300">
+                                <tr className="border border-gray-300">
                                     <td className={tableHeaderClass}>Email nhận hóa đơn</td>
                                     <td className={tableDataClass}>
                                         <span className="text-blue-500 text-sm italic underline">
@@ -346,7 +353,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="billOfLadingDate"
                                             value={dossier.billOfLadingDate || ''}
                                             onChange={handleDateChange}
@@ -366,7 +373,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="declarationDate"
                                             value={dossier.declarationDate || ''}
                                             onChange={handleDateChange}
@@ -386,7 +393,7 @@ export default function DossierDetail() {
                                         />
                                         <span className={classNames(italicTextClass, "text-sm")}>Ngày:</span>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="invoiceDate"
                                             value={dossier.invoiceDate || ''}
                                             onChange={handleDateChange}
@@ -399,8 +406,8 @@ export default function DossierDetail() {
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="inspectionDate"
-                                            value={dossier.inspectionDate || ''}
+                                            name="scheduledInspectionDate"
+                                            value={dossier.scheduledInspectionDate || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
                                         />
@@ -424,8 +431,8 @@ export default function DossierDetail() {
                                     <td className={tableDataClass}>
                                         <input
                                             type="text"
-                                            name="scheduledInspectionDate"
-                                            value={dossier.scheduledInspectionDate || ''}
+                                            name="inspectionDate"
+                                            value={dossier.inspectionDate || ''}
                                             onChange={handleInputChange}
                                             className={classNames(editableInputClass, "text-sm")}
                                         />
@@ -461,13 +468,13 @@ export default function DossierDetail() {
                                 <tr className="border border-gray-300">
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Container 40ft:</td>
                                     <td className={tableDataClass}>
-                                       <input
-    type="text"
-    name="cout20"
-    value={dossier.cout20 ?? ''}
-    onChange={handleInputChange}
-    className={classNames(editableInputClass, "text-sm")}
-/>
+                                        <input
+                                            type="text"
+                                            name="cout20"
+                                            value={dossier.cout20 ?? ''}
+                                            onChange={handleInputChange}
+                                            className={classNames(editableInputClass, "text-sm")}
+                                        />
 
                                     </td>
                                 </tr>
@@ -504,7 +511,7 @@ export default function DossierDetail() {
                                     <td className={classNames(tableHeaderClass, "font-bold")}>Ngày cấp chứng chỉ:</td>
                                     <td className={classNames(tableDataClass, "flex justify-between items-center")}>
                                         <input
-                                            type="date"
+                                            type="text"
                                             name="certificateDate"
                                             value={dossier.certificateDate || ''}
                                             onChange={handleDateChange}
@@ -684,7 +691,7 @@ export default function DossierDetail() {
 
                                 {/* Người cập nhật + Thời gian */}
                                 <tr className="border border-gray-300">
-                                    <td className={tableHeaderClass}>Người cập nhật</td>
+                                    <td className={tableHeaderClass}>Người cập nhật lần cuối</td>
                                     <td className={tableDataClass}>
                                         <div className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
                                             <span>{dossier.updatedByUser?.name || "<Chưa cập nhật>"}</span>

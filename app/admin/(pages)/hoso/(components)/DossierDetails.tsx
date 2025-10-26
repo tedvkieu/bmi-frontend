@@ -243,6 +243,12 @@ export default function DossierDetail() {
   const handleSave = async () => {
     if (!dossier) return;
 
+    const cout10 = Number(dossier.cout10 ?? 0);
+    const cout20 = Number(dossier.cout20 ?? 0);
+    if (cout10 < 0 || cout20 < 0) {
+      toast.error("Số lượng container không được âm.");
+      return;
+    }
     const dossierId = Array.isArray(id)
       ? id[0]
       : typeof id === "string"
@@ -374,7 +380,7 @@ export default function DossierDetail() {
                       editableInputClass,
                       "font-semibold text-red-600 text-center text-base"
                     )}
-                    style={{ width: "120px" }}
+                    style={{ width: "200px" }}
                   />
                 </div>
               </div>
@@ -1039,7 +1045,7 @@ export default function DossierDetail() {
 
                 {/* Người cập nhật + Thời gian */}
                 <tr className="border border-gray-300">
-                  <td className={tableHeaderClass}>Người cập nhật</td>
+                  <td className={tableHeaderClass}>Người cập nhật cuối cùng</td>
                   <td className={tableDataClass}>
                     <div className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded text-gray-700 text-sm cursor-not-allowed select-none">
                       <span>

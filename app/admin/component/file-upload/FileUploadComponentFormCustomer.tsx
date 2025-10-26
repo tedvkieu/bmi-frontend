@@ -45,6 +45,7 @@ interface UploadResultData {
   inspectionDate?: string | null;
   scheduledInspectionDate?: string | null;
   inspectionLocation?: string | null;
+  contact?: string | null;
   createdAt?: string | null;
   customer?: Customer | null;
   customerSubmit?: Customer | null;
@@ -103,7 +104,7 @@ const UploadResultDisplay: React.FC<{
             { label: "Tên đơn vị nhập khẩu", value: customer.name },
             { label: "Địa chỉ", value: customer.address },
             { label: "Mã số thuế", value: customer.taxCode },
-            { label: "Người liên hệ/ Số điện thoại", value: customer.contact },
+            { label: "Người liên hệ/ Số điện thoại", value: data.contact },
             { label: "Email nhận hóa đơn", value: customer.email },
           ].map((field, index) => (
             <div key={index}>
@@ -227,7 +228,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày Đăng Ký
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.registrationDate ?? null)}
+                {formatDate("" + data.createdAt) ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -243,7 +244,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày vận đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.billOfLadingDate ?? null)}
+                {data.billOfLadingDate ?? null}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -259,7 +260,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp số tờ khai
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.declarationDate ?? null)}
+                {data.declarationDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -275,7 +276,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp hóa đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.invoiceDate ?? null)}
+                {data.invoiceDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -283,7 +284,7 @@ const UploadResultDisplay: React.FC<{
                 Dự kiến thời gian giám định
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {formatDate(data.scheduledInspectionDate ?? null)}
+                {data.scheduledInspectionDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

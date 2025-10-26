@@ -16,6 +16,14 @@ interface CustomerProfileSectionProps {
   onUploadSuccess?: (data: any) => void;
   onRelatedCustomerCreated?: (customerId: number) => void;
   uploadMode?: "create" | "update";
+  renderUploadComponent?: (options: {
+    dossierId: number | null;
+    onUploadSuccess?: (data: any) => void;
+    onCancel: () => void;
+    loading: boolean;
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    uploadMode: "create" | "update";
+  }) => React.ReactNode;
 }
 
 interface CustomerUpdateData {
@@ -38,6 +46,7 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
   dossierId,
   onUploadSuccess,
   uploadMode = "update",
+  renderUploadComponent,
 }) => {
   // Inspection type selection removed from Section 1
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +159,20 @@ export const CustomerProfileSection: React.FC<CustomerProfileSectionProps> = ({
 
   // Show upload form if requested
   if (showUploadForm) {
+    if (renderUploadComponent) {
+      return (
+        <>
+          {renderUploadComponent({
+            dossierId: dossierId ?? null,
+            onUploadSuccess: handleUploadSuccess,
+            onCancel: () => setShowUploadForm(false),
+            loading: uploadLoading,
+            setLoading: setUploadLoading,
+            uploadMode,
+          })}
+        </>
+      );
+    }
     return (
       <FileUploadComponent
         dossierId={dossierId ?? null}

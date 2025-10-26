@@ -71,7 +71,7 @@ const DocumentRequestTable: React.FC<DocumentRequestTableProps> = ({
       toast.error("Không tìm thấy hồ sơ nháp tương ứng để tạo.");
       return;
     }
-    router.push(`/admin/hoso/tao-ho-so/${dossierId}`);
+    router.push(`/admin/tao-ho-so/${dossierId}`);
   };
 
   const openConfirm = (id: number) => {

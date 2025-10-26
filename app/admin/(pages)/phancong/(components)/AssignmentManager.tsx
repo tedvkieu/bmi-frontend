@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type SVGProps } from "react";
+import { useEffect, useRef, useState, useCallback, type SVGProps } from "react";
 import { useSearchParams } from "next/navigation";
 import TeamMemberSection from "../../evaluation/components/TeamMemberSection";
 import type {
@@ -20,7 +20,11 @@ const ArrowUpIcon = (props: SVGProps<SVGSVGElement>) => (
     stroke="currentColor"
     {...props}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0-6-6m6 6 6-6" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 4.5v15m0 0-6-6m6 6 6-6"
+    />
   </svg>
 );
 
@@ -33,7 +37,11 @@ const ArrowDownIcon = (props: SVGProps<SVGSVGElement>) => (
     stroke="currentColor"
     {...props}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19.5v-15m0 0-6 6m6-6 6 6" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 19.5v-15m0 0-6 6m6-6 6 6"
+    />
   </svg>
 );
 
@@ -207,7 +215,7 @@ const AssignmentManager: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buildDate = (year: number, month: number, day: number) => {
+  const buildDate = useCallback((year: number, month: number, day: number) => {
     const date = new Date(year, month - 1, day);
     if (
       date.getFullYear() !== year ||
@@ -217,61 +225,67 @@ const AssignmentManager: React.FC = () => {
       return null;
     }
     return date;
-  };
+  }, []);
 
-  const parseDateString = (value: string | null | undefined) => {
-    if (!value) return null;
-    const trimmed = value.trim();
-    if (!trimmed) return null;
+  const parseDateString = useCallback(
+    (value: string | null | undefined) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      if (!trimmed) return null;
 
-    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/;
-    const isoResult = trimmed.match(isoMatch);
-    if (isoResult) {
-      const [, y, m, d] = isoResult;
-      return buildDate(Number(y), Number(m), Number(d));
-    }
-
-    const vnMatch = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/;
-    const vnResult = trimmed.match(vnMatch);
-    if (vnResult) {
-      const [, d, m, yRaw] = vnResult;
-      let year = Number(yRaw);
-      if (yRaw.length === 2) {
-        year += year >= 50 ? 1900 : 2000;
+      const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/;
+      const isoResult = trimmed.match(isoMatch);
+      if (isoResult) {
+        const [, y, m, d] = isoResult;
+        return buildDate(Number(y), Number(m), Number(d));
       }
-      return buildDate(year, Number(m), Number(d));
-    }
 
-    return null;
-  };
+      const vnMatch = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/;
+      const vnResult = trimmed.match(vnMatch);
+      if (vnResult) {
+        const [, d, m, yRaw] = vnResult;
+        let year = Number(yRaw);
+        if (yRaw.length === 2) {
+          year += year >= 50 ? 1900 : 2000;
+        }
+        return buildDate(year, Number(m), Number(d));
+      }
 
-  const formatDateToISO = (date: Date) => {
+      return null;
+    },
+    [buildDate]
+  );
+
+  const formatDateToISO = useCallback((date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
-  };
+  }, []);
 
-  const formatDateToVN = (date: Date) => {
+  const formatDateToVN = useCallback((date: Date) => {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = String(date.getFullYear());
     return `${day}/${month}/${year}`;
-  };
+  }, []);
 
-  const deriveInspectionDateState = (raw: string | null | undefined) => {
-    const parsed = parseDateString(raw);
-    if (parsed) {
+  const deriveInspectionDateState = useCallback(
+    (raw: string | null | undefined) => {
+      const parsed = parseDateString(raw);
+      if (parsed) {
+        return {
+          vn: formatDateToVN(parsed),
+          iso: formatDateToISO(parsed),
+        };
+      }
       return {
-        vn: formatDateToVN(parsed),
-        iso: formatDateToISO(parsed),
+        vn: raw ?? "",
+        iso: "",
       };
-    }
-    return {
-      vn: raw ?? "",
-      iso: "",
-    };
-  };
+    },
+    [parseDateString, formatDateToVN, formatDateToISO]
+  );
 
   const getCreatedAtDate = () => {
     if (!dossierInfo?.createdAt) return null;
@@ -289,8 +303,7 @@ const AssignmentManager: React.FC = () => {
       setInspectionDateValue("");
       setInspectionDateISO("");
     }
-  }, [dossierInfo]);
-
+  }, [dossierInfo, deriveInspectionDateState]);
 
   const handleOpenDatePicker = () => {
     const input = datePickerRef.current;
@@ -314,6 +327,12 @@ const AssignmentManager: React.FC = () => {
     const parsed = parseDateString(value);
     setInspectionDateISO(parsed ? formatDateToISO(parsed) : "");
   };
+
+  // const handleInspectionDateTextChange = (value: string) => {
+  //   setInspectionDateValue(value);
+  //   const parsed = parseDateString(value);
+  //   setInspectionDateISO(parsed ? formatDateToISO(parsed) : "");
+  // };
 
   const handleSaveInspectionDate = async () => {
     if (!dossierInfo) return;
@@ -562,7 +581,9 @@ const AssignmentManager: React.FC = () => {
                 <dd className="font-medium text-slate-900">
                   {dossierInfo.registrationNo}
                 </dd>
-                <dd className="text-xs text-slate-500">ID: {dossierInfo.receiptId}</dd>
+                <dd className="text-xs text-slate-500">
+                  ID: {dossierInfo.receiptId}
+                </dd>
               </div>
               {dossierInfo.createdAt && (
                 <div className="flex flex-col gap-1">
@@ -622,7 +643,9 @@ const AssignmentManager: React.FC = () => {
                     className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   >
                     <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    <span className="font-medium text-slate-900">{m.fullName}</span>
+                    <span className="font-medium text-slate-900">
+                      {m.fullName}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -790,7 +813,9 @@ const AssignmentManager: React.FC = () => {
                       inspectionPlans.map((plan, index) => (
                         <tr
                           key={plan.planId ?? plan.tempId ?? index}
-                          className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                          className={
+                            index % 2 === 0 ? "bg-white" : "bg-slate-50"
+                          }
                         >
                           <td className="border border-slate-200 px-3 py-4 align-top text-sm font-semibold text-slate-900">
                             {index + 1}

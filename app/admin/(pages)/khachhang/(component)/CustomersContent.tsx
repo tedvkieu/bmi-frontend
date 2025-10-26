@@ -303,19 +303,12 @@ const CustomersContent = () => {
     router.push(`/admin/khachhang/${customerId}`);
   };
 
-  const handleCreateDossierForCustomer = async (customerId: number) => {
-    const toastId = toast.loading("Đang khởi tạo hồ sơ mới...");
-    try {
-      const draft = await customerApi.createDraftDossier(customerId);
-      toast.success("Đã tạo hồ sơ nháp cho khách hàng", { id: toastId });
-      router.push(`/admin/hoso/tao-ho-so/${draft.receiptId}`);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Không thể khởi tạo hồ sơ cho khách hàng";
-      toast.error(message, { id: toastId });
+  const handleCreateDossierForCustomer = (customerId: number) => {
+    if (!Number.isFinite(customerId)) {
+      toast.error("Không xác định được khách hàng cần tạo hồ sơ");
+      return;
     }
+    router.push(`/admin/tao-ho-so-khach/${customerId}`);
   };
 
   const formatDate = (dateString: string | null | undefined) => {

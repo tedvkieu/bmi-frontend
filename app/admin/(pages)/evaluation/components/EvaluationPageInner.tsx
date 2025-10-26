@@ -428,15 +428,10 @@ function EvaluationPageInner() {
       const criteriaAnswered = Object.values(evaluationData).filter(
         (v) => v === "YES" || v === "NO"
       ).length;
-      const totalDocuments = documentTypes.length;
-      const documentsCompleted = documentTypes.filter((doc) => {
-        const d = documentCheckData[doc.documentTypeId];
-        return !!(d?.hasHardCopy || d?.hasElectronic);
-      }).length;
       const criteriaCompleted =
         totalCriteria > 0 && criteriaAnswered === totalCriteria;
-      const docsCompleted =
-        totalDocuments > 0 && documentsCompleted === totalDocuments;
+      const shouldMarkCompleted =
+        criteriaCompleted && teamReadyForACD; // checklist is optional, keep status flexible
 
       const resultsPayload = Object.entries(evaluationData)
         .filter(([, v]) => v === "YES" || v === "NO")
@@ -457,10 +452,7 @@ function EvaluationPageInner() {
         dossierId: dossierInfo.receiptId,
         results: resultsPayload,
         documents: docsPayload,
-        status:
-          criteriaCompleted && docsCompleted && teamReadyForACD
-            ? "COMPLETED"
-            : undefined,
+        status: shouldMarkCompleted ? "COMPLETED" : undefined,
       };
 
       const res = await fetch(`/api/evaluations/form/submit`, {

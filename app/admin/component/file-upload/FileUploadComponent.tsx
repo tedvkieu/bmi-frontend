@@ -105,7 +105,7 @@ const UploadResultDisplay: React.FC<{
             { label: "Mã số thuế", value: customer.taxCode },
             {
               label: "Người liên hệ/ Số điện thoại",
-              value: customer.contact,
+              value: data.contact,
             },
             { label: "Email nhận hóa đơn", value: data.contact },
           ].map((field, index) => (
@@ -246,7 +246,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày vận đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.billOfLadingDate ?? null}
+                {data.billOfLadingDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -262,7 +262,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp số tờ khai
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.declarationDate ?? null}
+                {data.declarationDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -278,7 +278,7 @@ const UploadResultDisplay: React.FC<{
                 Ngày cấp hóa đơn
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.invoiceDate ?? null}
+                {data.invoiceDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -286,7 +286,7 @@ const UploadResultDisplay: React.FC<{
                 Dự kiến thời gian giám định
               </label>
               <span className="text-sm text-gray-900 whitespace-normal">
-                {data.scheduledInspectionDate ?? null}
+                {data.scheduledInspectionDate ?? "chưa có"}
               </span>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import AdminLayout from "./component/AdminLayout"; // Đảm bảo đường dẫn đúng
-import { useRouter } from "next/navigation";
 import LoadingSpinner from "./component/document/LoadingSpinner";
 import AnalyticDashboard from "./(pages)/analytic/AnalyticDashboard";
 
@@ -83,13 +82,5 @@ const DashboardPage = () => {
     </AdminLayout>
   );
 };
-
-// Helper component for Activity Item
-interface ActivityItemProps {
-  icon: React.ElementType;
-  iconBg: string;
-  text: React.ReactNode;
-  time: string;
-}
 
 export default DashboardPage;

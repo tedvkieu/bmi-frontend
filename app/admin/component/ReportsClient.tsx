@@ -177,6 +177,30 @@ const ReportsClient: React.FC = () => {
         return `${year}-${month}-${day}`;
     }
 
+    function parseDate(dateString: string): Date | null {
+        if (!dateString) return null;
+
+        // Try to parse dd/MM/yyyy format
+        const ddmmyyyyMatch = dateString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (ddmmyyyyMatch) {
+            const [, day, month, year] = ddmmyyyyMatch;
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            if (!isNaN(date.getTime())) return date;
+        }
+
+        // Try standard Date parsing for ISO or other formats
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) return date;
+
+        return null;
+    }
+
+    function formatDateForDisplay(dateString: string): string {
+        const date = parseDate(dateString);
+        if (!date) return "";
+        return date.toLocaleDateString("vi-VN");
+    }
+
     function buildPayload() {
         const payload: Record<string, any> = {};
 
@@ -779,7 +803,7 @@ const ReportsClient: React.FC = () => {
                                     <td className="px-6 py-3">{r.companyName}</td>
                                     <td className="px-6 py-3 whitespace-pre-line">{r.machineName}</td>
                                     <td className="px-6 py-3">{r.quantity}</td>
-                                    <td className="px-6 py-3">{r.inspectionTime ? new Date(r.inspectionTime).toLocaleDateString() : ""}</td>
+                                    <td className="px-6 py-3">{formatDateForDisplay(r.inspectionTime)}</td>
                                     <td className="px-3 py-3 text-center">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${result === "Đạt"
                                             ? "text-green-700 bg-green-100"
@@ -859,7 +883,7 @@ const ReportsClient: React.FC = () => {
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Thời gian giám định</label>
                                         <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg">
-                                            {selectedRow.inspectionTime ? new Date(selectedRow.inspectionTime).toLocaleDateString() : "—"}
+                                            {formatDateForDisplay(selectedRow.inspectionTime) || "—"}
                                         </div>
                                     </div>
                                     <div>

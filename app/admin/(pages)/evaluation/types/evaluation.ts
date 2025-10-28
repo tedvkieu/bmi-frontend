@@ -35,6 +35,7 @@ export interface TeamMember {
   isActive: boolean;
   // Comma-separated tasks like "A,C" indicating assigned sections
   assignTask?: string;
+  createdAt?: string;
 }
 
 export interface Category {

@@ -154,6 +154,31 @@ const formatDateForStorage = (value?: string | null): string => {
   return `${parts.day}.${parts.month}.${parts.year}`;
 };
 
+const toDateObject = (value?: string | null): Date | null => {
+  const parts = parseDateParts(value);
+  if (!parts) {
+    return null;
+  }
+
+  const year = Number(parts.year);
+  const month = Number(parts.month);
+  const day = Number(parts.day);
+
+  if (
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+};
+
 export default function DossierDetail() {
   const { id } = useParams();
   const router = useRouter();
@@ -257,6 +282,20 @@ export default function DossierDetail() {
 
     if (!dossierId) {
       toast.error("Không xác định được hồ sơ cần cập nhật");
+      return;
+    }
+
+    const inspectionDate = toDateObject(dossier.inspectionDate);
+    const certificateDate = toDateObject(dossier.certificateDate);
+
+    if (
+      inspectionDate &&
+      certificateDate &&
+      certificateDate.getTime() < inspectionDate.getTime()
+    ) {
+      toast.error(
+        "Ngày cấp chứng thư không được trước ngày đi giám định chính thức."
+      );
       return;
     }
 
@@ -665,12 +704,10 @@ export default function DossierDetail() {
                   </td>
                   <td className={tableDataClass}>
                     <input
-                      type="date"
+                      type="text"
                       name="scheduledInspectionDate"
-                      value={formatDateForInput(
-                        dossier.scheduledInspectionDate
-                      )}
-                      onChange={handleDateChange}
+                      value={dossier.scheduledInspectionDate || "Chưa cập nhật"}
+                      onChange={handleInputChange}
                       className={classNames(
                         editableInputClass,
                         "text-sm italic w-[120px]"
@@ -797,7 +834,7 @@ export default function DossierDetail() {
 
                 <tr className="border border-gray-300">
                   <td className={classNames(tableHeaderClass, "font-bold")}>
-                    Ngày cấp chứng chỉ:
+                    Ngày cấp chứng thư:
                   </td>
                   <td
                     className={classNames(

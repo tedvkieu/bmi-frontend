@@ -177,6 +177,34 @@ const ReportsClient: React.FC = () => {
         return `${year}-${month}-${day}`;
     }
 
+    function formatDateForDisplay(dateString: string): string {
+        if (!dateString) return "";
+        const trimmed = dateString.trim();
+
+        const dayFirstMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (dayFirstMatch) {
+            const day = dayFirstMatch[1].padStart(2, '0');
+            const month = dayFirstMatch[2].padStart(2, '0');
+            const year = dayFirstMatch[3];
+            return `${day}/${month}/${year}`;
+        }
+
+        const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) {
+            const year = isoMatch[1];
+            const month = isoMatch[2];
+            const day = isoMatch[3];
+            return `${day}/${month}/${year}`;
+        }
+
+        const parsed = new Date(trimmed);
+        if (!isNaN(parsed.getTime())) {
+            return parsed.toLocaleDateString('vi-VN');
+        }
+
+        return trimmed;
+    }
+
     function buildPayload() {
         const payload: Record<string, any> = {};
 
@@ -779,7 +807,7 @@ const ReportsClient: React.FC = () => {
                                     <td className="px-6 py-3">{r.companyName}</td>
                                     <td className="px-6 py-3 whitespace-pre-line">{r.machineName}</td>
                                     <td className="px-6 py-3">{r.quantity}</td>
-                                    <td className="px-6 py-3">{r.inspectionTime ? new Date(r.inspectionTime).toLocaleDateString() : ""}</td>
+                                    <td className="px-6 py-3">{formatDateForDisplay(r.inspectionTime)}</td>
                                     <td className="px-3 py-3 text-center">
                                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${result === "Đạt"
                                             ? "text-green-700 bg-green-100"
@@ -859,7 +887,7 @@ const ReportsClient: React.FC = () => {
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Thời gian giám định</label>
                                         <div className="text-sm text-gray-900 bg-gray-50 border border-gray-200 p-3 rounded-lg">
-                                            {selectedRow.inspectionTime ? new Date(selectedRow.inspectionTime).toLocaleDateString() : "—"}
+                                            {formatDateForDisplay(selectedRow.inspectionTime)}
                                         </div>
                                     </div>
                                     <div>

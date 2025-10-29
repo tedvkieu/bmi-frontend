@@ -154,13 +154,11 @@ class CompetencyApiService {
     async getCertifications(params?: {
         page?: number;
         limit?: number;
-        search?: string;
         status?: string;
     }): Promise<PaginatedResponse<Certification>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
         if (params?.status) searchParams.append("status", params.status);
 
         const query = searchParams.toString();
@@ -172,12 +170,10 @@ class CompetencyApiService {
     async getActiveCertifications(params?: {
         page?: number;
         limit?: number;
-        search?: string;
     }): Promise<PaginatedResponse<Certification>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
 
         const query = searchParams.toString();
         const url = `/api/certifications/active${query ? `?${query}` : ""}`;
@@ -188,12 +184,10 @@ class CompetencyApiService {
     async getInactiveCertifications(params?: {
         page?: number;
         limit?: number;
-        search?: string;
     }): Promise<PaginatedResponse<Certification>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
 
         const query = searchParams.toString();
         const url = `/api/certifications/inactive${query ? `?${query}` : ""}`;
@@ -221,18 +215,26 @@ class CompetencyApiService {
         });
     }
 
+    async searchCertifications(keyword: string): Promise<PaginatedResponse<Certification>> {
+        const searchParams = new URLSearchParams();
+        if (keyword?.trim()) {
+            searchParams.append("q", keyword.trim());
+        }
+        const query = searchParams.toString();
+        const url = `/api/certifications/search${query ? `?${query}` : ""}`;
+        return await this.request<PaginatedResponse<Certification>>(url);
+    }
+
     // ==================== PRODUCT CATEGORIES ====================
 
     async getProductCategories(params?: {
         page?: number;
         limit?: number;
-        search?: string;
         status?: string;
     }): Promise<PaginatedResponse<ProductCategory>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
         if (params?.status) searchParams.append("status", params.status);
 
         const query = searchParams.toString();
@@ -244,12 +246,10 @@ class CompetencyApiService {
     async getActiveProductCategories(params?: {
         page?: number;
         limit?: number;
-        search?: string;
     }): Promise<PaginatedResponse<ProductCategory>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
 
         const query = searchParams.toString();
         const url = `/api/product-categories/active${query ? `?${query}` : ""}`;
@@ -260,12 +260,10 @@ class CompetencyApiService {
     async getInactiveProductCategories(params?: {
         page?: number;
         limit?: number;
-        search?: string;
     }): Promise<PaginatedResponse<ProductCategory>> {
         const searchParams = new URLSearchParams();
         if (params?.page) searchParams.append("page", params.page.toString());
         if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
 
         const query = searchParams.toString();
         const url = `/api/product-categories/inactive${query ? `?${query}` : ""}`;
@@ -291,6 +289,16 @@ class CompetencyApiService {
         return this.request<void>(`/api/product-categories/${id}`, {
             method: "DELETE",
         });
+    }
+
+    async searchProductCategories(keyword: string): Promise<PaginatedResponse<ProductCategory>> {
+        const searchParams = new URLSearchParams();
+        if (keyword?.trim()) {
+            searchParams.append("q", keyword.trim());
+        }
+        const query = searchParams.toString();
+        const url = `/api/product-categories/search${query ? `?${query}` : ""}`;
+        return await this.request<PaginatedResponse<ProductCategory>>(url);
     }
 
     // ==================== USER CERTIFICATIONS ====================

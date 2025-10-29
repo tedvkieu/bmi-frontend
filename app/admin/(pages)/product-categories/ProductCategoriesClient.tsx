@@ -75,23 +75,23 @@ export default function ProductCategoriesClient() {
             setLoading(true);
             let response;
 
-            if (statusFilter === 'active') {
+            // If search term exists, use search API
+            if (searchTerm.trim()) {
+                response = await competencyApi.searchProductCategories(searchTerm.trim());
+            } else if (statusFilter === 'active') {
                 response = await competencyApi.getActiveProductCategories({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             } else if (statusFilter === 'inactive') {
                 response = await competencyApi.getInactiveProductCategories({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             } else {
                 response = await competencyApi.getProductCategories({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             }
 

@@ -93,19 +93,19 @@ const ReportsClient: React.FC = () => {
           (c: any, index: number) => ({
             id: String(
               c.id ??
-                c.companyId ??
-                c.code ??
-                c.value ??
-                c._id ??
-                c.uuid ??
-                `${page}-${index}`
+              c.companyId ??
+              c.code ??
+              c.value ??
+              c._id ??
+              c.uuid ??
+              `${page}-${index}`
             ),
             name: String(
               c.name ??
-                c.companyName ??
-                c.customerName ??
-                c.label ??
-                "Khách hàng"
+              c.companyName ??
+              c.customerName ??
+              c.label ??
+              "Khách hàng"
             ),
           })
         );
@@ -115,7 +115,6 @@ const ReportsClient: React.FC = () => {
           setCustomers(filteredItems);
         } else {
           setCustomers((prev) => {
-            // Remove duplicates based on both id and name
             const existingIds = new Set(prev.map((c) => c.id));
             const newItems = items.filter(
               (i) => i.id && !existingIds.has(i.id)
@@ -124,7 +123,6 @@ const ReportsClient: React.FC = () => {
           });
         }
 
-        // Get pagination info from json.page
         const totalPages = json.page?.totalPages || 1;
 
         setCompanyTotalPages(totalPages);
@@ -147,17 +145,13 @@ const ReportsClient: React.FC = () => {
     }
   }, [loadCompanies]);
 
-  // Removed auto-search: companies are only loaded on mount
-
   const handleCompanyScroll = React.useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.target as HTMLDivElement;
       const { scrollTop, scrollHeight, clientHeight } = target;
 
-      // Check if scrolled near bottom (within 50px)
       if (scrollHeight - scrollTop - clientHeight < 50) {
         const nextPage = companyPage + 1;
-        // Only load if nextPage is less than totalPages (page indices are 0-based)
         if (nextPage < companyTotalPages && !companyLoading) {
           loadCompanies(nextPage, "");
         }
@@ -188,8 +182,6 @@ const ReportsClient: React.FC = () => {
   React.useEffect(() => {
     resetPagination();
   }, [selectedCustomerId, period, fromDate, toDate, searchQuery]);
-
-  // (moved below, after handleSearch is defined)
 
   function normalizeResult(value: string): "Đạt" | "Không đạt" | "Khác" {
     const v = (value || "").trim().toUpperCase();
@@ -250,19 +242,104 @@ const ReportsClient: React.FC = () => {
     return trimmed;
   }
 
+  function formatDateForFileName(dateString: string): string {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    return `${day}.${month}.${year}`;
+  }
+
+  function sanitizeForFileName(value: string): string {
+    if (!value) return "";
+    return value
+      .replace(/[\\/:*?"<>|]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getRangeForPeriod(p: Period): { start: Date; end: Date } {
+    const now = new Date();
+    if (p === "DAY") {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(start);
+      return { start, end };
+    }
+    if (p === "WEEK") {
+      // Week starts on Monday (VN convention)
+      const day = now.getDay();
+      const diffToMonday = (day + 6) % 7;
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - diffToMonday);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return { start, end };
+    }
+    if (p === "MONTH") {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { start, end };
+    }
+    const start = new Date(now.getFullYear(), 0, 1);
+    const end = new Date(now.getFullYear(), 11, 31);
+    return { start, end };
+  }
+
+  function generateFileName(): string {
+    let startDate = "";
+    let endDate = "";
+    const fallbackAllLabel = "(Tat ca)";
+
+    // Ưu tiên sử dụng fromDate và toDate từ bộ lọc
+    if (fromDate && toDate) {
+      startDate = formatDateForFileName(fromDate);
+      endDate = formatDateForFileName(toDate);
+    } else if (fromDate) {
+      startDate = formatDateForFileName(fromDate);
+      endDate = startDate;
+    } else if (toDate) {
+      startDate = formatDateForFileName(toDate);
+      endDate = startDate;
+    } else if (period) {
+      const range = getRangeForPeriod(period as Period);
+      startDate = formatDateForFileName(range.start.toISOString());
+      endDate = formatDateForFileName(range.end.toISOString());
+    } else {
+      if (searchQuery && searchQuery.trim()) {
+        const key = sanitizeForFileName(searchQuery.trim());
+        return `BAO CAO THUC HIEN GIAM DINH-QĐ18 (Tu khoa tim kiem: ${key}).xlsx`;
+      }
+      if (selectedCustomerId) {
+        const companyName = sanitizeForFileName(
+          customers.find((c) => c.id === selectedCustomerId)?.name || "Tên công ty"
+        );
+        return `BAO CAO THUC HIEN GIAM DINH-QĐ18 (Tên công ty: ${companyName}).xlsx`;
+      }
+      return `BAO CAO THUC HIEN GIAM DINH-QĐ18 ${fallbackAllLabel}.xlsx`;
+    }
+
+    const dateRange = startDate === endDate
+      ? `(${startDate})`
+      : `(${startDate}-${endDate})`;
+
+    return `BAO CAO THUC HIEN GIAM DINH-QĐ18 ${dateRange}.xlsx`;
+  }
+
   function buildPayload() {
     const payload: Record<string, any> = {};
 
-    // Priority 1: Search query (if exists, ignore other filters)
     if (searchQuery.trim()) {
       payload.searchText = searchQuery.trim();
-      // Add pagination parameters
       payload.page = currentPage - 1;
       payload.size = pageSize;
       return payload;
     }
 
-    // Priority 2: Other filters (only when no search query)
     if (fromDate) payload.fromDate = formatDateToYYYYMMDD(fromDate);
     if (toDate) payload.toDate = formatDateToYYYYMMDD(toDate);
     if (period) payload.period = period;
@@ -271,11 +348,9 @@ const ReportsClient: React.FC = () => {
       payload.companyId = isNaN(idNum) ? selectedCustomerId : idNum;
     }
 
-    // Add pagination parameters (backend uses zero-based indexing and 'size' parameter)
-    payload.page = currentPage - 1; // Convert 1-based to 0-based
+    payload.page = currentPage - 1;
     payload.size = pageSize;
 
-    // Default behavior: if no filters selected, use current MONTH period
     if (Object.keys(payload).length === 0) {
       payload.period = "MONTH";
     }
@@ -286,7 +361,6 @@ const ReportsClient: React.FC = () => {
   function toArray(value: any): any[] {
     if (Array.isArray(value)) return value;
     if (value && typeof value === "object") {
-      // Common envelope keys from various backends
       const candidates = [
         value.data,
         value.items,
@@ -305,8 +379,6 @@ const ReportsClient: React.FC = () => {
 
   function handlePageChange(page: number) {
     setCurrentPage(page);
-    // Automatically trigger search when page changes
-    // This ensures data is loaded for the new page
   }
 
   function resetPagination() {
@@ -330,7 +402,7 @@ const ReportsClient: React.FC = () => {
     setPeriod("");
     setFromDate("");
     setToDate("");
-    setSearchQuery(""); // Clear search query
+    setSearchQuery("");
     resetPagination();
     setData([]);
     setHasData(false);
@@ -346,7 +418,6 @@ const ReportsClient: React.FC = () => {
     setInfo(null);
     setData([]);
     try {
-      // Build endpoint and payload inline to avoid unstable function deps
       const isSearchOnly = Boolean(searchQuery.trim());
       const endpoint = isSearchOnly
         ? "/api/reports/inspection/search-text"
@@ -378,7 +449,6 @@ const ReportsClient: React.FC = () => {
       });
       if (!res.ok) {
         if (res.status === 404) {
-          // Handle 404 as "no data" instead of error
           setData([]);
           setHasData(false);
           setTotals(null);
@@ -388,7 +458,6 @@ const ReportsClient: React.FC = () => {
         }
         throw new Error("Không tải được dữ liệu báo cáo");
       }
-      // Robust JSON parsing (handle text or blob payloads)
       const text = await res.text();
       let json: any = {};
       try {
@@ -396,7 +465,6 @@ const ReportsClient: React.FC = () => {
       } catch {
         json = {};
       }
-      // Get data from the correct location in API response
       const source = toArray(json.details || json.data || json);
       if (json && typeof json === "object" && json.totals) {
         setTotals(json.totals as ReportTotals);
@@ -404,14 +472,12 @@ const ReportsClient: React.FC = () => {
         setTotals(null);
       }
 
-      // Handle pagination info
       if (json && typeof json === "object") {
         if (json.pagination) {
           setCurrentPage((json.pagination.currentPage ?? 0) + 1);
           setTotalPages(json.pagination.totalPages ?? 1);
           setTotalRecords(json.pagination.totalElements ?? 0);
         } else {
-          // Fallback to old structure
           setCurrentPage(json.currentPage ?? json.page ?? 1);
           setTotalPages(json.totalPages ?? json.totalPage ?? 1);
           setTotalRecords(json.totalRecords ?? json.total ?? 0);
@@ -524,8 +590,7 @@ const ReportsClient: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-      a.download = `bao-cao-giam-dinh-${ts}.xlsx`;
+      a.download = generateFileName();
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e: any) {
@@ -549,7 +614,6 @@ const ReportsClient: React.FC = () => {
       await reportApi.importExcel(file);
       setInfo("Tải lên thành công.");
       showToast("Tải lên thành công", "success");
-      // Sau upload có thể tự động refresh kết quả
       await handleSearch();
     } catch (err: any) {
       setError(err?.message || "Tải lên thất bại");
@@ -573,14 +637,10 @@ const ReportsClient: React.FC = () => {
     totals?.totalFail ??
     data.filter((r) => normalizeResult(r.result) === "Không đạt").length;
 
-  // Charts are currently disabled in UI; omit time series computation to avoid unused variables
-
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-        {/* Bộ lọc */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Công ty dropdown */}
           <div className="col-span-1">
             <label className="block text-sm text-gray-800 font-medium mb-1.5">
               Công ty
@@ -592,13 +652,12 @@ const ReportsClient: React.FC = () => {
                 className="w-full text-left border border-gray-300 rounded-md px-3 py-2 text-gray-900 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
               >
                 <span
-                  className={`truncate ${
-                    selectedCustomerId ? "text-gray-900" : "text-gray-400"
-                  }`}
+                  className={`truncate ${selectedCustomerId ? "text-gray-900" : "text-gray-400"
+                    }`}
                 >
                   {selectedCustomerId
                     ? customers.find((c) => c.id === selectedCustomerId)
-                        ?.name || "Chọn công ty"
+                      ?.name || "Chọn công ty"
                     : "Tất cả"}
                 </span>
                 <svg
@@ -637,11 +696,10 @@ const ReportsClient: React.FC = () => {
                     {customers.map((c) => (
                       <div
                         key={c.id}
-                        className={`px-3 py-1.5 hover:bg-gray-100 cursor-pointer text-sm ${
-                          selectedCustomerId === c.id
-                            ? "bg-blue-50 text-blue-900 font-medium"
-                            : "text-gray-900"
-                        }`}
+                        className={`px-3 py-1.5 hover:bg-gray-100 cursor-pointer text-sm ${selectedCustomerId === c.id
+                          ? "bg-blue-50 text-blue-900 font-medium"
+                          : "text-gray-900"
+                          }`}
                         onClick={() => {
                           setSelectedCustomerId(c.id);
                           setIsCompanyDropdownOpen(false);
@@ -737,7 +795,6 @@ const ReportsClient: React.FC = () => {
           )}
         </div>
 
-        {/* Buttons */}
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
@@ -754,10 +811,10 @@ const ReportsClient: React.FC = () => {
             </button>
             <button
               className={classNames(
-                "px-4 py-2 rounded-md border border-gray-300 text-gray-800 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                "px-4 py-2 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
                 loading || !hasData
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "bg-white hover:bg-gray-50 cursor-pointer"
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer border border-blue-300"
               )}
               onClick={handleExport}
               disabled={loading || !hasData}
@@ -800,7 +857,6 @@ const ReportsClient: React.FC = () => {
         </div>
       </div>
 
-      {/* Analystic */}
       {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="text-gray-800 text-sm">Tổng số lượng</div>
@@ -816,7 +872,6 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div> */}
 
-      {/* Charts */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div className="font-medium text-gray-900 mb-3">Số giám định theo thời gian</div>
@@ -878,7 +933,6 @@ const ReportsClient: React.FC = () => {
                 </div>
             </div> */}
 
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-auto">
         <table className="min-w-full text-sm text-gray-800">
           <thead className="bg-gray-50">
@@ -895,13 +949,11 @@ const ReportsClient: React.FC = () => {
               ].map((h) => (
                 <th
                   key={h.label}
-                  className={`px-6 py-4 text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap ${
-                    h.className
-                  } ${
-                    h.label === "Kết quả giám định (Đạt/Không đạt)"
+                  className={`px-6 py-4 text-xs font-semibold text-blue-800 uppercase tracking-wider whitespace-pre-wrap ${h.className
+                    } ${h.label === "Kết quả giám định (Đạt/Không đạt)"
                       ? "text-center"
                       : "text-left"
-                  }`}
+                    }`}
                 >
                   {h.label}
                 </th>
@@ -941,13 +993,12 @@ const ReportsClient: React.FC = () => {
                   </td>
                   <td className="px-3 py-3 text-center">
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                        result === "Đạt"
-                          ? "text-green-700 bg-green-100"
-                          : result === "Không đạt"
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${result === "Đạt"
+                        ? "text-green-700 bg-green-100"
+                        : result === "Không đạt"
                           ? "text-red-700 bg-red-100"
                           : "text-gray-700 bg-gray-100"
-                      }`}
+                        }`}
                     >
                       {result}
                     </span>
@@ -976,7 +1027,6 @@ const ReportsClient: React.FC = () => {
         </table>
       </div>
 
-      {/* Detail Modal */}
       {isModalOpen && selectedRow && (
         <>
           <div
@@ -1063,13 +1113,12 @@ const ReportsClient: React.FC = () => {
                       Kết quả giám định
                     </label>
                     <div
-                      className={`text-sm font-semibold p-3 rounded-lg border ${
-                        normalizeResult(selectedRow.result) === "Đạt"
-                          ? "bg-green-50 text-green-800 border-green-200"
-                          : normalizeResult(selectedRow.result) === "Không đạt"
+                      className={`text-sm font-semibold p-3 rounded-lg border ${normalizeResult(selectedRow.result) === "Đạt"
+                        ? "bg-green-50 text-green-800 border-green-200"
+                        : normalizeResult(selectedRow.result) === "Không đạt"
                           ? "bg-red-50 text-red-800 border-red-200"
                           : "bg-gray-50 text-gray-800 border-gray-200"
-                      }`}
+                        }`}
                     >
                       {normalizeResult(selectedRow.result)}
                     </div>
@@ -1105,7 +1154,6 @@ const ReportsClient: React.FC = () => {
         </>
       )}
 
-      {/* Pagination */}
       {hasData && totalPages > 1 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
@@ -1128,7 +1176,6 @@ const ReportsClient: React.FC = () => {
                 Trước
               </button>
 
-              {/* Page numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -1174,7 +1221,6 @@ const ReportsClient: React.FC = () => {
         </div>
       )}
 
-      {/* Toasts */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map((t) => (
           <div
@@ -1183,8 +1229,8 @@ const ReportsClient: React.FC = () => {
               t.type === "success"
                 ? "px-4 py-2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shadow"
                 : t.type === "error"
-                ? "px-4 py-2 rounded-md bg-red-50 text-red-800 border border-red-200 shadow"
-                : "px-4 py-2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shadow"
+                  ? "px-4 py-2 rounded-md bg-red-50 text-red-800 border border-red-200 shadow"
+                  : "px-4 py-2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shadow"
             }
           >
             {t.message}

@@ -75,23 +75,23 @@ export default function CertificationsClient() {
             setLoading(true);
             let response;
 
-            if (statusFilter === 'active') {
+            // If search term exists, use search API
+            if (searchTerm.trim()) {
+                response = await competencyApi.searchCertifications(searchTerm.trim());
+            } else if (statusFilter === 'active') {
                 response = await competencyApi.getActiveCertifications({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             } else if (statusFilter === 'inactive') {
                 response = await competencyApi.getInactiveCertifications({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             } else {
                 response = await competencyApi.getCertifications({
                     page: currentPage,
-                    limit: itemsPerPage,
-                    search: searchTerm
+                    limit: itemsPerPage
                 });
             }
 

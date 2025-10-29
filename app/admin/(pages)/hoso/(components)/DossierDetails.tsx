@@ -64,7 +64,9 @@ const parseDateParts = (value?: string | null): ParsedDateParts | null => {
     };
   }
 
-  const dotMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  const dotMatch = trimmed.match(
+    /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/
+  );
   if (dotMatch) {
     const year = normalizeYear(dotMatch[3]);
     if (!year) {
@@ -78,7 +80,9 @@ const parseDateParts = (value?: string | null): ParsedDateParts | null => {
     };
   }
 
-  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  const slashMatch = trimmed.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/
+  );
   if (slashMatch) {
     const year = normalizeYear(slashMatch[3]);
     if (!year) {
@@ -92,7 +96,9 @@ const parseDateParts = (value?: string | null): ParsedDateParts | null => {
     };
   }
 
-  const dashMatch = trimmed.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+  const dashMatch = trimmed.match(
+    /^(\d{1,2})-(\d{1,2})-(\d{2,4})(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/
+  );
   if (dashMatch) {
     const year = normalizeYear(dashMatch[3]);
     if (!year) {
@@ -145,13 +151,19 @@ const formatDateForInput = (value?: string | null): string => {
   return `${parts.year}-${parts.month}-${parts.day}`;
 };
 
-const formatDateForStorage = (value?: string | null): string => {
+const formatDateToDmy = (value?: string | null): string => {
   const parts = parseDateParts(value);
   if (!parts) {
     return "";
   }
 
-  return `${parts.day}.${parts.month}.${parts.year}`;
+  const day = padToTwoDigits(parts.day);
+  const month = padToTwoDigits(parts.month);
+  return `${day}/${month}/${parts.year}`;
+};
+
+const formatDateForStorage = (value?: string | null): string => {
+  return formatDateToDmy(value);
 };
 
 const toDateObject = (value?: string | null): Date | null => {
@@ -223,15 +235,41 @@ export default function DossierDetail() {
   ) => {
     const { name, type, value } = e.target;
 
+    let newValue: any = value;
+
+    // Nếu là checkbox thì lấy checked (boolean)
+    if (e.target instanceof HTMLInputElement && type === "checkbox") {
+      newValue = e.target.checked;
+    }
+
+    if (
+      name === "billOfLading" ||
+      name === "declarationNo" ||
+      name === "invoiceNo"
+    ) {
+      const sanitized = value.replace(/[^A-Za-z0-9-]/g, "");
+      if (value !== sanitized) {
+        toast.error("Chỉ cho phép chữ cái, số và dấu gạch ngang (-).");
+      }
+      newValue = sanitized;
+    }
+
+    if (name === "cout10" || name === "cout20") {
+      const trimmed = value.trim();
+      if (trimmed === "") {
+        newValue = 0;
+      } else {
+        const parsed = Number(trimmed);
+        if (Number.isNaN(parsed) || parsed < 0) {
+          toast.error("Vui lòng nhập số lượng hợp lệ.");
+          return;
+        }
+        newValue = parsed;
+      }
+    }
+
     setDossier((prevDossier) => {
       if (!prevDossier) return null;
-
-      let newValue: any = value;
-
-      // Nếu là checkbox thì lấy checked (boolean)
-      if (e.target instanceof HTMLInputElement && type === "checkbox") {
-        newValue = e.target.checked;
-      }
 
       // Xử lý các field lồng trong customerSubmit.*
       if (name.startsWith("customerRelated.")) {
@@ -256,8 +294,33 @@ export default function DossierDetail() {
     const { name, value } = e.target;
     const formattedValue = formatDateForStorage(value);
 
+    if (!dossier) {
+      return;
+    }
+
+    if (name === "inspectionDate") {
+      const nextInspectionComparable = toDateObject(formatDateToDmy(value));
+      const createdAtComparable = toDateObject(
+        formatDateToDmy(dossier.createdAt)
+      );
+
+      if (
+        nextInspectionComparable &&
+        createdAtComparable &&
+        nextInspectionComparable.getTime() < createdAtComparable.getTime()
+      ) {
+        toast.error(
+          `Ngày lên hồ sơ là: ${formatDateToDmy(
+            dossier.createdAt
+          )}. Ngày giám định chính thức không được trước ngày lên hồ sơ.`
+        );
+        return;
+      }
+    }
+
     setDossier((prevDossier) => {
       if (!prevDossier) return null;
+
       return {
         ...prevDossier,
         [name]: formattedValue,
@@ -270,7 +333,12 @@ export default function DossierDetail() {
 
     const cout10 = Number(dossier.cout10 ?? 0);
     const cout20 = Number(dossier.cout20 ?? 0);
-    if (cout10 < 0 || cout20 < 0) {
+    if (
+      Number.isNaN(cout10) ||
+      Number.isNaN(cout20) ||
+      cout10 < 0 ||
+      cout20 < 0
+    ) {
       toast.error("Số lượng container không được âm.");
       return;
     }
@@ -285,8 +353,26 @@ export default function DossierDetail() {
       return;
     }
 
-    const inspectionDate = toDateObject(dossier.inspectionDate);
-    const certificateDate = toDateObject(dossier.certificateDate);
+    const inspectionDate = toDateObject(
+      formatDateToDmy(dossier.inspectionDate)
+    );
+    const certificateDate = toDateObject(
+      formatDateToDmy(dossier.certificateDate)
+    );
+    const createdAtDate = toDateObject(formatDateToDmy(dossier.createdAt));
+
+    if (
+      inspectionDate &&
+      createdAtDate &&
+      inspectionDate.getTime() < createdAtDate.getTime()
+    ) {
+      toast.error(
+        `Ngày lên hồ sơ là: ${formatDateToDmy(
+          dossier.createdAt
+        )}. Ngày giám định chính thức không được trước ngày lên hồ sơ.`
+      );
+      return;
+    }
 
     if (
       inspectionDate &&
@@ -319,8 +405,8 @@ export default function DossierDetail() {
         billOfLading: dossier.billOfLading ?? "",
         billOfLadingDate: dossier.billOfLadingDate ?? "",
         shipName: dossier.shipName ?? "",
-        cout10: dossier.cout10 ?? null,
-        cout20: dossier.cout20 ?? null,
+        cout10,
+        cout20,
         bulkShip: dossier.bulkShip ?? false,
         declarationDoc: dossier.declarationDoc ?? "",
         declarationPlace: dossier.declarationPlace ?? "",
@@ -776,7 +862,7 @@ export default function DossierDetail() {
                     <input
                       type="text"
                       name="cout10"
-                      value={dossier.cout10 || ""}
+                      value={dossier.cout10 || 0}
                       onChange={handleInputChange}
                       className={classNames(editableInputClass, "text-sm")}
                     />
@@ -791,7 +877,7 @@ export default function DossierDetail() {
                     <input
                       type="text"
                       name="cout20"
-                      value={dossier.cout20 ?? ""}
+                      value={dossier.cout20 || 0}
                       onChange={handleInputChange}
                       className={classNames(editableInputClass, "text-sm")}
                     />

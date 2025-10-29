@@ -400,7 +400,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                     </td>
                     <td className={tableDataClass}>
                       <span className={classNames(inputClass, "text-sm")}>
-                        {document.cout10 || "<Chưa cập nhập>"}
+                        {document.cout10 || 0}
                       </span>
                     </td>
                   </tr>
@@ -410,7 +410,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                     </td>
                     <td className={tableDataClass}>
                       <span className={classNames(inputClass, "text-sm")}>
-                        {document.cout20 || "<Chưa cập nhập>"}
+                        {document.cout20 || 0}
                       </span>
                     </td>
                   </tr>
@@ -426,7 +426,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                     </td>
                   </tr>
 
-                  <tr className="border border-gray-300">
+                  {/* <tr className="border border-gray-300">
                     <td className={classNames(tableHeaderClass, "font-bold")}>
                       Hải quan mở tờ khai:
                     </td>
@@ -435,7 +435,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                         {document.declarationPlace || "<Chưa cập nhập>"}
                       </span>
                     </td>
-                  </tr>
+                  </tr> */}
 
                   <tr className="border border-gray-300">
                     <td className={classNames(tableHeaderClass, "font-bold")}>
@@ -449,7 +449,7 @@ const DossierViewModal: React.FC<DocumentViewModalProps> = ({
                   </tr>
                   <tr className="border border-gray-300">
                     <td className={classNames(tableHeaderClass, "font-bold")}>
-                      Ngày cấp chứng chỉ:
+                      Ngày cấp chứng thư:
                     </td>
                     <td
                       className={classNames(

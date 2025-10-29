@@ -150,7 +150,7 @@ export const CompletionSection: React.FC<CompletionSectionProps> = ({
               <span>{receiptData.inspectionLocation}</span>
             </div>
             <div className="summary-item">
-              <label>Trạng thái chứng chỉ:</label>
+              <label>Trạng thái chứng thư:</label>
               <span
                 className={`status-badge status-${receiptData.certificateStatus.toLowerCase()}`}
               >

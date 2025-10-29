@@ -85,7 +85,7 @@ export default function AddCustomerForm() {
             });
             setFormData(prevData => ({ ...prevData, taxCode: "" })); // Clear tax code if it's no longer relevant
         }
-    }, [formData.customerType]);
+    }, [formData.customerType, errors.taxCode]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

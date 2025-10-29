@@ -92,6 +92,17 @@ const AssignmentManager: React.FC = () => {
   const reindexPlans = (plans: InspectionPlan[]) =>
     plans.map((plan, index) => ({ ...plan, planOrder: index + 1 }));
 
+  const formatAssignedTimestamp = (value?: string | null): string => {
+    if (!value) {
+      return "";
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.valueOf())) {
+      return value;
+    }
+    return parsed.toLocaleString("vi-VN");
+  };
+
   // Fetch inspectors
   const fetchInspectors = async () => {
     try {
@@ -643,9 +654,15 @@ const AssignmentManager: React.FC = () => {
                     className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                   >
                     <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    <span className="font-medium text-slate-900">
-                      {m.fullName}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">
+                        {m.fullName}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        Ngày phân công:{" "}
+                        {formatAssignedTimestamp(m.createdAt) || "—"}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>

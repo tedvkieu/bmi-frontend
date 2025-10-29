@@ -107,7 +107,7 @@ const UploadResultDisplay: React.FC<{
               label: "Người liên hệ/ Số điện thoại",
               value: data.contact,
             },
-            { label: "Email nhận hóa đơn", value: data.contact },
+            { label: "Email nhận hóa đơn", value: customer.email },
           ].map((field, index) => (
             <div key={index}>
               <label className="block text-sm font-medium text-gray-500 mb-1">
